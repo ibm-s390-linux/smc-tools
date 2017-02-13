@@ -1,0 +1,55 @@
+#!/bin/bash
+
+version=`head -1 README.smctools | cut -c 12-16`;
+
+# Consistency check: Do we have an entry in the History section...?
+if [ `grep -A 20 "Release History:" README.smctools | grep "$version" | wc -l` -eq 0 ]; then
+	echo "Error: 'README.smctools' is missing an entry for version '$version' in 'Release History' ";
+	exit 4;
+fi
+
+# Consistency check: git branch
+sref=git symbolic-ref HEAD;
+if [ "${sref##*}" != "master" ]; then
+	echo;
+	echo "WARNING: Building package on non-master branch.";
+	echo "         Packages for publication MUST be built on the master branch!";
+	echo;
+fi
+
+if [ -e smctools.$version.tar.gz ]; then
+	echo "Removing old package...";
+	rm smctools.$version.tar.gz;
+fi
+echo "Building smctools $version";
+build_dir=tmp/smctools-$version;
+if [ ! -e tmp ]; then
+	mkdir tmp;
+fi
+if [ -e $build_dir ]; then
+	rm -rf $build_dir;
+fi
+mkdir $build_dir;
+cp smctools_common.h $build_dir
+cp smc.h $build_dir
+cp smc_diag.h $build_dir;
+cp smcrpnet.c $build_dir;
+cp smcss.c $build_dir;
+cp ld_pre_smc.c $build_dir;
+cp Makefile $build_dir;
+cp LICENSE $build_dir;
+cp README.smctools $build_dir;
+cp af_smc.7 $build_dir;
+cp smcss.8 $build_dir;
+cp smcrpnet.8 $build_dir;
+cp smc_run.in $build_dir;
+cp smc_run.8 $build_dir;
+
+cd tmp;
+tar cvfz ../smctools.$version.tar.gz smctools-$version | sed 's/^/   /';
+if [ $? -eq 0 ]; then
+	echo "Package smctools.$version.tar.gz build successful";
+else
+	echo "Package smctools.$version.tar.gz build failed";
+fi
+

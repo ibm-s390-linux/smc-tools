@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# SMC Tools - Shared Memory Communication Tools
+#
+# Copyright IBM Corp. 2017
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+LIBDIR="@install_dir@/lib/"
+LIBDIR64="@install_dir@/lib64/"
+
+#
+# Verify command line arguments and specify the preload library debug mode
+# if necessary.
+#
+command_line=$@
+debug_option=$(echo "$command_line" | cut -f 1 -d " ");
+SMC_DEBUG=0;
+while getopts ":d" opt; do
+	case $opt in
+		d)
+			SMC_DEBUG=1;
+			command_line=${command_line#"$debug_option"};
+			command_line=${command_line##\ };
+			;;
+		\?)
+			echo "`basename "$0"`: Error: Invalid option: -$OPTARG";
+			exit 1;
+			;;
+	esac
+done
+if [ "x$command_line" = "x" ]; then
+	echo "`basename "$0"`: Error: Missing command parameter";
+	exit 1;
+fi
+#
+# Verify that preload libraries were properly installed.
+#
+if [ $SMC_DEBUG = 1 ]; then
+	app_path=$2;
+else
+	app_path=$1;
+fi
+
+app_path=$(which "$app_path");
+app_64bit=$(file -L "$app_path" | grep -c "ELF 64-bit");
+app_32bit=$(file -L "$app_path" | grep -c "ELF 3.-bit");
+
+if [ $app_64bit -gt 0 ] && [ ! -e "$LIBDIR64$LIB_NAME" ]; then
+	echo "`basename "$0"`: Error: Could not find '$LIB_NAME' in '$LIBDIR64'" >&2;
+	exit 2;
+fi
+if [ $app_32bit -gt 0 ] && [ ! -e "$LIB_PATH$LIB_NAME" ]; then
+	echo "`basename "$0"`: Error: Could not find '$LIB_NAME' in '$LIBDIR'" <&2;
+	exit 3;
+fi
+
+export SMC_DEBUG;
+#
+# Execute the specified command.
+#
+export LD_PRELOAD=$LIB_NAME;
+
+exec $command_line
+exit $?;

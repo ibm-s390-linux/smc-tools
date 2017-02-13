@@ -1,0 +1,66 @@
+.\" smc_run.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2017
+.\" Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMC_RUN 8 "January 2017" "smc-tools" "Linux Programmer's Manual "
+.SH NAME
+smc_run \- start a TCP socket program with the capability to use SMC as
+networking protocol.
+
+.SH SYNOPSYS
+
+.B smc_run
+.RB [ \-d ]
+.I program
+.I parameters
+
+.SH DESCRIPTION
+.B smc_run
+starts a
+.IR program
+specified as argument with its
+.IR parameters
+allowing to use the SMC protocol for program-used TCP socket connections.
+The script checks whether the ld_pre_smc.so preload library exists
+and specifies it as a preload shared library for the Linux program
+loader.
+The ld_pre_smc.so library intercepts a few TCP socket calls and
+triggers the equivalent execution through SMC.
+
+The following options can be specified:
+.SS "\-d"
+Display additional diagnostic messages during the program
+execution.
+.SH RETURN CODES
+Successful
+.IR smc_run
+command returns 0.
+If an error occurs
+.IR smc_run
+writes a message to stdout and completes with a return code other
+than 0.
+
+.IP 1 5
+An invalid option was specified.
+.IP 2 5
+The script could not find the ld_pre_smc.so shared library in the /usr/lib64
+directory.
+.IP 3 5
+The script could not find the ld_pre_smc.so shared library in the /usr/lib
+directory.
+.P
+.SH AUTHOR
+.nf
+Copyright (c) IBM Corp., 2017
+
+Published under the terms and conditions of the EPL
+(eclipse public license).
+.fi
+.SH SEE ALSO
+.BR af_smc (7),
+.BR smcrpnet (8),
+.BR smcss (8),
+.BR tcp (7)
