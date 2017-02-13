@@ -24,9 +24,9 @@ ARCH64=1
 endif
 
 DESTDIR        ?=
-INSTALLDIR	= /usr
-BINDIR		= ${INSTALLDIR}/bin
-MANDIR		= ${INSTALLDIR}/share/man
+PREFIX          = /usr
+BINDIR		= ${PREFIX}/bin
+MANDIR		= ${PREFIX}/share/man
 OWNER		= $(shell id -un)
 GROUP		= $(shell id -gn)
 INSTALL_FLAGS_BIN	= -g $(GROUP) -o $(OWNER) -m755
@@ -37,13 +37,13 @@ STUFF_32BIT	= 0
 # Check that 31/32-bit build tools are available.
 #
 ifeq ($(ARCH64),1)
-LIBDIR		= ${INSTALLDIR}/lib64
-ifneq ("$(wildcard ${INSTALLDIR}/include/gnu/stubs-32.h)","")
+LIBDIR		= ${PREFIX}/lib64
+ifneq ("$(wildcard ${PREFIX}/include/gnu/stubs-32.h)","")
 STUFF_32BIT = 1
-LIBDIR32	= ${INSTALLDIR}/lib
+LIBDIR32	= ${PREFIX}/lib
 endif
 else
-LIBDIR		= ${INSTALLDIR}/lib
+LIBDIR		= ${PREFIX}/lib
 endif
 
 all: smc_run ld_pre_smc.so ld_pre_smc32.so smcss smcrpnet
@@ -57,7 +57,7 @@ else
 endif
 
 smc_run: smc_run.in
-	my_installdir=${INSTALLDIR}; \
+	my_installdir=${PREFIX}; \
         sed -e "s#@install_dir@#$$my_installdir#g" < $< > $@
 
 ld_pre_smc.so: ld_pre_smc.c

@@ -17,12 +17,12 @@ if [ "${sref##*}" != "master" ]; then
 	echo;
 fi
 
-if [ -e smctools.$version.tar.gz ]; then
+if [ -e smc-tools.$version.tar.gz ]; then
 	echo "Removing old package...";
-	rm smctools.$version.tar.gz;
+	rm smc-tools.$version.tar.gz;
 fi
-echo "Building smctools $version";
-build_dir=tmp/smctools-$version;
+echo "Building smc-tools $version";
+build_dir=tmp/smc-tools-$version;
 if [ ! -e tmp ]; then
 	mkdir tmp;
 fi
@@ -46,10 +46,10 @@ cp smc_run.in $build_dir;
 cp smc_run.8 $build_dir;
 
 cd tmp;
-tar cvfz ../smctools.$version.tar.gz smctools-$version | sed 's/^/   /';
+tar -zcvf ../smc-tools-$version.tar.gz smc-tools-$version | sed 's/^/   /';
 if [ $? -eq 0 ]; then
-	echo "Package smctools.$version.tar.gz build successful";
+	echo "Package smc-tools-$version.tar.gz build successful";
 else
-	echo "Package smctools.$version.tar.gz build failed";
+	echo "Package smc-tools-$version.tar.gz build failed";
 fi
 
