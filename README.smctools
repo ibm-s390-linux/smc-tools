@@ -3,8 +3,7 @@ SMC Tools (1.0.0)
 
 The SMC Tools provided in this package allow execution of existing TCP
 applications over RoCE network without need to make changes in them.
-In addition tools are provided to display SMC socket information and
-SMC socket statistics (in future).
+In addition tools are provided to display SMC socket information.
 
 This package consists of the tools:
 
