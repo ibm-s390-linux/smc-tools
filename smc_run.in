@@ -9,6 +9,7 @@
 # which accompanies this distribution, and is available at
 # http://www.eclipse.org/legal/epl-v10.html
 #
+LIB_NAME="ld_pre_smc.so"
 LIBDIR="@install_dir@/lib/"
 LIBDIR64="@install_dir@/lib64/"
 
