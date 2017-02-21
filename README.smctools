@@ -27,8 +27,10 @@ In addition the package contains the AF_SMC manpage ("man af_smc").
 Release History:
 ================
 
+0.1.2-1.1
+    The initial version for inclusion in SLES12 SP2 betas. Later removed.
 1.0.0
-    The initial version.
+    The initial version for publication on developerWorks..
 
 Parts:
 ======
