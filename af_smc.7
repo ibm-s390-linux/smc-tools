@@ -71,9 +71,9 @@ Any available Ethernet interface can be combined with available
 if they belong to the same Converged Ethernet fabric.
 To configure RoCE Adapter mapping, you must create a pnet table.
 Modify the table with the smc-tools command
-.I smcrpnet.
+.I smc_pnet.
 .PP
-For details call "man smcrpnet".
+For details call "man smc_pnet".
 .SS Important sysctl settings
 SMC-R supports IPv4 only. Use this sysctl setting:
 .IR  net.ipv6.bindv6only=1
@@ -115,7 +115,7 @@ Published under the terms and conditions of the EPL
 .BR socket (7)
 .BR smc_run (8)
 .BR smcss (8)
-.BR smcrpnet (8)
+.BR smc_pnet (8)
 .SH "HISTORY"
 .TP
 .B AF_SMC, version 1.0.0

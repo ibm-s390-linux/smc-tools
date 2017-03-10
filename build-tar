@@ -33,7 +33,7 @@ mkdir $build_dir;
 cp smctools_common.h $build_dir
 cp smc.h $build_dir
 cp smc_diag.h $build_dir;
-cp smcrpnet.c $build_dir;
+cp smc_pnet.c $build_dir;
 cp smcss.c $build_dir;
 cp ld_pre_smc.c $build_dir;
 cp Makefile $build_dir;
@@ -41,7 +41,7 @@ cp LICENSE $build_dir;
 cp README.smctools $build_dir;
 cp af_smc.7 $build_dir;
 cp smcss.8 $build_dir;
-cp smcrpnet.8 $build_dir;
+cp smc_pnet.8 $build_dir;
 cp smc_run.in $build_dir;
 cp smc_run.8 $build_dir;
 

@@ -46,7 +46,7 @@ else
 LIBDIR		= ${PREFIX}/lib
 endif
 
-all: smc_run ld_pre_smc.so ld_pre_smc32.so smcss smcrpnet
+all: smc_run ld_pre_smc.so ld_pre_smc32.so smcss smc_pnet
 
 CFLAGS := -Wall -I include -O3 -g
 
@@ -84,15 +84,15 @@ smcss: smcss.o
 
 #
 ifneq ($(shell sh -c 'command -v pkg-config'),)
-SMCRPNET_FLAGS = $(shell pkg-config --silence-errors --cflags --libs libnl-genl-3.0)
+SMC_PNET_FLAGS = $(shell pkg-config --silence-errors --cflags --libs libnl-genl-3.0)
 else
-SMCRPNET_FLAGS = -I/usr/include/libnl3 -lnl-genl-3 -lnl-3
+SMC_PNET_FLAGS = -I/usr/include/libnl3 -lnl-genl-3 -lnl-3
 endif
 
-smcrpnet: smcrpnet.c smc.h
+smc_pnet: smc_pnet.c smc.h
 	@if [ -e /usr/include/libnl3/netlink/netlink.h ]; then \
-		echo ${CC} ${CFLAGS} ${SMCRPNET_FLAGS} -o $@ $< ; \
-		${CC} ${CFLAGS} ${SMCRPNET_FLAGS} -o $@ $< ; \
+		echo ${CC} ${CFLAGS} ${SMC_PNET_FLAGS} -o $@ $< ; \
+		${CC} ${CFLAGS} ${SMC_PNET_FLAGS} -o $@ $< ; \
 	else \
 		printf "*********************************************\n" >&2; \
 		printf "* Missing build requirement for: %-45s\n" $@ >&2; \
@@ -110,11 +110,11 @@ ifeq ($(STUFF_32BIT),1)
 endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install -s $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
-	install -s $(INSTALL_FLAGS_BIN) smcrpnet $(DESTDIR)$(BINDIR)
+	install -s $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_MAN) af_smc.7 $(DESTDIR)$(MANDIR)/man7
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_MAN) smcrpnet.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
 
 clean:
-	rm -f *.o *.so smc_run smcss smcrpnet
+	rm -f *.o *.so smc_run smcss smc_pnet

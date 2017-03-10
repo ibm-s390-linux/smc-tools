@@ -1,4 +1,4 @@
-.\" smcrpnet.8
+.\" smc_pnet.8
 .\"
 .\"
 .\" Copyright IBM Corp. 2017
@@ -7,29 +7,29 @@
 .\" ----------------------------------------------------------------------
 .\"
 
-.TH SMCRPNET 8 "January 2017" "smc-tools" "Linux Programmer's Manual"
+.TH SMC_PNET 8 "January 2017" "smc-tools" "Linux Programmer's Manual"
 
 .SH NAME
-smcrpnet \- create, destroy, and change the SMC PNET table.
+smc_pnet \- create, destroy, and change the SMC PNET table.
 
 .SH SYNOPSYS
 
-.B smcrpnet
+.B smc_pnet
 .RB { \-\-add | \-a "} {" \-\-interface | \-I "} <ethernet-interface> {" \-\-ibdevice | \-D "} <infiniband-device> [ {" \-\-ibport | \-P "<infiniband-port> ] } <pnetid>"
 .P
-.B smcrpnet
+.B smc_pnet
 .RB { \-\-show | -s } <pnetid>
 .P
-.B smcrpnet
+.B smc_pnet
 .RB { \-\-delete | \-d } <pnetid>
 .P
-.B smcrpnet
+.B smc_pnet
 .RB { \-\-flush | \-f }
 .P
-.B smcrpnet
+.B smc_pnet
 .RB { \-\-version | \-v }
 .P
-.B smcrpnet
+.B smc_pnet
 .RB { \-\-help | \-h }
 
 .SH DESCRIPTION
@@ -41,13 +41,13 @@ belong to the same Converged Ethernet fabric. To configure mapping of a RoCE Ada
 port to a standard Ethernet interface, an entry in the pnet table must be created.
 .P
 The
-.B smcrpnet
+.B smc_pnet
 command configures the pnet table.
 
 .SH OPTIONS
 .SS (none)
 By default,
-.B smcrpnet
+.B smc_pnet
 shows all entries of the pnet table.
 .SS <pnetid>
 defines a name for a grouping of Ethernet interface and RNIC.
@@ -74,9 +74,9 @@ specifies the port number of the Infiniband device port. Valid numbers are
 1 or 2.
 The default value is 1.
 .SS "\-v, \-\-version"
-displays smcrpnet program version and copyright information.
+displays smc_pnet program version and copyright information.
 .SS "\-h, \-\-help"
-displays a brief smcrpnet usage information.
+displays a brief smc_pnet usage information.
 .PP
 
 .SH EXAMPLES
@@ -91,27 +91,27 @@ smcprnet -a ABC -I encf500 -D mlx4_0 -P 2
 .IP 2.
 Delete a pnet table entry with pnetid named ABC:
 .sp 1
-smcrpnet -d ABC
+smc_pnet -d ABC
 .sp 1
 .PP
 .IP 3.
 Show the mapping of ethernet interface name and infiniband device port for pnetid ABC:
 .sp 1
-smcrpnet -s ABC
+smc_pnet -s ABC
 .sp 1
 ABC encf500 mlx4_0 2
 .sp 1
 .IP 4.
 Delete all entries in the pnet table
 .sp 1
-smcrpnet -f
+smc_pnet -f
 .P
 .SH RETURN CODES
 Successful
-.IR smcrpnet
+.IR smc_pnet
 commands return 0.
 If an error occurs,
-.IR smcrpnet
+.IR smc_pnet
 writes a message to stderr and completes with a return code
 other than 0.
 .P

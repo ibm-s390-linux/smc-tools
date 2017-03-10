@@ -9,7 +9,7 @@ This package consists of the tools:
 
 - ld_preload_smc.so : preload library.
 - smc_run           : preload library environment setup script.
-- smcrpnet          : C program for PNET Table handling
+- smc_pnet          : C program for PNET Table handling
 - smcss             : C program for displaying the information about active
                       SMC sockets.
 
@@ -19,7 +19,7 @@ The environment setup script smc_run sets up the preload environment
 for the ld_pre_smc.so shared library before starting application.
 The smcss program is used to gather and display information about the
 SMC sockets.
-The smcrpnet program is used to create, destroy, and change the SMC-R PNET
+The smc_pnet program is used to create, destroy, and change the SMC-R PNET
 table.
 
 In addition the package contains the AF_SMC manpage ("man af_smc").
@@ -40,13 +40,13 @@ The SMC Tools package includes the following files:
 Makefile		smctools Makefile
 ld_pre_smc.c		ld_pre_smc.so, SMC preload library source code
 smc_run			SMC preload library environment setup script
-smcrpnet.c		PNET Table handling source code
+smc_pnet.c		PNET Table handling source code
 smcss.c			SMC socket display source code
 smctools_common.h	common definitions for smctools
 smc.h			include file from kernel include/uapi/linux/smc.h
 smc_diag.h		include file from kernel include/uapi/linux/smc_diag.h
 af_smc.7		manpage for AF_SMC sockets
-smcrpnet.8		manpage for smcrpnet
+smc_pnet.8		manpage for smc_pnet
 smcss.8			manpage for smcss
 smc_run.8		manpage for preload library usage
 

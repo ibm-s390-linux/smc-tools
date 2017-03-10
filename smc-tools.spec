@@ -15,7 +15,7 @@ The smc-tools package enables usage of SMC sockets in Linux.
 It contains these tools:
 * Preload library "ld_pre_smc.so" together with the calling script "smc_run"
   to trigger transparent usage of SMC-sockets for existing TCP socket applications.
-*  Configuration tool called "smcrpnet"
+*  Configuration tool called "smc_pnet"
 * Tool "smcss" to print information about SMC sockets
 * Manpages, among them af_smc.7
 
@@ -39,11 +39,11 @@ rm -rf %{buildroot}
 %doc LICENSE
 %doc README.smctools
 %{_bindir}/smc_run
-%{_bindir}/smcrpnet
+%{_bindir}/smc_pnet
 %{_bindir}/smcss
 %{_mandir}/man7/af_smc.7*
 %{_mandir}/man8/smc_run.8*
-%{_mandir}/man8/smcrpnet.8*
+%{_mandir}/man8/smc_pnet.8*
 %{_mandir}/man8/smcss.8*
 %{_libdir}/ld_pre_smc.so
 %if %{with_32bit}
