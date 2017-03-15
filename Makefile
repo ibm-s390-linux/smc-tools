@@ -84,15 +84,17 @@ smcss: smcss.o
 
 #
 ifneq ($(shell sh -c 'command -v pkg-config'),)
-SMC_PNET_FLAGS = $(shell pkg-config --silence-errors --cflags --libs libnl-genl-3.0)
+SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
+SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
 else
-SMC_PNET_FLAGS = -I/usr/include/libnl3 -lnl-genl-3 -lnl-3
+SMC_PNET_CFLAGS = -I/usr/include/libnl3
+SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
 smc_pnet: smc_pnet.c smc.h
 	@if [ -e /usr/include/libnl3/netlink/netlink.h ]; then \
-		echo ${CC} ${CFLAGS} ${SMC_PNET_FLAGS} -o $@ $< ; \
-		${CC} ${CFLAGS} ${SMC_PNET_FLAGS} -o $@ $< ; \
+		echo ${CC} ${CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}; \
+		${CC} ${CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}; \
 	else \
 		printf "*********************************************\n" >&2; \
 		printf "* Missing build requirement for: %-45s\n" $@ >&2; \
