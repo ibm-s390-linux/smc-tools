@@ -9,8 +9,8 @@ if [ `grep -A 20 "Release History:" README.smctools | grep "$version" | wc -l` -
 fi
 
 # Consistency check: git branch
-sref=git symbolic-ref HEAD;
-if [ "${sref##*}" != "master" ]; then
+sref=`git symbolic-ref HEAD`;
+if [ "${sref}" != "refs/heads/master" ]; then
 	echo;
 	echo "WARNING: Building package on non-master branch.";
 	echo "         Packages for publication MUST be built on the master branch!";
