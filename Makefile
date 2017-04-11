@@ -59,6 +59,7 @@ endif
 smc_run: smc_run.in
 	my_installdir=${PREFIX}; \
         sed -e "s#@install_dir@#$$my_installdir#g" < $< > $@
+	chmod a+x $@
 
 ld_pre_smc.so: ld_pre_smc.c
 	${CC} ${CFLAGS} -fPIC -c ld_pre_smc.c
