@@ -9,10 +9,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-VERSION			= 1
-RELEASE			= 0
-PATCHLEVEL		= 0
-SMC_TOOLS_RELASE	= $(VERSION).$(RELEASE).$(PATCHLEVEL)
+SMC_TOOLS_RELASE	= 1.0.0
 
 ARCH = $(shell uname -m)
 ifeq ($(ARCH),i686)
