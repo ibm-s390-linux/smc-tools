@@ -9,7 +9,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELASE	= 1.0.0
+SMC_TOOLS_RELEASE	= 1.0.0
 
 ARCH = $(shell uname -m)
 ifeq ($(ARCH),i686)
@@ -43,7 +43,7 @@ else
 LIBDIR		= ${PREFIX}/lib
 endif
 
-all: smc_run ld_pre_smc.so ld_pre_smc32.so smcss smc_pnet
+all: smc_run ld_pre_smc.so ld_pre_smc32.so smcss smc_pnet README.smctools af_smc.7
 
 CFLAGS := -Wall -I include -O3 -g
 
@@ -54,9 +54,14 @@ else
 endif
 
 smc_run: smc_run.in
-	my_installdir=${PREFIX}; \
-        sed -e "s#@install_dir@#$$my_installdir#g" < $< > $@
+	my_installdir=${PREFIX} sed -e "s#@install_dir@#$$my_installdir#g" < $< > $@
 	chmod a+x $@
+
+smc-tools.spec: smc-tools.spec.in
+	sed -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
+
+%: %.in	smc-tools.spec
+	sed -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
 
 ld_pre_smc.so: ld_pre_smc.c
 	${CC} ${CFLAGS} -fPIC -c ld_pre_smc.c
@@ -117,4 +122,4 @@ endif
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
 
 clean:
-	rm -f *.o *.so smc_run smcss smc_pnet
+	rm -f *.o *.so smc_run smcss smc_pnet README.smctools af_smc.7 smc-tools.spec

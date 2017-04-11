@@ -118,7 +118,7 @@ Published under the terms and conditions of the EPL
 .BR smc_pnet (8)
 .SH "HISTORY"
 .TP
-.B AF_SMC, version 1.0.0
+.B AF_SMC, version x.x.x
 .RS 4
 .IP "\bu" 2
 Initial version.

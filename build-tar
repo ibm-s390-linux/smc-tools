@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=`head -1 README.smctools | cut -c 12-16`;
+version=`grep -w SMC_TOOLS_RELEASE Makefile | head -1 | awk '{print($3)}'`;
 
 # Consistency check: Do we have an entry in the History section...?
 if [ `grep -A 20 "Release History:" README.smctools | grep "$version" | wc -l` -eq 0 ]; then
@@ -9,7 +9,7 @@ if [ `grep -A 20 "Release History:" README.smctools | grep "$version" | wc -l` -
 fi
 
 # Consistency check: git branch
-sref=`git symbolic-ref HEAD`;
+sref=`git symbolic-ref HEAD 2>/dev/null`;
 if [ "${sref}" != "refs/heads/master" ]; then
 	echo;
 	echo "WARNING: Building package on non-master branch.";
@@ -37,6 +37,7 @@ cp smc_pnet.c $build_dir;
 cp smcss.c $build_dir;
 cp ld_pre_smc.c $build_dir;
 cp Makefile $build_dir;
+sed -e '/^smc-tools.spec:/,+5d' Makefile > $build_dir/Makefile;
 cp LICENSE $build_dir;
 cp README.smctools $build_dir;
 cp af_smc.7 $build_dir;
@@ -52,4 +53,7 @@ if [ $? -eq 0 ]; then
 else
 	echo "Package smc-tools-$version.tar.gz build failed";
 fi
+cd ..;
+rm -rf tmp;
 
+exit 0;
