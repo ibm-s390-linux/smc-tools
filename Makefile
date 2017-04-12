@@ -9,7 +9,8 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE	= 1.0.0
+SMC_TOOLS_RELEASE = 1.0.0
+VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCH = $(shell uname -m)
 ifeq ($(ARCH),i686)
@@ -43,7 +44,8 @@ else
 LIBDIR		= ${PREFIX}/lib
 endif
 
-all: smc_run ld_pre_smc.so ld_pre_smc32.so smcss smc_pnet README.smctools af_smc.7
+all: smc_run ld_pre_smc.so.$(SMC_TOOLS_RELEASE) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) \
+     smcss smc_pnet README.smctools af_smc.7
 
 CFLAGS := -Wall -I include -O3 -g
 
@@ -63,15 +65,15 @@ smc-tools.spec: smc-tools.spec.in
 %: %.in	smc-tools.spec
 	sed -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
 
-ld_pre_smc.so: ld_pre_smc.c
+ld_pre_smc.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.c
 	${CC} ${CFLAGS} -fPIC -c ld_pre_smc.c
-	${CC} -shared ld_pre_smc.o -ldl -Wl,-z,defs -o ld_pre_smc.so
+	${CC} -shared ld_pre_smc.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
 
-ld_pre_smc32.so: ld_pre_smc.c
+ld_pre_smc32.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.c
 ifeq ($(ARCH64),1)
 ifeq ($(STUFF_32BIT),1)
-	${CC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} ld_pre_smc.c -o ld_pre_smc32.o
-	${CC} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -o ld_pre_smc32.so
+	${CC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o ld_pre_smc32.o
+	${CC} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
 else
 	$(warning "Warning: Skipping 31/32-bit library build because 31/32-bit \
 build tools are unavailable. SMC-R will not support 31 and 32 bit TCP \
@@ -108,10 +110,14 @@ smc_pnet: smc_pnet.c smc.h
 
 install: all
 	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
-	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc.so $(DESTDIR)$(LIBDIR)
+	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)
+	ln -sr $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(VER_MAJOR)
+	ln -sr $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so
 ifeq ($(STUFF_32BIT),1)
 	install -d -m755 $(DESTDIR)$(LIBDIR32)
-	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc32.so $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
+	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE)
+	ln -sr $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(VER_MAJOR)
+	ln -sr $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
 endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install -s $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
@@ -122,4 +128,4 @@ endif
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
 
 clean:
-	rm -f *.o *.so smc_run smcss smc_pnet README.smctools af_smc.7 smc-tools.spec
+	rm -f *.o *.so.$(SMC_TOOLS_RELEASE) smc_run smcss smc_pnet README.smctools af_smc.7 smc-tools.spec
