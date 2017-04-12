@@ -12,14 +12,8 @@
 SMC_TOOLS_RELEASE = 1.0.0
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
-ARCH = $(shell uname -m)
-ifeq ($(ARCH),i686)
-ARCH64=0
-else ifeq ($(ARCH),s390)
-ARCH64=0
-else
-ARCH64=1
-endif
+ARCHTYPE = $(shell uname -m)
+ARCH := $(shell getconf LONG_BIT)
 
 DESTDIR        ?=
 PREFIX          = /usr
@@ -34,7 +28,7 @@ STUFF_32BIT	= 0
 #
 # Check that 31/32-bit build tools are available.
 #
-ifeq ($(ARCH64),1)
+ifeq ($(ARCH),64)
 LIBDIR		= ${PREFIX}/lib64
 ifneq ("$(wildcard ${PREFIX}/include/gnu/stubs-32.h)","")
 STUFF_32BIT = 1
@@ -47,9 +41,9 @@ endif
 all: smc_run ld_pre_smc.so.$(SMC_TOOLS_RELEASE) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) \
      smcss smc_pnet README.smctools af_smc.7
 
-CFLAGS := -Wall -I include -O3 -g
+CFLAGS ?= -Wall -O3 -g
 
-ifeq ($(ARCH),s390x)
+ifeq ($(ARCHTYPE),s390x)
 	MACHINE_OPT32="-m31"
 else
 	MACHINE_OPT32="-m32"
@@ -70,7 +64,7 @@ ld_pre_smc.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.c
 	${CC} -shared ld_pre_smc.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
 
 ld_pre_smc32.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.c
-ifeq ($(ARCH64),1)
+ifeq ($(ARCH),64)
 ifeq ($(STUFF_32BIT),1)
 	${CC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o ld_pre_smc32.o
 	${CC} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
