@@ -106,7 +106,7 @@ smc_pnet: smc_pnet.c smc.h
 		exit 0; \
 	fi
 
-install:
+install: all
 	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
 	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc.so $(DESTDIR)$(LIBDIR)
 ifeq ($(STUFF_32BIT),1)
