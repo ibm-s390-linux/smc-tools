@@ -69,10 +69,10 @@ ifeq ($(STUFF_32BIT),1)
 	${CC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o ld_pre_smc32.o
 	${CC} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
 else
-	$(warning "Warning: Skipping 31/32-bit library build because 31/32-bit \
-build tools are unavailable. SMC-R will not support 31 and 32 bit TCP \
-applications unless the glibc-devel for appropriate addressing mode is \
-installed and the preload libraries are rebuilt.")
+	$(warning "Warning: Skipping 31/32-bit library build because 31/32-bit build tools")
+	$(warning "         are unavailable. SMC will not support 31/32 bit applications")
+	$(warning "         unless the glibc devel package for the appropriate addressing")
+	$(warning "         mode is installed and the preload libraries are rebuilt.")
 endif
 endif
 
