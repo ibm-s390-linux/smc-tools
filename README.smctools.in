@@ -24,13 +24,24 @@ table.
 
 In addition the package contains the AF_SMC manpage ("man af_smc").
 
+
 Release History:
 ================
 
 0.1.2-1.1
     The initial version for inclusion in SLES12 SP2 betas. Later removed.
+
 1.0.0
-    The initial version for publication on developerWorks..
+    The initial version for publication on developerWorks.
+
+1.x.x
+    Changes:
+    - Add SONAME to shared libraries
+    - Improve distro compatibility
+
+    Bug fixes:
+    - Makefile: Fix target 'install' dependencies
+
 
 Parts:
 ======
@@ -49,6 +60,7 @@ af_smc.7		manpage for AF_SMC sockets
 smc_pnet.8		manpage for smc_pnet
 smcss.8			manpage for smcss
 smc_run.8		manpage for preload library usage
+
 
 Requirements:
 =============

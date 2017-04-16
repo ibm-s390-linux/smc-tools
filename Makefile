@@ -86,7 +86,7 @@ ifneq ($(shell sh -c 'command -v pkg-config'),)
 SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
 SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
 else
-SMC_PNET_CFLAGS = -I/usr/include/libnl3
+SMC_PNET_CFLAGS = -I libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
@@ -95,11 +95,13 @@ smc_pnet: smc_pnet.c smc.h
 		echo ${CC} ${CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}; \
 		${CC} ${CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}; \
 	else \
-		printf "*********************************************\n" >&2; \
+		printf "**************************************************************\n" >&2; \
 		printf "* Missing build requirement for: %-45s\n" $@ >&2; \
-		printf "* Install package..............: %-45s\n" libnl3-devel >&2; \
-		printf "*********************************************\n" >&2; \
-		exit 0; \
+		printf "* Install package..............: %-45s\n" "devel package for libnl3" >&2; \
+		printf "* Install package..............: %-45s\n" "devel package for libnl3-genl" >&2; \
+		printf "* NOTE: Package names might differ by platform\n" >&2; \
+		printf "**************************************************************\n" >&2; \
+		exit 1; \
 	fi
 
 install: all
