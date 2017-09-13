@@ -97,7 +97,7 @@ ifneq ($(shell sh -c 'command -v pkg-config'),)
 SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
 SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
 else
-SMC_PNET_CFLAGS = -I libnl3
+SMC_PNET_CFLAGS = -I /usr/include/libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
