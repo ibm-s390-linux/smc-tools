@@ -69,7 +69,7 @@ Requirements:
 
 - To compile and run applications over a RoCE network, PCI support,
   Mellanox Connect-X device support, Infiniband, and SMC support, must be
-  enabled in kernel.
+  enabled in the kernel.
 - To run the applications over a RoCE network, the RoCE network must be
   properly configured.
 
