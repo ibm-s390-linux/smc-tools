@@ -9,10 +9,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-VERSION		= 1
-RELEASE		= 0
-PATCHLEVEL	= 1
-SMC_TOOLS_RELEASE = $(VERSION).$(RELEASE).$(PATCHLEVEL)
+SMC_TOOLS_RELEASE = 1.x.x
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
