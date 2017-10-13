@@ -118,13 +118,13 @@ install: all
 	echo "  INSTALL"
 	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
 	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)
-	ln -sr $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(VER_MAJOR)
-	ln -sr $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so
+	ln -srf $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(VER_MAJOR)
+	ln -srf $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so
 ifeq ($(STUFF_32BIT),1)
 	install -d -m755 $(DESTDIR)$(LIBDIR32)
 	install -s $(INSTALL_FLAGS_BIN) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE)
-	ln -sr $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(VER_MAJOR)
-	ln -sr $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
+	ln -srf $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(VER_MAJOR)
+	ln -srf $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
 endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install -s $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
