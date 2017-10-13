@@ -41,6 +41,8 @@ Release History:
 
     Bug fixes:
     - Makefile: Fix target 'install' dependencies
+    - smcss:    Fix "--version" output
+    - smc_pnet: Fix "--version" output
 
 
 Parts:

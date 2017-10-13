@@ -9,7 +9,10 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE = 1.0.1
+VERSION		= 1
+RELEASE		= 0
+PATCHLEVEL	= 1
+SMC_TOOLS_RELEASE = $(VERSION).$(RELEASE).$(PATCHLEVEL)
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
@@ -51,6 +54,7 @@ all: ld_pre_smc.so.$(SMC_TOOLS_RELEASE) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) \
      smcss smc_pnet smc_run README.smctools af_smc.7
 
 CFLAGS ?= -Wall -O3 -g
+ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
 
 ifeq ($(ARCHTYPE),s390x)
 	MACHINE_OPT32="-m31"
@@ -88,7 +92,7 @@ endif
 endif
 
 smcss.o: smcss.c smc_diag.h smctools_common.h
-	${CCC} ${CFLAGS} -c smcss.c
+	${CCC} ${ALL_CFLAGS} -c smcss.c
 
 smcss: smcss.o
 	${CCC} $< -o $@
@@ -101,7 +105,7 @@ SMC_PNET_CFLAGS = -I /usr/include/libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
-smc_pnet: smc_pnet.c smc.h
+smc_pnet: smc_pnet.c smc.h smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \
 		printf "**************************************************************\n" >&2; \
 		printf "* Missing build requirement for: %-45s\n" $@ >&2; \
@@ -111,7 +115,7 @@ smc_pnet: smc_pnet.c smc.h
 		printf "**************************************************************\n" >&2; \
 		exit 1; \
 	fi
-	${CCC} ${CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
+	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
 
 install: all
 	echo "  INSTALL"

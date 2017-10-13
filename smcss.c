@@ -31,7 +31,6 @@
 #include "smctools_common.h"
 #include "smc_diag.h"
 
-#define VERSION RELEASE_STRING
 #define MAGIC_SEQ 123456
 
 struct rtnl_handle {
@@ -464,7 +463,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 		case 'V':
-			printf("smcss utitility, smc-tools-ss-%s\n", VERSION);
+			printf("smcss utility, smc-tools-%s\n", RELEASE_STRING);
 			exit(0);
 		case 'h':
 			help();
