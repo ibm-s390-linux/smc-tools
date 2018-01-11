@@ -16,12 +16,12 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <gnu/lib-names.h>
 #include <netdb.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <search.h>
 
-#define LIBC_PATH "libc.so.6"
 #define DLOPEN_FLAG RTLD_LAZY
 
 #ifndef AF_SMC
@@ -97,7 +97,7 @@ static void initialize(void)
 {
 	set_debug_mode("SMC_DEBUG");
 
-	dl_handle = dlopen(LIBC_PATH,DLOPEN_FLAG);
+	dl_handle = dlopen(LIBC_SO, DLOPEN_FLAG);
 	if (!dl_handle)
 		dbg_msg(stderr, "dlopen failed: %s\n", dlerror());
 	GET_FUNC(socket);
