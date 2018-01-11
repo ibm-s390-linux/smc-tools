@@ -73,13 +73,13 @@ ld_pre_smc.o: ld_pre_smc.c
 	${CCC} ${CFLAGS} -fPIC -c ld_pre_smc.c
 
 ld_pre_smc.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.o
-	${LINK} -shared ld_pre_smc.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
+	${LINK} ${LDFLAGS} -shared ld_pre_smc.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
 
 ld_pre_smc32.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.c
 ifeq ($(ARCH),64)
 ifeq ($(STUFF_32BIT),1)
 	${CCC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o ld_pre_smc32.o
-	${LINK} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
+	${LINK} ${LDFLAGS} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
 else
 	$(warning "Warning: Skipping 31/32-bit library build because 31/32-bit build tools")
 	$(warning "         are unavailable. SMC will not support 31/32 bit applications")
