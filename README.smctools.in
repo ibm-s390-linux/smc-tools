@@ -25,6 +25,23 @@ table.
 In addition the package contains the AF_SMC manpage ("man af_smc").
 
 
+Bug Reports
+===========
+See section 'Code Contributions'.
+
+
+Code Contributions
+==================
+Code contributions will not be accepted for smctools.
+Therefore, please do not send DIFFs or code-snippets. Thank you!
+If you want to report bugs or suggest enhancements, please contact:
+   linux390@de.ibm.com
+and put "[smctools]" as the first word in the subject line of your mail.
+For bug reports, at a minimum describe the scenario with instructions on how
+to reproduce.
+For enhancements, please describe the proposed change and its benefits.
+
+
 Release History:
 ================
 
