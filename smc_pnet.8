@@ -45,67 +45,81 @@ The
 command configures the pnet table.
 
 .SH OPTIONS
-.SS (none)
 By default,
 .B smc_pnet
 shows all entries of the pnet table.
-.SS <pnetid>
+.TP
+.BR <pnetid>
 defines a name for a grouping of Ethernet interface and RNIC.
 A pnetid name consists of up to 16 alpanumeric uppercase characters without blanks.
-.SS "\-a, \-\-add"
+.TP
+.BR "\-a, \-\-add"
 creates a new pnetid definition to the pnet table (if it does not already exist).
 Only one pnetid can be defined for a certain
 Ethernet interface and for a certain infiniband device port.
 Adding an ethernet interface or an infiniband device port more than once
 fails.
-.SS "\-s, \-\-show"
+.TP
+.BR "\-s, \-\-show"
 shows a certain pnetid definition in the pnet table.
-.SS "\-d, \-\-delete"
+.TP
+.BR "\-d, \-\-delete"
 deletes an existing pnetid definition from the pnet table.
-.SS "\-f, \-\-flush"
+.TP
+.BR "\-f, \-\-flush"
 removes all pnetid definitions from the pnet table.
-.SS "\-I, \-\-interface <ethernet-interface>"
+.TP
+.BR "\-I, \-\-interface <ethernet-interface>"
 specifies the name of the Ethernet interface to be added for a certain pnetid
 definition.
-.SS "\-D, \-\-ibdevice <infiniband-device>"
+.TP
+.BR "\-D, \-\-ibdevice <infiniband-device>"
 specifies the name of the Infiniband device.
-.SS "\-P, \-\-ibport <infiniband-port>"
+.TP
+.BR "\-P, \-\-ibport <infiniband-port>"
 specifies the port number of the Infiniband device port. Valid numbers are
 1 or 2.
 The default value is 1.
-.SS "\-v, \-\-version"
+.TP
+.BR "\-v, \-\-version"
 displays smc_pnet program version.
-.SS "\-h, \-\-help"
+.TP
+.BR "\-h, \-\-help"
 displays a brief smc_pnet usage information.
-.PP
 
 .SH EXAMPLES
+.B Create a pnetid ABC with ethernet interface name encf500, infiniband
+.B device name mlx4_0 and port number 2:
+.RS 4
 .PP
-.IP 1.
-Create a pnetid ABC with ethernet interface name encf500, infiniband
-device name mlx4_0 and port number 2:
-.sp 1
-smc_pnet -a ABC -I encf500 -D mlx4_0 -P 2
-.sp 1
+smc_pnet \-a ABC \-I encf500 \-D mlx4_0 \-P 2
+.RE
 .PP
-.IP 2.
-Delete a pnet table entry with pnetid named ABC:
-.sp 1
-smc_pnet -d ABC
-.sp 1
+.
+.B Delete a pnet table entry with pnetid named ABC:
+.RS 4
 .PP
-.IP 3.
-Show the mapping of ethernet interface name and infiniband device port for pnetid ABC:
-.sp 1
-smc_pnet -s ABC
-.sp 1
+smc_pnet \-d ABC
+.RE
+.PP
+.
+.B Show the mapping of ethernet interface name and infiniband device port for pnetid ABC:
+.RS 4
+.PP
+smc_pnet \-s ABC
+.PP
 ABC encf500 mlx4_0 2
-.sp 1
-.IP 4.
-Delete all entries in the pnet table
-.sp 1
-smc_pnet -f
-.P
+.RE
+.PP
+.
+.B Delete all entries in the pnet table
+.RS 4
+.PP
+smc_pnet \-f
+.RE
+.PP
+.
+.
 .SH RETURN CODES
 Successful
 .IR smc_pnet
@@ -123,7 +137,7 @@ Ursula Braun <ubraun@linux.vnet.ibm.com>
 Copyright (c) IBM Corp., 2017
 
 Published under the terms and conditions of the EPL
-(eclipse public license).
+(Eclipse Public License).
 .fi
 
 .SH SEE ALSO

@@ -31,7 +31,8 @@ The ld_pre_smc.so library intercepts a few TCP socket calls and
 triggers the equivalent execution through SMC.
 
 The following options can be specified:
-.SS "\-d"
+.TP
+.BR "\-d"
 Display additional diagnostic messages during the program
 execution.
 .SH RETURN CODES
@@ -43,12 +44,15 @@ If an error occurs
 writes a message to stdout and completes with a return code other
 than 0.
 
-.IP 1 5
+.TP
+.B 1
 An invalid option was specified.
-.IP 2 5
+.TP
+.B 2
 The script could not find the ld_pre_smc.so shared library in the /usr/lib64
 directory.
-.IP 3 5
+.TP
+.B 3
 The script could not find the ld_pre_smc.so shared library in the /usr/lib
 directory.
 .P
@@ -57,7 +61,7 @@ directory.
 Copyright (c) IBM Corp., 2017
 
 Published under the terms and conditions of the EPL
-(eclipse public license).
+(Eclipse Public License).
 .fi
 .SH SEE ALSO
 .BR af_smc (7),

@@ -35,6 +35,7 @@ Release History:
     - Makefile: Do not strip binaries on install
     - Makefile: Use LDFLAGS to allow addition of externally set link flags
     - ld_pre..: Remove hardcoded reference to libc
+    - Manpages: Formatting changes
 
     Bug fixes:
     - Makefile: Fix target 'install' dependencies
