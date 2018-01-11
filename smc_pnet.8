@@ -92,22 +92,22 @@ displays a brief smc_pnet usage information.
 .B device name mlx4_0 and port number 2:
 .RS 4
 .PP
-smc_pnet \-a ABC \-I encf500 \-D mlx4_0 \-P 2
+$ smc_pnet \-a ABC \-I encf500 \-D mlx4_0 \-P 2
 .RE
 .PP
 .
 .B Delete a pnet table entry with pnetid named ABC:
 .RS 4
 .PP
-smc_pnet \-d ABC
+$ smc_pnet \-d ABC
 .RE
 .PP
 .
 .B Show the mapping of ethernet interface name and infiniband device port for pnetid ABC:
 .RS 4
 .PP
-smc_pnet \-s ABC
-.PP
+.nf
+$ smc_pnet \-s ABC
 ABC encf500 mlx4_0 2
 .RE
 .PP
@@ -115,7 +115,7 @@ ABC encf500 mlx4_0 2
 .B Delete all entries in the pnet table
 .RS 4
 .PP
-smc_pnet \-f
+$ smc_pnet \-f
 .RE
 .PP
 .
