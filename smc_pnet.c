@@ -294,7 +294,8 @@ int main(int argc, char **argv)
 			break;
 		case 'v':
 		case 'V':
-			printf("smc_pnet utility, smc-tools-%s\n", RELEASE_STRING);
+			printf("smc_pnet utility, smc-tools-%s (%s)\n",
+			       RELEASE_STRING, RELEASE_LEVEL);
 			exit(0);
 		case 'h':
 			help();

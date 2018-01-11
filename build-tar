@@ -1,10 +1,11 @@
 #!/bin/bash
 
-version=`grep -w SMC_TOOLS_RELEASE Makefile | head -1 | awk '{print($3)}'`;
+VERSION=`grep -w SMC_TOOLS_RELEASE Makefile | head -1 | awk '{print($3)}'`;
+LEVEL=`git log --pretty=format:'%h' -n 1`;
 
 # Consistency check: Do we have an entry in the History section...?
-if [ `grep -A 20 "Release History:" README.smctools | grep "$version" | wc -l` -eq 0 ]; then
-	echo "Error: 'README.smctools' is missing an entry for version '$version' in 'Release History' ";
+if [ `grep -A 20 "Release History:" README.smctools | grep "$VERSION" | wc -l` -eq 0 ]; then
+	echo "Error: 'README.smctools' is missing an entry for version '$VERSION' in 'Release History' ";
 	exit 4;
 fi
 
@@ -17,12 +18,12 @@ if [ "${sref}" != "refs/heads/master" ]; then
 	echo;
 fi
 
-if [ -e smc-tools.$version.tar.gz ]; then
+if [ -e smc-tools.$VERSION.tar.gz ]; then
 	echo "Removing old package...";
-	rm smc-tools.$version.tar.gz;
+	rm smc-tools.$VERSION.tar.gz;
 fi
-echo "Building smc-tools $version";
-build_dir=tmp/smc-tools-$version;
+echo "Building smc-tools $VERSION";
+build_dir=tmp/smc-tools-$VERSION;
 if [ ! -e tmp ]; then
 	mkdir tmp;
 fi
@@ -30,7 +31,7 @@ if [ -e $build_dir ]; then
 	rm -rf $build_dir;
 fi
 mkdir $build_dir;
-cp smctools_common.h $build_dir
+sed -e "s/=SMC LEVEL=/$LEVEL/" smctools_common.h > $build_dir/smctools_common.h
 cp smc.h $build_dir
 cp smc_diag.h $build_dir;
 cp smc_pnet.c $build_dir;
@@ -47,11 +48,11 @@ cp smc_run.in $build_dir;
 cp smc_run.8 $build_dir;
 
 cd tmp;
-tar -zcvf ../smc-tools-$version.tar.gz smc-tools-$version | sed 's/^/   /';
+tar -zcvf ../smc-tools-$VERSION.tar.gz smc-tools-$VERSION | sed 's/^/   /';
 if [ $? -eq 0 ]; then
-	echo "Package smc-tools-$version.tar.gz build successful";
+	echo "Package smc-tools-$VERSION.tar.gz build successful";
 else
-	echo "Package smc-tools-$version.tar.gz build failed";
+	echo "Package smc-tools-$VERSION.tar.gz build failed";
 fi
 cd ..;
 rm -rf tmp;

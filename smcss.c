@@ -463,7 +463,8 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 		case 'V':
-			printf("smcss utility, smc-tools-%s\n", RELEASE_STRING);
+			printf("smcss utility, smc-tools-%s (%s)\n", RELEASE_STRING,
+			       RELEASE_LEVEL);
 			exit(0);
 		case 'h':
 			help();
