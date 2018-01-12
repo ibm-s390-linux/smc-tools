@@ -45,6 +45,11 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
+1.x.x (2018-xx-xx)
+    Changes:
+
+    Bug fixes:
+
 1.0.1 (2018-01-12)
     Changes:
     - Makefile: Improve distro compatibility
