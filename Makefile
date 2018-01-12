@@ -47,8 +47,7 @@ else
 LIBDIR		= ${PREFIX}/lib
 endif
 
-all: ld_pre_smc.so.$(SMC_TOOLS_RELEASE) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) \
-     smcss smc_pnet smc_run README.smctools af_smc.7
+all: ld_pre_smc.so ld_pre_smc32.so smcss smc_pnet smc_run README.smctools af_smc.7
 
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
@@ -72,10 +71,10 @@ smc-tools.spec: smc-tools.spec.in
 ld_pre_smc.o: ld_pre_smc.c
 	${CCC} ${CFLAGS} -fPIC -c ld_pre_smc.c
 
-ld_pre_smc.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.o
+ld_pre_smc.so: ld_pre_smc.o
 	${LINK} ${LDFLAGS} -shared ld_pre_smc.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
 
-ld_pre_smc32.so.$(SMC_TOOLS_RELEASE): ld_pre_smc.c
+ld_pre_smc32.so: ld_pre_smc.c
 ifeq ($(ARCH),64)
 ifeq ($(STUFF_32BIT),1)
 	${CCC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o ld_pre_smc32.o
@@ -88,12 +87,6 @@ else
 endif
 endif
 
-smcss.o: smcss.c smc_diag.h smctools_common.h
-	${CCC} ${ALL_CFLAGS} -c smcss.c
-
-smcss: smcss.o
-	${CCC} $< -o $@
-#
 ifneq ($(shell sh -c 'command -v pkg-config'),)
 SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
 SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
@@ -112,19 +105,18 @@ smc_pnet: smc_pnet.c smc.h smctools_common.h
 		printf "**************************************************************\n" >&2; \
 		exit 1; \
 	fi
-	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
+	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} ${LDFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
+
+smcss: smcss.c smc_diag.h smctools_common.h
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $< -o $@
 
 install: all
 	echo "  INSTALL"
 	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_BIN) ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)
-	ln -srf $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(VER_MAJOR)
-	ln -srf $(DESTDIR)$(LIBDIR)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR)/ld_pre_smc.so
+	install $(INSTALL_FLAGS_BIN) ld_pre_smc.so $(DESTDIR)$(LIBDIR)
 ifeq ($(STUFF_32BIT),1)
 	install -d -m755 $(DESTDIR)$(LIBDIR32)
-	install $(INSTALL_FLAGS_BIN) ld_pre_smc32.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE)
-	ln -srf $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(VER_MAJOR)
-	ln -srf $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so.$(SMC_TOOLS_RELEASE) $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
+	install $(INSTALL_FLAGS_BIN) ld_pre_smc32.so $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
 endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
@@ -136,4 +128,4 @@ endif
 
 clean:
 	echo "  CLEAN"
-	rm -f *.o *.so.$(SMC_TOOLS_RELEASE) smc_run smcss smc_pnet README.smctools af_smc.7 smc-tools.spec
+	rm -f *.o *.so smc_run smcss smc_pnet README.smctools af_smc.7 smc-tools.spec
