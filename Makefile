@@ -59,7 +59,7 @@ else
 endif
 
 smc_run: smc_run.in
-	my_installdir=${PREFIX} $(GEN) -e "s#@install_dir@#$$my_installdir#g" < $< > $@
+	$(GEN) -e "s#@install_dir@#$(PREFIX)#g" < $< > $@
 	chmod a+x $@
 
 smc-tools.spec: smc-tools.spec.in
