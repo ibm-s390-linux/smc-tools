@@ -1,7 +1,7 @@
 /*
  * SMC Tools - Shared Memory Communication Tools
  *
- * Copyright (c) IBM Corp. 2016, 2017
+ * Copyright (c) IBM Corp. 2016, 2018
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -26,6 +26,11 @@
 
 #ifndef AF_SMC
 #define AF_SMC 43
+#endif
+
+#ifndef SMCPROTO_SMC
+#define SMCPROTO_SMC		0	/* SMC protocol, IPv4 */
+#define SMCPROTO_SMC6		1	/* SMC protocol, IPv6 */
 #endif
 
 int (*orig_socket)(int domain, int type, int protocol);
@@ -72,14 +77,21 @@ int socket(int domain, int type, int protocol)
 	if (!dl_handle)
 		initialize();
 
-	if ((domain == AF_INET) && (type == SOCK_STREAM)) {
-		dbg_msg(stderr, "ld_pre_smc: map sock AF_INET/SOCK_STREAM ");
-		dbg_msg(stderr, "to AF_SMC\n");
+	/* check if socket is eligible for AF_SMC */
+	if ((domain == AF_INET || domain == AF_INET6) &&
+	    type == SOCK_STREAM &&
+	    (protocol == IPPROTO_IP || protocol == IPPROTO_TCP)) {
+		dbg_msg(stderr, "ld_pre_smc: map sock to AF_SMC\n");
+		if (domain == AF_INET)
+			protocol = SMCPROTO_SMC;
+		else /* AF_INET6 */
+			protocol = SMCPROTO_SMC6;
+
 		domain = AF_SMC;
-		rc = (*orig_socket)(domain, type, protocol);
-	} else {
-		rc = (*orig_socket)(domain, type, protocol);
 	}
+
+	rc = (*orig_socket)(domain, type, protocol);
+
 	return rc;
 }
 
