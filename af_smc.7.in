@@ -1,7 +1,7 @@
-.\" af_smc.7
+/.\" af_smc.7
 .\"
 .\"
-.\" Copyright IBM Corp. 2016, 2017
+.\" Copyright IBM Corp. 2016, 2018
 .\" Author(s):	Ursula Braun <ubraun@linux.vnet.ibm.com>
 .\"		Thomas Richter <tmricht@linux.vnet.ibm.com>
 .\" ----------------------------------------------------------------------
@@ -12,8 +12,14 @@ AF_SMC - Sockets for SMC communication
 .B #include <sys/socket.h>
 .br
 .B "#define AF_SMC 43"
+.br
+.B "#define SMCPROTO_SMC  0"
+.br
+.B "#define SMCPROTO_SMC6 1"
 .PP
-.I "tcp_socket = socket(AF_SMC, SOCK_STREAM, 0);"
+.I "tcp_socket = socket(AF_SMC, SOCK_STREAM, SMCPROTO_SMC);"
+.br
+.I "tcp_socket = socket(AF_SMC, SOCK_STREAM, SMCPROTO_SMC6);"
 .SH DESCRIPTION
 .I Shared Memory Communication via RDMA
 (SMC) is a socket over the RDMA
@@ -32,15 +38,37 @@ The exploitation of SMC is transparent to TCP sockets applications.
 The new address family
 .B AF_SMC
 supports the SMC protocol on Linux.
-It keeps the address format of AF_INET sockets and supports streaming
-socket types only.
+It keeps the address format of
+.B AF_INET
+and
+.B AF_INET6
+sockets and supports streaming socket types only.
 .SS Usage modes
 Two usage modes are possible:
 .IP "AF_SMC native usage"
-exploits the socket domain AF_SMC instead of
-AF_INET.
+exploits the socket domain
+.B AF_SMC
+instead of
+.B AF_INET
+and
+.BR AF_INET6 .
+Specify
+.B SMCPROTO_SMC
+for
+.B AF_INET
+compatible socket semantics, and
+.B SMC_PROTO_SMC6
+for
+.B AF_INET6
+respectively.
 .IP "usage of AF_INET socket applications with SMC preload library"
-converts AF_INET sockets to AF_SMC sockets.
+converts
+.B AF_INET
+and
+.B AF_INET6
+sockets to
+.B AF_SMC
+sockets.
 The SMC preload library is part of the SMC tools package.
 .PP
 SMC capability of sockets is negotiated during connection setup. If
@@ -58,13 +86,15 @@ Primary and backup links to a certain peer are combined in a so-called
 To guarantee untroubled RDMA traffic, the number of connections
 per link group and the number of send requests in flight per link are limited.
 .SS Enabling SMC
-To enable SMC, smc-code must be active: If smc is not part of the
-kernel image, load the separate smc module (use "modprobe smc").
+To enable SMC, smc-code must be active: If SMC is not part of the
+kernel image, load the separate smc module (use
+.B modprobe
+.BR smc ).
 .SS RoCE adapter mapping: Creation of a pnet table
 The SMC protocol requires grouping of multiple physical networks -
 standard Ethernet and RoCE networks. Such groups are called
 .I Physical Networks
-(PNets). For SMC, RoCE Adapter mapping is configured within a table called
+(PNets). For SMC, RoCE adapter mapping is configured within a table called
 .BR "pnet table" .
 Any available Ethernet interface can be combined with available
 .I RDMA-capable network interface cards
@@ -84,13 +114,19 @@ For details see
 .SS Starting a TCP application to work over SMC
 To start an existing TCP application to work through SMC, use the SMC
 preload library.
-The SMC Tools package provides a script called "smc_run"
-to convert AF_INET and AF_INET6 socket calls to AF_SMC socket calls by means
-of the preload technique.
+The SMC Tools package provides the command
+.I smc_run
+to convert
+.B AF_INET
+and
+.B AF_INET6
+socket calls to
+.B AF_SMC
+socket calls by means of the preload technique.
 .PP
 Example:
 .IP
-smc_run ftp
+.B smc_run ftp
 .PP
 This command-line example starts an FTP client over SMC.
 .PP
@@ -118,7 +154,7 @@ Published under the terms and conditions of the EPL
 .BR smc_pnet (8)
 .SH "HISTORY"
 .TP
-.B AF_SMC, version x.x.x
+.B AF_SMC, version 1.0.0
 .RS 4
 .IP "\bu" 2
 Initial version.
