@@ -53,7 +53,8 @@ is established between
 a local RoCE card and a remote RoCE card. To enhance availability, you can
 configure alternate links with automatic fail over.
 Primary and backup links to a certain peer are combined in a so-called
-.I link group.
+.I link
+.IR group .
 To guarantee untroubled RDMA traffic, the number of connections
 per link group and the number of send requests in flight per link are limited.
 .SS Enabling SMC
@@ -71,13 +72,15 @@ Any available Ethernet interface can be combined with available
 if they belong to the same Converged Ethernet fabric.
 To configure RoCE Adapter mapping, you must create a pnet table.
 Modify the table with the smc-tools command
-.I smc_pnet.
+.IR smc_pnet .
 .PP
-For details call "man smc_pnet".
+For details see
+.BR  smc_pnet (8).
 .SS Displaying SMC socket state information
 SMC socket state information can be obtained with the smc-tools command
-.I smcss.
-For details call "man smcss".
+.IR smcss .
+For details see
+.BR smcss (8).
 .SS Starting a TCP application to work over SMC
 To start an existing TCP application to work through SMC, use the SMC
 preload library.
