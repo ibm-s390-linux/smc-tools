@@ -1,7 +1,7 @@
 /*
  * SMC Tools - Shared Memory Communication Tools
  *
- * Copyright (c) IBM Corp. 2017
+ * Copyright (c) IBM Corp. 2017, 2018
  *
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  *
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <time.h>
+#include <sys/param.h>
 
 #include <linux/tcp.h>
 #include <linux/sock_diag.h>
@@ -32,6 +33,7 @@
 #include "smc_diag.h"
 
 #define MAGIC_SEQ 123456
+#define ADDR_LEN_SHORT	23
 
 struct rtnl_handle {
 	int			fd;
@@ -47,6 +49,7 @@ struct rtnl_handle {
 static char *progname;
 int show_details;
 int show_lgr;
+int show_wide;
 int listening = 0;
 int all = 0;
 
@@ -160,11 +163,11 @@ static int sockdiag_send(int fd)
 
 static void print_header(void)
 {
-	printf("     State     ");
-	printf(" Inode ");
-	printf(" UID  ");
-	printf("        Local Address ");
-	printf("      Foreign Address ");
+	printf("State          ");
+	printf("UID   ");
+	printf("Inode  ");
+	printf("Local Address           ");
+	printf("Foreign Address         ");
 	printf("Intf ");
         printf("Mode ");
 
@@ -182,16 +185,16 @@ static void print_header(void)
 		printf("txFlags ");
 		printf("txprep-Cursor ");
 		printf("txsent-Cursor ");
-		printf(" txfin-Cursor ");
+		printf("txfin-Cursor  ");
 	}
 
 	if (show_lgr) {
-		printf(" Role ");
-		printf("    IB-device    ");
+		printf("Role ");
+		printf("IB-device       ");
 		printf("Port ");
 		printf("Linkid ");
-		printf("                 GID              ");
-		printf("                Peer-GID          ");
+		printf("GID                                      ");
+		printf("Peer-GID");
 	}
 
 	printf("\n");
@@ -218,7 +221,7 @@ static const char *smc_state(unsigned char x)
 	}
 }
 
-static int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
+static void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
 			int len)
 {
 	unsigned short type;
@@ -232,15 +235,42 @@ static int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
 	}
 	if (len)
 		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n", len, rta->rta_len);
-	return 0;
+}
+
+/* format one sockaddr / port */
+static void addr_format(char *buf, size_t buf_len, size_t short_len,
+			int af, void *addr, int port)
+{
+	char *errmsg = "(inet_ntop error)"; /* very unlikely */
+	char addr_buf[64], port_buf[16];
+	int addr_len, port_len;
+
+	if (!inet_ntop(af, addr, addr_buf, sizeof(addr_buf))) {
+		strcpy(buf, errmsg);
+		return;
+	}
+	sprintf(port_buf, "%d", port);
+	addr_len = strlen(addr_buf);
+	port_len = strlen(port_buf);
+	if (!show_wide && (addr_len + 1 + port_len > short_len)) {
+		/* truncate addr string */
+		addr_len = short_len - 1 - port_len - 2;
+		strncpy(buf, addr_buf, addr_len);
+		buf[addr_len] = '\0';
+		strcat(buf, ".."); /* indicate truncation */
+		strcat(buf, ":");
+		strncat(buf, port_buf, port_len);
+	} else {
+		snprintf(buf, buf_len, "%s:%s", addr_buf, port_buf);
+	}
 }
 
 static void show_one_smc_sock(struct nlmsghdr *nlh)
 {
-	struct rtattr *tb[SMC_DIAG_MAX + 1];
 	struct smc_diag_msg *r = NLMSG_DATA(nlh);
-	struct in_addr in;
+	struct rtattr *tb[SMC_DIAG_MAX + 1];
 	unsigned long long inode;
+	char txtbuf[128];
 
 	parse_rtattr(tb, SMC_DIAG_MAX, (struct rtattr *)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
@@ -253,20 +283,22 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 			return;
 	}
 
-	printf("%14s ", smc_state(r->diag_state));
-	printf("%5d ", r->diag_uid);
+	printf("%-14s ", smc_state(r->diag_state));
+	printf("%05d ", r->diag_uid);
 	inode = r->diag_inode;
-	printf("%6llu ", inode);
+	printf("%06llu ", inode);
 	if (r->diag_state == 2)			/* INIT state */
 		goto newline;
 
-	in.s_addr = r->id.idiag_src[0];
-	printf("%15s:%5d ", inet_ntoa(in), ntohs(r->id.idiag_sport));
+	addr_format(txtbuf, sizeof(txtbuf), ADDR_LEN_SHORT,
+		    r->diag_family, r->id.idiag_src, ntohs(r->id.idiag_sport));
+	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	if (r->diag_state == 10)		/* LISTEN state */
 		goto newline;
 
-	in.s_addr = r->id.idiag_dst[0];
-	printf("%15s:%5d ", inet_ntoa(in), ntohs(r->id.idiag_dport));
+	addr_format(txtbuf, sizeof(txtbuf), ADDR_LEN_SHORT,
+		    r->diag_family, r->id.idiag_dst, ntohs(r->id.idiag_dport));
+	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	printf("%04x ", r->id.idiag_if);
 	printf("%4s ", r->diag_fallback ? "TCP " : "RDMA");
 
@@ -292,10 +324,10 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 
 			printf("%04x:%08x ", cinfo.rx_prod.wrap, cinfo.rx_prod.count);
 			printf("%04x:%08x ", cinfo.rx_cons.wrap, cinfo.rx_cons.count);
-			printf("%02x:%02x ", cinfo.rx_prod_flags, cinfo.rx_conn_state_flags);
+			printf("%02x:%02x   ", cinfo.rx_prod_flags, cinfo.rx_conn_state_flags);
 			printf("%04x:%08x ", cinfo.tx_prod.wrap, cinfo.tx_prod.count);
 			printf("%04x:%08x ", cinfo.tx_cons.wrap, cinfo.tx_cons.count);
-			printf("%02x:%02x ", cinfo.tx_prod_flags, cinfo.tx_conn_state_flags);
+			printf("%02x:%02x   ", cinfo.tx_prod_flags, cinfo.tx_conn_state_flags);
 			printf("%04x:%08x ", cinfo.tx_prep.wrap, cinfo.tx_prep.count);
 			printf("%04x:%08x ", cinfo.tx_sent.wrap, cinfo.tx_sent.count);
 			printf("%04x:%08x ", cinfo.tx_fin.wrap, cinfo.tx_fin.count);
@@ -308,22 +340,21 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 
 			linfo = *(struct smc_diag_lgrinfo *)RTA_DATA(tb[SMC_DIAG_LGRINFO]);
 			printf("%4s ", linfo.role ? "SERV" : "CLNT");
-			printf("%15s ", linfo.lnk[0].ibname);
-			printf("%02x ", linfo.lnk[0].ibport);
-			printf("%02x ", linfo.lnk[0].link_id);
-			printf("%s ", linfo.lnk[0].gid);
-			printf("%s ", linfo.lnk[0].peer_gid);
+			printf("%-15s ", linfo.lnk[0].ibname);
+			printf("%02x   ", linfo.lnk[0].ibport);
+			printf("%02x     ", linfo.lnk[0].link_id);
+			printf("%-40s ", linfo.lnk[0].gid);
+			printf("%s", linfo.lnk[0].peer_gid);
 		}
 	}
 
 newline:
 	printf("\n");
-	return;
 }
 
 static int rtnl_dump(struct rtnl_handle *rth)
 {
-		struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr;
 	struct iovec iov;
 	struct msghdr msg = {
 		.msg_name = &nladdr,
@@ -337,7 +368,6 @@ static int rtnl_dump(struct rtnl_handle *rth)
 
 	memset(buf, 0, sizeof(buf));
 	iov.iov_base = buf;
-
 	iov.iov_len = sizeof(buf);
 again:
 	msglen = recvmsg(rth->fd, &msg, 0);
@@ -356,9 +386,8 @@ again:
 	while(NLMSG_OK(h, msglen)) {
 		if (h->nlmsg_flags & NLM_F_DUMP_INTR)
 			fprintf(stderr, "Dump interrupted\n");
-		if (h->nlmsg_type == NLMSG_DONE) {
+		if (h->nlmsg_type == NLMSG_DONE)
 			break; /* process next */
-		}
 		if (h->nlmsg_type == NLMSG_ERROR) {
 			if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
 				fprintf(stderr, "ERROR truncated\n");
@@ -405,6 +434,7 @@ static const struct option long_opts[] = {
 	{ "listening", 0, 0, 'l' },
 	{ "linkgroup", 0, 0, 'L' },
 	{ "version", 0, 0, 'V' },
+	{ "wide", 0, 0, 'W' },
 	{ "help", 0, 0, 'h' },
 	{ NULL, 0, NULL, 0}
 };
@@ -418,6 +448,7 @@ static void _usage(FILE *dest)
 "\t-a, --all           show all sockets\n"
 "\t-l, --listening     show listening sockets\n"
 "\t-e, --extended      show detailed socket information\n"
+"\t-W, --wide          do not truncate IP addresses\n"
 "\t-L, --linkgroup     show linkgroups\n"
 "\tno OPTIONS          show all connected sockets\n",
 		progname);
@@ -440,12 +471,11 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
 	char *slash;
-	int rc = 0;
 	int ch;
 
 	progname = (slash = strrchr(argv[0], '/')) ? slash + 1 : argv[0];
 
-	while ((ch = getopt_long(argc, argv, "aleLhvV", long_opts, NULL)) != EOF) {
+	while ((ch = getopt_long(argc, argv, "aleLhvVW", long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'a':
 			all = 1;
@@ -466,6 +496,9 @@ int main(int argc, char *argv[])
 			printf("smcss utility, smc-tools-%s (%s)\n", RELEASE_STRING,
 			       RELEASE_LEVEL);
 			exit(0);
+		case 'W':
+			show_wide++;
+			break;
 		case 'h':
 			help();
 		case '?':
@@ -474,6 +507,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	rc = smc_show_netlink();
-	return rc;
+	if (listening && show_details) {
+		fprintf(stderr, "--listening together with --extended is not supported\n");
+		usage();
+	}
+	if (listening && show_lgr) {
+		fprintf(stderr, "--listening together with --linkgroup is not supported\n");
+		usage();
+	}
+	return smc_show_netlink();
 }
