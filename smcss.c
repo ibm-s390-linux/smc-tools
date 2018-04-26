@@ -48,7 +48,8 @@ struct rtnl_handle {
 
 static char *progname;
 int show_details;
-int show_lgr;
+int show_smcr;
+int show_smcd;
 int show_wide;
 int listening = 0;
 int all = 0;
@@ -150,8 +151,11 @@ static int sockdiag_send(int fd)
 	if (show_details)
 		req.r.diag_ext |= (1<<(SMC_DIAG_CONNINFO-1));
 
-	if (show_lgr)
+	if (show_smcr)
 		req.r.diag_ext |= (1<<(SMC_DIAG_LGRINFO-1));
+
+	if (show_smcd)
+		req.r.diag_ext |= (1<<(SMC_DIAG_DMBINFO-1));
 
 	if (sendmsg(fd, &msg, 0) < 0) {
 		close(fd);
@@ -188,13 +192,21 @@ static void print_header(void)
 		printf("txfin-Cursor  ");
 	}
 
-	if (show_lgr) {
+	if (show_smcr) {
 		printf("Role ");
 		printf("IB-device       ");
 		printf("Port ");
 		printf("Linkid ");
 		printf("GID                                      ");
 		printf("Peer-GID");
+	}
+
+	if (show_smcd) {
+		printf("GID              ");
+		printf("Token            ");
+		printf("Peer-GID         ");
+		printf("Peer-Token       ");
+		printf("Linkid");
 	}
 
 	printf("\n");
@@ -282,6 +294,10 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 		if (!all && (r->diag_state == 10 || r->diag_state == 2))
 			return;
 	}
+	if (show_smcr && r->diag_mode != SMC_DIAG_MODE_SMCR)
+		return;	/* show only SMC-R sockets */
+	if (show_smcd && r->diag_mode != SMC_DIAG_MODE_SMCD)
+		return;	/* show only SMC-D sockets */
 
 	printf("%-14s ", smc_state(r->diag_state));
 	printf("%05d ", r->diag_uid);
@@ -300,9 +316,14 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 		    r->diag_family, r->id.idiag_dst, ntohs(r->id.idiag_dport));
 	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	printf("%04x ", r->id.idiag_if);
-	printf("%4s ", r->diag_fallback ? "TCP " : "RDMA");
+	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP)
+		printf("%4s ", "TCP ");
+	else if (r->diag_mode == SMC_DIAG_MODE_SMCD)
+		printf("%4s ", "SMCD");
+	else
+		printf("%4s ", "SMCR");
 
-	if (r->diag_fallback)
+	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP)
 		goto newline;
 
 	if (show_details) {
@@ -334,7 +355,7 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 		}
 	}
 
-	if (show_lgr) {
+	if (show_smcr) {
 		if (tb[SMC_DIAG_LGRINFO]) {
 			struct smc_diag_lgrinfo linfo;
 
@@ -345,6 +366,19 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 			printf("%02x     ", linfo.lnk[0].link_id);
 			printf("%-40s ", linfo.lnk[0].gid);
 			printf("%s", linfo.lnk[0].peer_gid);
+		}
+	}
+
+	if (show_smcd) {
+		if (tb[SMC_DIAG_DMBINFO]) {
+			struct smcd_diag_dmbinfo dinfo;
+
+			dinfo = *(struct smcd_diag_dmbinfo *)RTA_DATA(tb[SMC_DIAG_DMBINFO]);
+			printf("%016llx ", dinfo.my_gid);
+			printf("%016llx ", dinfo.token);
+			printf("%016llx ", dinfo.peer_gid);
+			printf("%016llx ", dinfo.peer_token);
+			printf("%08x ", dinfo.linkid);
 		}
 	}
 
@@ -432,7 +466,8 @@ static const struct option long_opts[] = {
 	{ "all", 0, 0, 'a' },
 	{ "extended", 0, 0, 'e' },
 	{ "listening", 0, 0, 'l' },
-	{ "linkgroup", 0, 0, 'L' },
+	{ "smcd", 0, 0, 'D' },
+	{ "smcr", 0, 0, 'R' },
 	{ "version", 0, 0, 'V' },
 	{ "wide", 0, 0, 'W' },
 	{ "help", 0, 0, 'h' },
@@ -449,7 +484,8 @@ static void _usage(FILE *dest)
 "\t-l, --listening     show listening sockets\n"
 "\t-e, --extended      show detailed socket information\n"
 "\t-W, --wide          do not truncate IP addresses\n"
-"\t-L, --linkgroup     show linkgroups\n"
+"\t-D, --smcd          show detailed SMC-D information (shows only SMC-D sockets)\n"
+"\t-R, --smcr          show detailed SMC-R information (shows only SMC-R sockets)\n"
 "\tno OPTIONS          show all connected sockets\n",
 		progname);
 }
@@ -475,7 +511,7 @@ int main(int argc, char *argv[])
 
 	progname = (slash = strrchr(argv[0], '/')) ? slash + 1 : argv[0];
 
-	while ((ch = getopt_long(argc, argv, "aleLhvVW", long_opts, NULL)) != EOF) {
+	while ((ch = getopt_long(argc, argv, "aleDRhvVW", long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'a':
 			all = 1;
@@ -488,8 +524,11 @@ int main(int argc, char *argv[])
 		case 'e':
 			show_details++;
 			break;
-		case 'L':
-			show_lgr++;
+		case 'D':
+			show_smcd++;
+			break;
+		case 'R':
+			show_smcr++;
 			break;
 		case 'v':
 		case 'V':
@@ -507,12 +546,20 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (show_smcr && show_smcd) {
+		fprintf(stderr, "--smcd together with --smcr is not supported\n");
+		usage();
+	}
 	if (listening && show_details) {
 		fprintf(stderr, "--listening together with --extended is not supported\n");
 		usage();
 	}
-	if (listening && show_lgr) {
-		fprintf(stderr, "--listening together with --linkgroup is not supported\n");
+	if (listening && show_smcr) {
+		fprintf(stderr, "--listening together with --smcr is not supported\n");
+		usage();
+	}
+	if (listening && show_smcd) {
+		fprintf(stderr, "--listening together with --smcd is not supported\n");
 		usage();
 	}
 	return smc_show_netlink();
