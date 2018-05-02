@@ -39,21 +39,32 @@ smcss \- print information about the AF_SMC sockets and link groups.
 .B smcss
 prints information about the Linux AF_SMC sockets and link groups.
 The type of information printed is controlled by the first argument, as follows:
-.SS "(none)"
+.TP
+.BR (none)
+.br
 displays a list of connecting, closing, or connected SMC sockets with basic
 information.
-.SS "\-a, \-\-all"
+
+.TP
+.BR "\-a, \-\-all"
 displays all types of SMC sockets: listening, opening, closing, and connected.
-.SS "\-l, \-\-listening"
-shows listening sockets only. (These are omitted by default.)
+
+.TP
+.BR "\-l, \-\-listening"
+shows listening sockets only. These are omitted by default.
 
 .SH OPTIONS
 
-.SS "\-e, \-\-extend"
+.TP
+.BR "\-e, \-\-extend"
 displays additional information, such as shutdown state.
-.SS "\-L, \-\-linkgroup
+
+.TP
+.BR "\-L, \-\-linkgroup
 displays additional information about the linkgroup to which the socket is connected.
-.SS "\-W, \-\-wide"
+
+.TP
+.BR "\-W, \-\-wide"
 do not truncate IP addresses.
 
 .SH OUTPUT
