@@ -38,7 +38,7 @@ cp smc_pnet.c $build_dir;
 cp smcss.c $build_dir;
 cp ld_pre_smc.c $build_dir;
 cp Makefile $build_dir;
-sed -e '/^smc-tools.spec:/,+5d' Makefile | sed -e 's/ smc-tools.spec//' | sed -e 's/ af_smc.7//' | sed -e 's/ README.smctools//' > $build_dir/Makefile;
+sed -e '/^smc-tools.spec:/,+5d' Makefile | sed -e 's/ smc-tools.spec//' | sed -e 's/README.smctools af_smc.7/README.smctools/' | sed -e 's/ README.smctools//' > $build_dir/Makefile;
 cp LICENSE $build_dir;
 cp README.smctools $build_dir;
 cp af_smc.7 $build_dir;
