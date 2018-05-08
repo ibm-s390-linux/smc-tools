@@ -514,12 +514,10 @@ int main(int argc, char *argv[])
 	while ((ch = getopt_long(argc, argv, "aleDRhvVW", long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'a':
-			all = 1;
-			listening = 0;
+			all++;
 			break;
 		case 'l':
-			if (!all)
-				listening = 1;
+			listening++;
 			break;
 		case 'e':
 			show_details++;
@@ -552,6 +550,10 @@ int main(int argc, char *argv[])
 	}
 	if (listening && show_details) {
 		fprintf(stderr, "--listening together with --extended is not supported\n");
+		usage();
+	}
+	if (listening && all) {
+		fprintf(stderr, "--listening together with --all is not supported\n");
 		usage();
 	}
 	if (listening && show_smcr) {
