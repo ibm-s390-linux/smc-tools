@@ -31,8 +31,8 @@ struct smc_diag_msg {
 /* Mode of a connection */
 enum {
 	SMC_DIAG_MODE_SMCR,
-	SMC_DIAG_MODE_SMCD,
 	SMC_DIAG_MODE_FALLBACK_TCP,
+	SMC_DIAG_MODE_SMCD,
 };
 
 /* Extensions */
