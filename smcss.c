@@ -169,7 +169,7 @@ static void print_header(void)
 {
 	printf("State          ");
 	printf("UID   ");
-	printf("Inode  ");
+	printf("Inode   ");
 	printf("Local Address           ");
 	printf("Foreign Address         ");
 	printf("Intf ");
@@ -302,7 +302,7 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 	printf("%-14s ", smc_state(r->diag_state));
 	printf("%05d ", r->diag_uid);
 	inode = r->diag_inode;
-	printf("%06llu ", inode);
+	printf("%07llu ", inode);
 	if (r->diag_state == 2)			/* INIT state */
 		goto newline;
 
