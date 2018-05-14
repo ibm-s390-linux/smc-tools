@@ -7,7 +7,7 @@ In addition tools are provided to display SMC socket information.
 
 This package consists of the tools:
 
-- ld_preload_smc.so : preload library.
+- libsmc-preload.so : preload library.
 - smc_run           : preload library environment setup script.
 - smc_pnet          : C program for PNET Table handling
 - smcss             : C program for displaying the information about active
@@ -55,6 +55,7 @@ Release History:
     - smcss:    Add IPv6 support
     - preload:  Add IPv6 support
     - smcss:    Output format changed
+    - preload:  Rename preload library into libsmc-preload.so
 
     Bug fixes:
 

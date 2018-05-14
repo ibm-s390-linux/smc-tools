@@ -81,7 +81,7 @@ int socket(int domain, int type, int protocol)
 	if ((domain == AF_INET || domain == AF_INET6) &&
 	    type == SOCK_STREAM &&
 	    (protocol == IPPROTO_IP || protocol == IPPROTO_TCP)) {
-		dbg_msg(stderr, "ld_pre_smc: map sock to AF_SMC\n");
+		dbg_msg(stderr, "libsmc-preload: map sock to AF_SMC\n");
 		if (domain == AF_INET)
 			protocol = SMCPROTO_SMC;
 		else /* AF_INET6 */
