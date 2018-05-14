@@ -47,7 +47,7 @@ struct rtnl_handle {
 };
 
 static char *progname;
-int show_details;
+int show_debug;
 int show_smcr;
 int show_smcd;
 int show_wide;
@@ -148,7 +148,7 @@ static int sockdiag_send(int fd)
 		.msg_iovlen = iovlen,
 	};
 
-	if (show_details)
+	if (show_debug)
 		req.r.diag_ext |= (1<<(SMC_DIAG_CONNINFO-1));
 
 	if (show_smcr)
@@ -171,11 +171,11 @@ static void print_header(void)
 	printf("UID   ");
 	printf("Inode   ");
 	printf("Local Address           ");
-	printf("Foreign Address         ");
+	printf("Peer Address            ");
 	printf("Intf ");
         printf("Mode ");
 
-	if (show_details) {
+	if (show_debug) {
 		printf("Shutd ");
 		printf("Token    ");
 		printf("Sndbuf   ");
@@ -316,25 +316,39 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 		    r->diag_family, r->id.idiag_dst, ntohs(r->id.idiag_dport));
 	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	printf("%04x ", r->id.idiag_if);
-	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP)
-		printf("%4s ", "TCP ");
-	else if (r->diag_mode == SMC_DIAG_MODE_SMCD)
+	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP) {
+		printf("TCP ");
+		/* when available print local and peer fallback reason code */
+		if (tb[SMC_DIAG_FALLBACK] &&
+		    tb[SMC_DIAG_FALLBACK]->rta_len >= sizeof(struct smc_diag_fallback))
+		{
+			struct smc_diag_fallback fallback;
+
+			fallback = *(struct smc_diag_fallback *)RTA_DATA(tb[SMC_DIAG_FALLBACK]);
+			printf("0x%08x", fallback.reason);
+			if (fallback.peer_diagnosis)
+				printf("/0x%08x", fallback.peer_diagnosis);
+		}
+		goto newline;
+
+	} else if (r->diag_mode == SMC_DIAG_MODE_SMCD)
 		printf("%4s ", "SMCD");
 	else
 		printf("%4s ", "SMCR");
 
-	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP)
-		goto newline;
-
-	if (show_details) {
-		if (tb[SMC_DIAG_SHUTDOWN]) {
+	if (show_debug) {
+		if (tb[SMC_DIAG_SHUTDOWN] &&
+		    tb[SMC_DIAG_SHUTDOWN]->rta_len >= sizeof(__u8))
+		{
 			unsigned char mask;
 
 			mask = *(__u8 *)RTA_DATA(tb[SMC_DIAG_SHUTDOWN]);
 			printf(" %c-%c  ", mask & 1 ? 'R' : '<', mask & 2 ? 'W' : '>');
 		}
 
-		if (tb[SMC_DIAG_CONNINFO]) {
+		if (tb[SMC_DIAG_CONNINFO] &&
+		    tb[SMC_DIAG_CONNINFO]->rta_len >= sizeof(struct smc_diag_conninfo))
+		{
 			struct smc_diag_conninfo cinfo;
 
 			cinfo = *(struct smc_diag_conninfo *)RTA_DATA(tb[SMC_DIAG_CONNINFO]);
@@ -356,7 +370,9 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 	}
 
 	if (show_smcr) {
-		if (tb[SMC_DIAG_LGRINFO]) {
+		if (tb[SMC_DIAG_LGRINFO] &&
+		    tb[SMC_DIAG_LGRINFO]->rta_len >= sizeof(struct smc_diag_lgrinfo))
+		{
 			struct smc_diag_lgrinfo linfo;
 
 			linfo = *(struct smc_diag_lgrinfo *)RTA_DATA(tb[SMC_DIAG_LGRINFO]);
@@ -370,7 +386,9 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 	}
 
 	if (show_smcd) {
-		if (tb[SMC_DIAG_DMBINFO]) {
+		if (tb[SMC_DIAG_DMBINFO] &&
+		    tb[SMC_DIAG_DMBINFO]->rta_len >= sizeof(struct smcd_diag_dmbinfo))
+		{
 			struct smcd_diag_dmbinfo dinfo;
 
 			dinfo = *(struct smcd_diag_dmbinfo *)RTA_DATA(tb[SMC_DIAG_DMBINFO]);
@@ -464,7 +482,7 @@ exit:
 
 static const struct option long_opts[] = {
 	{ "all", 0, 0, 'a' },
-	{ "extended", 0, 0, 'e' },
+	{ "debug", 0, 0, 'd' },
 	{ "listening", 0, 0, 'l' },
 	{ "smcd", 0, 0, 'D' },
 	{ "smcr", 0, 0, 'R' },
@@ -482,7 +500,7 @@ static void _usage(FILE *dest)
 "\t-V, --version       show version information\n"
 "\t-a, --all           show all sockets\n"
 "\t-l, --listening     show listening sockets\n"
-"\t-e, --extended      show detailed socket information\n"
+"\t-d, --debug         show debug socket information\n"
 "\t-W, --wide          do not truncate IP addresses\n"
 "\t-D, --smcd          show detailed SMC-D information (shows only SMC-D sockets)\n"
 "\t-R, --smcr          show detailed SMC-R information (shows only SMC-R sockets)\n"
@@ -511,7 +529,7 @@ int main(int argc, char *argv[])
 
 	progname = (slash = strrchr(argv[0], '/')) ? slash + 1 : argv[0];
 
-	while ((ch = getopt_long(argc, argv, "aleDRhvVW", long_opts, NULL)) != EOF) {
+	while ((ch = getopt_long(argc, argv, "aldDRhvVW", long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'a':
 			all++;
@@ -519,8 +537,8 @@ int main(int argc, char *argv[])
 		case 'l':
 			listening++;
 			break;
-		case 'e':
-			show_details++;
+		case 'd':
+			show_debug++;
 			break;
 		case 'D':
 			show_smcd++;
@@ -548,8 +566,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "--smcd together with --smcr is not supported\n");
 		usage();
 	}
-	if (listening && show_details) {
-		fprintf(stderr, "--listening together with --extended is not supported\n");
+	if (listening && show_debug) {
+		fprintf(stderr, "--listening together with --debug is not supported\n");
 		usage();
 	}
 	if (listening && all) {

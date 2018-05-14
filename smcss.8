@@ -1,12 +1,12 @@
 .\" smcss.8
 .\"
 .\"
-.\" Copyright IBM Corp. 2017
+.\" Copyright IBM Corp. 2017, 2018
 .\" Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
 .\" ----------------------------------------------------------------------
 .\"
 
-.TH SMCSS 8 "January 2017" "smc-tools" "Linux Programmer's Manual"
+.TH SMCSS 8 "June 2018" "smc-tools" "Linux Programmer's Manual"
 
 .SH NAME
 smcss \- print information about the AF_SMC sockets and link groups.
@@ -14,24 +14,24 @@ smcss \- print information about the AF_SMC sockets and link groups.
 .SH SYNOPSIS
 
 .B smcss
-.RB [ \-\-extended | \-e ]
+.RB [ \-\-debug | \-d ]
 .RB [ \-\-smcd | \-D ]
 .RB [ \-\-wide | \-W ]
 .P
 .B smcss
 .RB { \-\-all | -a }
-.RB [ \-\-extended | \-e ]
+.RB [ \-\-debug | \-d ]
 .RB [ \-\-smcd | \-D ]
 .RB [ \-\-wide | \-W ]
 .P
 .B smcss
-.RB [ \-\-extended | \-e ]
+.RB [ \-\-debug | \-d ]
 .RB [ \-\-smcr | \-R ]
 .RB [ \-\-wide | \-W ]
 .P
 .B smcss
 .RB { \-\-all | -a }
-.RB [ \-\-extended | \-e ]
+.RB [ \-\-debug | \-d ]
 .RB [ \-\-smcr | \-R ]
 .RB [ \-\-wide | \-W ]
 .P
@@ -67,8 +67,8 @@ shows listening sockets only. These are omitted by default.
 .SH OPTIONS
 
 .TP
-.BR "\-e, \-\-extend"
-displays additional information, such as shutdown state.
+.BR "\-d, \-\-debug"
+displays additional debug information, such as shutdown state.
 
 .TP
 .BR "\-D, \-\-smcd
@@ -141,19 +141,19 @@ The socket was abnormally closed locally.
 PROCESSABORT
 The peer has closed the socket abnormally.
 .SS "UID"
-Unique ID of the SMC socket.
+User ID of the SMC socket.
 .SS "Inode"
 Inode attribute of the socket.
 .SS "Local Address"
-Address and port number of the local end of the SMC
-socket. Displayed Address is displayed truncated when it ends with '..'.
+Address and port number of the local end of the SMC socket. 
+The displayed address is truncated when it ends with '..'.
 .BR "-W, --wide"
 can be used to display addresses untruncated.
-.SS "Foreign Address"
+.SS "Peer Address"
 Address and port number of the remote end of the socket.
 Analogous to "Local Address".
 .SS "Intf"
-If socket is explicitly bound with setsockopt option SO_BINDTODEVICE,
+When the socket is explicitly bound with setsockopt option SO_BINDTODEVICE then
 Intf shows the interface number of the Ethernet device to which the socket is bound.
 .SS "Mode"
 .TP
@@ -253,7 +253,7 @@ writes a message to stderr and completes with a return code other than 0.
 .SH AUTHOR
 .nf
 This man page was written by
-Ursula Braun <ubraun@linux.vnet.ibm.com>
+Ursula Braun <ubraun@linux.ibm.com>
 
 Copyright (c) IBM Corp. 2017, 2018
 
