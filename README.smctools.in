@@ -50,6 +50,14 @@ Release History:
 
     Bug fixes:
 
+1.1.0 (2018-xx-xx)
+    Changes:
+    - smcss:    Add IPv6 support
+    - preload:  Add IPv6 support
+    - smcss:    Output format changed
+
+    Bug fixes:
+
 1.0.1 (2018-01-12)
     Changes:
     - Makefile: Improve distro compatibility
