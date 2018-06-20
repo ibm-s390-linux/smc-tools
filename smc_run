@@ -40,7 +40,7 @@ export SMC_DEBUG;
 #
 # Execute the specified command.
 #
-export LD_PRELOAD=$LIB_NAME;
+export LD_PRELOAD=$LD_PRELOAD:$LIB_NAME;
 
 exec $command_line
 exit $?;

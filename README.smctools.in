@@ -58,6 +58,8 @@ Release History:
     - preload:  Rename preload library into libsmc-preload.so
 
     Bug fixes:
+    - smc_run:	Append preload library to LD_PRELOAD instead of potentially
+                overwriting pre-set values
 
 1.0.1 (2018-01-12)
     Changes:
