@@ -60,6 +60,7 @@ Release History:
     Bug fixes:
     - smc_run:	Append preload library to LD_PRELOAD instead of potentially
                 overwriting pre-set values
+    - preload:  Set suid flag to work with suid executables
 
 1.0.1 (2018-01-12)
     Changes:
