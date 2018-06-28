@@ -45,7 +45,7 @@ rm -rf %{buildroot}
 %{_mandir}/man8/smc_run.8*
 %{_mandir}/man8/smc_pnet.8*
 %{_mandir}/man8/smcss.8*
-%{_libdir}/libsmc-preload.so
+%{_libdir}/libsmc-preload.so*
 %if %{with_32bit}
 %define _libdir32="` tr -d '64' < %{_libdir}`"
 %{_libdir32}/libsmc-preload.so
