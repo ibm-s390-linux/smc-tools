@@ -3,7 +3,11 @@
 VERSION=`grep -w SMC_TOOLS_RELEASE Makefile | head -1 | awk '{print($3)}'`;
 LEVEL=`git log --pretty=format:'%h' -n 1`;
 
-# Consistency check: Do we have an entry in the History section...?
+# Consistency check: Do we have an entry in the README's "History" section...?
+if [ ! -e README.smctools ]; then
+	echo "Error: 'README.smctools' not found"
+	exit 5;
+fi
 if [ `grep -A 20 "Release History:" README.smctools | grep "$VERSION" | wc -l` -eq 0 ]; then
 	echo "Error: 'README.smctools' is missing an entry for version '$VERSION' in 'Release History' ";
 	exit 4;
@@ -23,10 +27,7 @@ if [ -e smc-tools.$VERSION.tar.gz ]; then
 	rm smc-tools.$VERSION.tar.gz;
 fi
 echo "Building smc-tools $VERSION";
-build_dir=tmp/smc-tools-$VERSION;
-if [ ! -e tmp ]; then
-	mkdir tmp;
-fi
+build_dir=smc-tools-$VERSION;
 if [ -e $build_dir ]; then
 	rm -rf $build_dir;
 fi
@@ -36,7 +37,7 @@ cp smc.h $build_dir
 cp smc_diag.h $build_dir;
 cp smc_pnet.c $build_dir;
 cp smcss.c $build_dir;
-cp ld_pre_smc.c $build_dir;
+cp smc-preload.c $build_dir;
 cp Makefile $build_dir;
 sed -e '/^smc-tools.spec:/,+5d' Makefile | sed -e 's/ smc-tools.spec//' | sed -e 's/README.smctools af_smc.7/README.smctools/' | sed -e 's/ README.smctools//' > $build_dir/Makefile;
 cp LICENSE $build_dir;
@@ -44,7 +45,7 @@ cp README.smctools $build_dir;
 cp af_smc.7 $build_dir;
 cp smcss.8 $build_dir;
 cp smc_pnet.8 $build_dir;
-cp smc_run.in $build_dir;
+cp smc_run $build_dir;
 cp smc_run.8 $build_dir;
 
 cd $build_dir;
@@ -57,12 +58,12 @@ if [ `ls -1 | wc -l` -ne $num ]; then
 fi
 
 cd -;
-cd tmp;
-tar -zcvf ../smc-tools-$VERSION.tar.gz smc-tools-$VERSION | sed 's/^/   /';
+target=smc-tools-$VERSION.tar.gz
+tar -zcvf $target smc-tools-$VERSION | sed 's/^/   /';
 if [ $? -eq 0 ]; then
-	echo "Package smc-tools-$VERSION.tar.gz build successful";
+	echo "Package $target build successful";
 else
-	echo "Package smc-tools-$VERSION.tar.gz build failed";
+	echo "Package $target build failed";
 fi
 cd ..;
 rm -rf tmp;
