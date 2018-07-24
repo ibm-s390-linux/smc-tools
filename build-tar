@@ -13,6 +13,13 @@ if [ `grep -A 20 "Release History:" README.smctools | grep "$VERSION" | wc -l` -
 	exit 4;
 fi
 
+# Check .spec file
+vspec="`grep -e "^Version: " smc-tools.spec.in | awk '{print($2)}'`";
+if [ "$vspec" != "$VERSION" ]; then
+	echo "Error: .spec file has version $vspec instead of $VERSION";
+	exit 6;
+fi
+
 # Consistency check: git branch
 sref=`git symbolic-ref HEAD 2>/dev/null`;
 if [ "${sref}" != "refs/heads/master" ]; then
