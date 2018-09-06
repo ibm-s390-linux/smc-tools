@@ -14,6 +14,7 @@ VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
 ARCH := $(shell getconf LONG_BIT)
+DISTRO := $(shell lsb_release -si 2>/dev/null)
 
 ifneq ("${V}","1")
         MAKEFLAGS += --quiet
@@ -39,13 +40,21 @@ STUFF_32BIT	  = 0
 # Check that 31/32-bit build tools are available.
 #
 ifeq ($(ARCH),64)
+ifeq ($(DISTRO),Ubuntu)
+LIBDIR		= ${PREFIX}/lib/s390x-linux-gnu
+else
 LIBDIR		= ${PREFIX}/lib64
+endif
 ifneq ("$(wildcard ${PREFIX}/include/gnu/stubs-32.h)","")
 STUFF_32BIT = 1
 LIBDIR32	= ${PREFIX}/lib
 endif
 else
+ifeq ($(DISTRO),Ubuntu)
+LIBDIR		= ${PREFIX}/lib/s390-linux-gnu
+else
 LIBDIR		= ${PREFIX}/lib
+endif
 endif
 
 all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet README.smctools af_smc.7
