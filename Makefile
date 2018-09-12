@@ -129,6 +129,9 @@ endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
+ifeq ($(shell uname -m | cut -c1-4),s390)
+	install $(INSTALL_FLAGS_BIN) smc_rnics $(DESTDIR)$(BINDIR)
+endif
 	install $(INSTALL_FLAGS_MAN) af_smc.7 $(DESTDIR)$(MANDIR)/man7
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
