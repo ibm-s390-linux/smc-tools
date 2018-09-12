@@ -41,6 +41,7 @@ rm -rf %{buildroot}
 %{_bindir}/smc_run
 %{_bindir}/smc_pnet
 %{_bindir}/smcss
+%{_bindir}/smc_rnics
 %{_mandir}/man7/af_smc.7*
 %{_mandir}/man8/smc_run.8*
 %{_mandir}/man8/smc_pnet.8*

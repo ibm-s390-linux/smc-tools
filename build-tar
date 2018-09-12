@@ -43,6 +43,7 @@ sed -e "s/=SMC LEVEL=/$LEVEL/" smctools_common.h > $build_dir/smctools_common.h
 cp smc.h $build_dir
 cp smc_diag.h $build_dir;
 cp smc_pnet.c $build_dir;
+cp smc_rnics $build_dir;
 cp smcss.c $build_dir;
 cp smc-preload.c $build_dir;
 cp Makefile $build_dir;
