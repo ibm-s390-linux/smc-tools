@@ -57,7 +57,7 @@ LIBDIR		= ${PREFIX}/lib
 endif
 endif
 
-all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet README.smctools af_smc.7
+all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet smc-tools.spec smc_rnics README.smctools af_smc.7
 
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
@@ -68,10 +68,11 @@ else
 	MACHINE_OPT32="-m32"
 endif
 
-smc-tools.spec: smc-tools.spec.in
+smc_rnics: smc_rnics.in
 	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
+	chmod a+x $@
 
-%: %.in	smc-tools.spec
+%: %.in
 	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
 
 smc-preload.o: smc-preload.c
@@ -139,4 +140,4 @@ endif
 
 clean:
 	echo "  CLEAN"
-	rm -f *.o *.so smcss smc_pnet README.smctools af_smc.7 smc-tools.spec
+	rm -f *.o *.so smcss smc_pnet README.smctools af_smc.7 smc-tools.spec smc_rnics

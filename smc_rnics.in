@@ -56,7 +56,7 @@ while [ $# -gt 0 ]; do
 	"-r" | "--rawids" )
 		rawIDs=1;;
 	"-v" | "--version" )
-		echo "smc_rnics utility, smc-tools-1.1.0 (=SMC LEVEL=)";
+		echo "smc_rnics utility, smc-tools-x.x.x (=SMC LEVEL=)";
 		exit 0;;
 	"--" ) ;;
 	* ) usage && exit 2;
