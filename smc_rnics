@@ -30,7 +30,7 @@ function print_rnic() {
 }
 
 if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
-	printf "Error: s390/s390x supported only\n";
+	printf "Error: s390/s390x supported only\n" >&2;
 	exit 1;
 fi
 
@@ -63,19 +63,19 @@ done
 if [ "$action" != "print" ]; then
 	[ "${fid:0:2}" == "0x" ] && fid=${fid:2};
 	if [ ! -d /sys/bus/pci/slots/$fid ]; then
-		echo "Error: FID 0x$fid does not exist";
+		echo "Error: FID 0x$fid does not exist" >&2;
 		exit 4;
 	fi
 	power=`cat /sys/bus/pci/slots/$fid/power 2>/dev/null`;
 	val=0;
 	[ "$action" == "enable" ] && val=1;
 	if [ $power -eq $val ]; then
-		echo "Error: FID $fid is already ${action}d";
+		echo "Error: FID $fid is already ${action}d" >&2;
 		exit 5;
 	fi
 	echo $val  > /sys/bus/pci/slots/$fid/power 2>/dev/null;
 	if [ $? -ne 0 ]; then
-		echo "Error: Failed to $action FID 0x$fid";
+		echo "Error: Failed to $action FID 0x$fid" >&2;
 		exit 6;
 	fi
 	exit 0;
@@ -108,7 +108,7 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 		fi
 	done
 	if [ "$addr" == "" ]; then
-		echo "Error: No matching card found for FID $fid";
+		echo "Error: No matching card found for FID $fid" >&2;
 		continue;
 	fi
 	cd /sys/bus/pci/devices/$addr;
