@@ -11,7 +11,7 @@ function usage() {
 	echo;
 	echo "Usage: smc_rnics [ OPTIONS ]";
 	echo;
-	echo "List all available RNICs ";
+	echo "List all available RNICs";
 	echo;
 	echo "   -h, --help           this message";
 	echo "   -e, --enable <FID>   enable the specified FID";
