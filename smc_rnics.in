@@ -23,11 +23,11 @@ function usage() {
 
 function print_rnic() {
 	if [ $header -eq 0 ]; then
-		printf "FID         Power  PCI ID        PCHID   Type           Port  PNET ID           Interface\n";
-		echo '--------------------------------------------------------------------------------------------';
+		printf "FID       Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
+		echo '-----------------------------------------------------------------------------------------';
 		header=1;
 	fi
-	printf "%-10s  %-5s  %-12s  %-6s  %-14s %-4s  %-16s  %s\n" "$fid" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	printf "%-8s  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$fid" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
 }
 
 if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
@@ -67,7 +67,7 @@ done
 if [ "$action" != "print" ]; then
 	[ "${fid:0:2}" == "0x" ] && fid=${fid:2};
 	if [ ! -d /sys/bus/pci/slots/$fid ]; then
-		echo "Error: FID 0x$fid does not exist" >&2;
+		echo "Error: FID $fid does not exist" >&2;
 		exit 4;
 	fi
 	power=`cat /sys/bus/pci/slots/$fid/power 2>/dev/null`;
@@ -79,7 +79,7 @@ if [ "$action" != "print" ]; then
 	fi
 	echo $val  > /sys/bus/pci/slots/$fid/power 2>/dev/null;
 	if [ $? -ne 0 ]; then
-		echo "Error: Failed to $action FID 0x$fid" >&2;
+		echo "Error: Failed to $action FID $fid" >&2;
 		exit 6;
 	fi
 	exit 0;
@@ -89,7 +89,7 @@ header=0;
 # iterate over slots, as powered-off devices won't show elsewhere
 for fid in `ls -1 /sys/bus/pci/slots`; do
 	cd /sys/bus/pci/slots/$fid;
-	fid="0x$fid";
+	fid="$fid";
 	power=`cat power`;
 	interfaces="";
 	port="";
@@ -106,7 +106,7 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 	# device is hotplugged - locate card
 	for card in `ls -1 /sys/bus/pci/devices`; do
 		cd /sys/bus/pci/devices/$card;
-		if [ "`cat function_id`" == "$fid" ]; then
+		if [ "`cat function_id`" == "0x$fid" ]; then
 			addr=$card;
 			break;
 		fi
@@ -118,7 +118,7 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 	cd /sys/bus/pci/devices/$addr;
 	id=`cat device`;
 	vend=`cat vendor`;
-	dev_type="$vend/$id";
+	dev_type="`echo $vend:$id | sed 's/0x//g'`";
 	if [ $rawIDs -eq 0 ]; then
 		case "$vend" in
 		"0x1014" ) # IBM
@@ -135,7 +135,7 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 			esac;;
 		esac
 	fi
-	pchid="`cat pchid`";
+	pchid="`cat pchid | sed 's/^0x//'`";
 	pnet="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII`";
 	if [ -d net ]; then
 		interfaces="`ls -1 net`";
