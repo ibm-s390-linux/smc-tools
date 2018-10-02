@@ -2,10 +2,6 @@
 
 # Copyright IBM Corp. 2018
 
-PRINT=1;
-ENABLE=2;
-DISABLE=3;
-
 
 function usage() {
 	echo;
@@ -23,11 +19,11 @@ function usage() {
 
 function print_rnic() {
 	if [ $header -eq 0 ]; then
-		printf "FID       Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
-		echo '-----------------------------------------------------------------------------------------';
+		printf "FID  Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
+		echo '------------------------------------------------------------------------------------';
 		header=1;
 	fi
-	printf "%-8s  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$fid" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	printf "%3x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
 }
 
 if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
@@ -56,7 +52,7 @@ while [ $# -gt 0 ]; do
 	"-r" | "--rawids" )
 		rawIDs=1;;
 	"-v" | "--version" )
-		echo "smc_rnics utility, smc-tools-x.x.x (=SMC LEVEL=)";
+		echo "smc_rnics utility, smc-tools-1.1.0 (=SMC LEVEL=)";
 		exit 0;;
 	"--" ) ;;
 	* ) usage && exit 2;
@@ -66,20 +62,22 @@ done
 
 if [ "$action" != "print" ]; then
 	[ "${fid:0:2}" == "0x" ] && fid=${fid:2};
+	fid=`printf "%08x" $((16#$fid))`;
+	ufid=`printf "%x" $((16#$fid))`;  # representation without leading zeros
 	if [ ! -d /sys/bus/pci/slots/$fid ]; then
-		echo "Error: FID $fid does not exist" >&2;
+		echo "Error: FID $ufid does not exist" >&2;
 		exit 4;
 	fi
 	power=`cat /sys/bus/pci/slots/$fid/power 2>/dev/null`;
 	val=0;
 	[ "$action" == "enable" ] && val=1;
 	if [ $power -eq $val ]; then
-		echo "Error: FID $fid is already ${action}d" >&2;
+		echo "Error: FID $ufid is already ${action}d" >&2;
 		exit 5;
 	fi
 	echo $val  > /sys/bus/pci/slots/$fid/power 2>/dev/null;
 	if [ $? -ne 0 ]; then
-		echo "Error: Failed to $action FID $fid" >&2;
+		echo "Error: Failed to $action FID $ufid" >&2;
 		exit 6;
 	fi
 	exit 0;
@@ -103,16 +101,16 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 		print_rnic;
 		continue;
 	fi
-	# device is hotplugged - locate card
-	for card in `ls -1 /sys/bus/pci/devices`; do
-		cd /sys/bus/pci/devices/$card;
+	# device is hotplugged - locate it
+	for dev in `ls -1 /sys/bus/pci/devices`; do
+		cd /sys/bus/pci/devices/$dev;
 		if [ "`cat function_id`" == "0x$fid" ]; then
-			addr=$card;
+			addr=$dev;
 			break;
 		fi
 	done
 	if [ "$addr" == "" ]; then
-		echo "Error: No matching card found for FID $fid" >&2;
+		echo "Error: No matching device found for FID $fid" >&2;
 		continue;
 	fi
 	cd /sys/bus/pci/devices/$addr;
@@ -140,7 +138,7 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 	if [ -d net ]; then
 		interfaces="`ls -1 net`";
 	fi
-	# one card can have multiple interfaces (one per port)
+	# one device can have multiple interfaces (one per port)
 	if [ "$interfaces" != "" ]; then
 		pnetids="$pnet";
 		for int in $interfaces; do
