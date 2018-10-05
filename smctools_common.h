@@ -3,7 +3,7 @@
  *
  * Copyright IBM Corp. 2017
  *
- * Author(s): Ursula Braun (ubraun@linux.vnet.ibm.com)
+ * Author(s): Ursula Braun (ubraun@linux.ibm.com)
  *
  * Copyright (c) IBM Corp. 2017
  *

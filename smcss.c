@@ -3,7 +3,7 @@
  *
  * Copyright (c) IBM Corp. 2017, 2018
  *
- * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
+ * Author(s):  Ursula Braun <ubraun@linux.ibm.com>
  *
  * User space program for SMC Socket display
  *

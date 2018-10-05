@@ -1,7 +1,7 @@
 .\"
 .\" Copyright IBM Corp. 2016, 2018
-.\" Author(s):	Ursula Braun <ubraun@linux.vnet.ibm.com>
-.\"		Thomas Richter <tmricht@linux.vnet.ibm.com>
+.\" Author(s):	Ursula Braun <ubraun@linux.ibm.com>
+.\"		Thomas Richter <tmricht@linux.ibm.com>
 .\" ----------------------------------------------------------------------
 .TH AF_SMC 7 "January 2017"  "smc-tools" "Linux Programmer's Manual"
 .SH NAME
@@ -128,14 +128,6 @@ Infiniband traffic may use MTU values 256, 512, 1024, 2048, or 4096.
 SMC determines the configured MTU size of the RoCE Ethernet port,
 announces this MTU size to the peer during connection start, and chooses
 the minimum MTU size of both peers.
-
-.SH "AUTHOR"
-.nf
-Copyright IBM Corp. 2016, 2018
-
-Published under the terms and conditions of the EPL
-(Eclipse Public License).
-.fi
 
 .SH "SEE ALSO"
 .BR socket (2),
