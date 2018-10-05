@@ -56,6 +56,7 @@ cp README.smctools $build_dir;
 cp af_smc.7 $build_dir;
 cp smcss.8 $build_dir;
 cp smc_pnet.8 $build_dir;
+cp smc_rnics.8 $build_dir;
 cp smc_run $build_dir;
 cp smc_run.8 $build_dir;
 
