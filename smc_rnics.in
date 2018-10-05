@@ -5,13 +5,13 @@
 
 function usage() {
 	echo;
-	echo "Usage: smc_rnics [ OPTIONS ]";
+	echo "Usage: smc_rnics [ OPTIONS ] [ FID ]";
 	echo;
 	echo "List all available RNICs";
 	echo;
-	echo "   -h, --help           this message";
-	echo "   -e, --enable <FID>   enable the specified FID";
 	echo "   -d, --disable <FID>  disable the specified FID";
+	echo "   -e, --enable <FID>   enable the specified FID";
+	echo "   -h, --help           display this message";
 	echo "   -r, --rawids         display 'type' as raw vendor/device IDs";
 	echo "   -v, --version        display version info";
 	echo;
@@ -24,6 +24,18 @@ function print_rnic() {
 		header=1;
 	fi
 	printf "%3x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	(( printed++ ));
+}
+
+function format_fid() {
+	res="${1#0x}";
+
+	if [[ "$res" =~ ^([:xdigit:])+ ]]; then
+		printf "Error: '%s' is not a valid FID\n" "$res" >&2;
+		exit 3;
+	fi
+
+	res="`printf "%08x" $((16#$res))`";
 }
 
 if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
@@ -32,10 +44,12 @@ if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
 fi
 
 args=`getopt -u -o hrve:d: -l enable:,disable:,help,rawids,version -- $*`;
-[ $? -ne 0 ] && exit 1;
+[ $? -ne 0 ] && exit 2;
 set -- $args;
 action="print";
 rawIDs=0;
+target="";
+printed=0;
 while [ $# -gt 0 ]; do
 	case $1 in
 	"-e" | "--enable" )
@@ -55,30 +69,35 @@ while [ $# -gt 0 ]; do
 		echo "smc_rnics utility, smc-tools-1.1.0 (=SMC LEVEL=)";
 		exit 0;;
 	"--" ) ;;
-	* ) usage && exit 2;
+	* )	format_fid "$1";
+		target="$res";
 	esac
 	shift;
 done
 
 if [ "$action" != "print" ]; then
-	[ "${fid:0:2}" == "0x" ] && fid=${fid:2};
-	fid=`printf "%08x" $((16#$fid))`;
+	if [ "$target" != "" ]; then
+		usage;
+		exit 4;
+	fi
+	format_fid "$fid";
+	fid="$res";
 	ufid=`printf "%x" $((16#$fid))`;  # representation without leading zeros
 	if [ ! -d /sys/bus/pci/slots/$fid ]; then
 		echo "Error: FID $ufid does not exist" >&2;
-		exit 4;
+		exit 5;
 	fi
 	power=`cat /sys/bus/pci/slots/$fid/power 2>/dev/null`;
 	val=0;
 	[ "$action" == "enable" ] && val=1;
 	if [ $power -eq $val ]; then
 		echo "Error: FID $ufid is already ${action}d" >&2;
-		exit 5;
+		exit 6;
 	fi
 	echo $val  > /sys/bus/pci/slots/$fid/power 2>/dev/null;
 	if [ $? -ne 0 ]; then
 		echo "Error: Failed to $action FID $ufid" >&2;
-		exit 6;
+		exit 7;
 	fi
 	exit 0;
 fi
@@ -88,6 +107,9 @@ header=0;
 for fid in `ls -1 /sys/bus/pci/slots`; do
 	cd /sys/bus/pci/slots/$fid;
 	fid="$fid";
+	if [ "$target" != "" ] && [ "$fid" != "$target" ]; then
+		continue;
+	fi
 	power=`cat power`;
 	interfaces="";
 	port="";
@@ -116,7 +138,7 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 	cd /sys/bus/pci/devices/$addr;
 	id=`cat device`;
 	vend=`cat vendor`;
-	dev_type="`echo $vend:$id | sed 's/0x//g'`";
+	dev_type="${vend#0x}:${id#0x}";
 	if [ $rawIDs -eq 0 ]; then
 		case "$vend" in
 		"0x1014" ) # IBM
@@ -155,5 +177,9 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 	fi
 	print_rnic;
 done
+
+if [ "$target" != "" ] && [ $printed -eq 0 ]; then
+	exit 8;
+fi
 
 exit 0;
