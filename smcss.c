@@ -1,7 +1,7 @@
 /*
  * SMC Tools - Shared Memory Communication Tools
  *
- * Copyright (c) IBM Corp. 2017, 2018
+ * Copyright IBM Corp. 2017, 2018
  *
  * Author(s):  Ursula Braun <ubraun@linux.ibm.com>
  *
