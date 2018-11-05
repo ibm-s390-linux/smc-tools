@@ -212,14 +212,14 @@ the peer and confirmed to the peer.
 SMC socket connection flags set locally and sent to the peer.
 .SS "txprep-Cursor"
 Describes the current cursor location of the "Sndbuf" for data to be sent.
-The data is to be moved to the "Peerbuf" by using RDMA-write.
+The data is to be moved to the "Peerbuf".
 .SS "txsent-Cursor"
 Describes the current cursor location of the "Sndbuf" for data sent.
-The data was moved to the "Peerbuf" by using RDMA-write.
+The data was moved to the "Peerbuf".
 .SS "txfin-Cursor"
 Describes the current cursor location of the "Sndbuf" for data sent and
 send completion confirmed.
-The data was moved to the "Peerbuf" by using RDMA-write and completion was confirmed.
+The data was moved to the "Peerbuf" and completion was confirmed.
 .SS "Role"
 .TP
 .I
