@@ -40,7 +40,7 @@ static char *progname;
 static struct pnetentry {
 	char *pnetid;		/* Pnetid */
 	char *ethname;		/* Ethernet device name */
-	char *ibname;		/* Infiniband device name */
+	char *ibname;		/* Infiniband/ISM device name */
 	int ibport;		/* Infiniband device port number */
 	unsigned char cmd;	/* Command to execute */
 } pnetcmd;
@@ -51,7 +51,7 @@ static void _usage(FILE *dest)
 "Usage: %s [ OPTIONS ] [pnetid]\n"
 "\t-h, --help            this message\n"
 "\t-V, --version         show version information\n"
-"\t-a, --add             add a pnetid entry, requires interface and ibdevice\n"
+"\t-a, --add             add a pnetid entry, requires interface or ib/ism device\n"
 "\t-d, --delete          delete a pnetid entry\n"
 "\t-s, --show            show a pnetid entry\n"
 "\t-f, --flush           flush the complete pnet table\n"
@@ -193,21 +193,26 @@ static int genl_command(void)
 
 	switch (pnetcmd.cmd) {		/* Start message construction */
 	case SMC_PNETID_ADD:
-		rc = nla_put_string(msg, SMC_PNETID_ETHNAME, pnetcmd.ethname);
+		if (pnetcmd.ethname)
+			rc = nla_put_string(msg, SMC_PNETID_ETHNAME,
+					    pnetcmd.ethname);
 		if (rc < 0) {
 			nl_perror(rc, progname);
 			rc = EXIT_FAILURE;
 			goto out3;
 		}
 
-		rc = nla_put_string(msg, SMC_PNETID_IBNAME, pnetcmd.ibname);
+		if (pnetcmd.ibname)
+			rc = nla_put_string(msg, SMC_PNETID_IBNAME,
+					    pnetcmd.ibname);
 		if (rc < 0) {
 			nl_perror(rc, progname);
 			rc = EXIT_FAILURE;
 			goto out3;
 		}
 
-		rc = nla_put_u8(msg, SMC_PNETID_IBPORT, pnetcmd.ibport);
+		if (pnetcmd.ibname)
+			rc = nla_put_u8(msg, SMC_PNETID_IBPORT, pnetcmd.ibport);
 		if (rc < 0) {
 			nl_perror(rc, progname);
 			rc = EXIT_FAILURE;
@@ -328,12 +333,9 @@ int main(int argc, char **argv)
 	}
 
 	if (pnetcmd.cmd == SMC_PNETID_ADD) {
-		if (!pnetcmd.ethname) {
-			fprintf(stderr, "%s: interface missing\n", progname);
-			usage();
-		}
-		if (!pnetcmd.ibname) {
-			fprintf(stderr, "%s: ibdevice missing\n", progname);
+		if (!pnetcmd.ethname && !pnetcmd.ibname) {
+			fprintf(stderr, "%s: interface or device missing\n",
+				progname);
 			usage();
 		}
 		if (!pnetcmd.ibport)
