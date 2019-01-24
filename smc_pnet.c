@@ -106,7 +106,7 @@ static const struct option long_opts[] = {
 static struct nla_policy smc_pnet_policy[SMC_PNETID_MAX + 1] = {
 	[SMC_PNETID_NAME] = {
 				.type = NLA_STRING,
-				.maxlen = 16
+				.maxlen = 17
 			    },
 	[SMC_PNETID_ETHNAME] = {
 				.type = NLA_STRING,
