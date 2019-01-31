@@ -49,6 +49,7 @@ Release History:
 1.x.x (201x-xx-xx)
     Changes:
     - smc_rnics: Initial version added
+    - smc_dbg: Initial version added
 
 1.1.0 (2018-06-29)
     Changes:
@@ -92,6 +93,7 @@ af_smc.7		manpage for AF_SMC sockets
 smc_pnet.8		manpage for smc_pnet
 smcss.8			manpage for smcss
 smc_run.8		manpage for preload library usage
+smc_dbg			collect debugging data
 
 
 Requirements:

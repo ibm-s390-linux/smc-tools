@@ -5,8 +5,7 @@ LEVEL=`git log --pretty=format:'%h' -n 1`;
 
 # Consistency check: Do we have an entry in the README's "History" section...?
 if [ ! -e README.smctools ]; then
-	echo "Error: 'README.smctools' not found"
-	exit 5;
+	make;
 fi
 if [ `grep -A 20 "Release History:" README.smctools | grep "$VERSION" | wc -l` -eq 0 ]; then
 	echo "Error: 'README.smctools' is missing an entry for version '$VERSION' in 'Release History' ";
@@ -41,15 +40,19 @@ fi
 mkdir $build_dir;
 sed -e "s/=SMC LEVEL=/$LEVEL/" smctools_common.h > $build_dir/smctools_common.h
 sed -e "s/=SMC LEVEL=/$LEVEL/" smc_rnics > $build_dir/smc_rnics
+sed -e "s/=SMC LEVEL=/$LEVEL/" smc_dbg > $build_dir/smc_dbg
 chmod a+x $build_dir/smc_rnics
+chmod a+x $build_dir/smc_dbg
 cp smc.h $build_dir
 cp smc_diag.h $build_dir;
 cp smc_pnet.c $build_dir;
 cp smcss.c $build_dir;
 cp smc-preload.c $build_dir;
 cp Makefile $build_dir;
-sed -e '/^smc-tools.spec:/,+2d' Makefile | sed -e '/^smc_rnics:/,+3d' | sed -e 's/ smc-tools.spec smc_rnics//' \
-| sed -e 's/README.smctools af_smc.7/README.smctools/' | sed -e 's/ README.smctools//' \
+sed -e '/^smc-tools.spec:/,+2d' Makefile | sed -e '/^smc_rnics:/,+7d' \
+| sed -e 's/ smc-tools.spec smc_dbg smc_rnics//' \
+| sed -e 's/README.smctools af_smc.7/README.smctools/' \
+| sed -e 's/ README.smctools//' \
 > $build_dir/Makefile;
 cp LICENSE $build_dir;
 cp README.smctools $build_dir;
@@ -65,7 +68,10 @@ num=`ls -1 | wc -l`;
 make >/dev/null 2>&1
 make clean >/dev/null
 if [ `ls -1 | wc -l` -ne $num ]; then
-	echo "Error: Number of files variies after a 'make'-'make clean' cycle"
+	echo "Error: Number of files variies after a 'make'-'make clean' cycle."
+	echo "Content of directory $build_dir:";
+	ls -1 | sed 's/^/  /';
+	echo "Expected $num, got `ls -1 | wc -l`";
 	exit 1;
 fi
 

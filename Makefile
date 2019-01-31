@@ -57,7 +57,7 @@ LIBDIR		= ${PREFIX}/lib
 endif
 endif
 
-all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet smc-tools.spec smc_rnics README.smctools af_smc.7
+all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet smc-tools.spec smc_dbg smc_rnics README.smctools af_smc.7
 
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
@@ -69,6 +69,10 @@ else
 endif
 
 smc_rnics: smc_rnics.in
+	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
+	chmod a+x $@
+
+smc_dbg: smc_dbg.in
 	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
 	chmod a+x $@
 
@@ -130,6 +134,7 @@ endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
+	install $(INSTALL_FLAGS_BIN) smc_dbg $(DESTDIR)$(BINDIR)
 ifeq ($(shell uname -m | cut -c1-4),s390)
 	install $(INSTALL_FLAGS_BIN) smc_rnics $(DESTDIR)$(BINDIR)
 endif
@@ -141,4 +146,4 @@ endif
 
 clean:
 	echo "  CLEAN"
-	rm -f *.o *.so smcss smc_pnet README.smctools af_smc.7 smc-tools.spec smc_rnics
+	rm -f *.o *.so smcss smc_pnet README.smctools af_smc.7 smc-tools.spec smc_dbg smc_rnics
