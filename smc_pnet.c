@@ -56,7 +56,7 @@ static void _usage(FILE *dest)
 "\t-s, --show            show a pnetid entry\n"
 "\t-f, --flush           flush the complete pnet table\n"
 "\t-I, --interface       Ethernet interface name of a pnetid entry\n"
-"\t-D, --ibdevice        Infiniband device name of a pnetid entry\n"
+"\t-D, --ibdevice        Infiniband/ISM device name of a pnetid entry\n"
 "\t-P, --ibport          Infiniband device port (default: 1)\n"
 "\t\n"
 "\tno OPTIONS            show complete pnet table\n",
@@ -164,7 +164,7 @@ static int genl_command(void)
 	if (id < 0) {
 		rc = EXIT_FAILURE;
 		if (id == -NLE_OBJ_NOTFOUND)
-			fprintf(stderr, "%s: SMC-R module not loaded\n",
+			fprintf(stderr, "%s: SMC module not loaded\n",
 				progname);
 		else
 			nl_perror(id, progname);
@@ -349,7 +349,7 @@ int main(int argc, char **argv)
 			pnetcmd.ethname = NULL;
 		}
 		if (pnetcmd.ibname) {
-			fprintf(stderr, "%s: ibdevice %s ignored\n", progname,
+			fprintf(stderr, "%s: device %s ignored\n", progname,
 					pnetcmd.ibname);
 			pnetcmd.ibname = NULL;
 		}
