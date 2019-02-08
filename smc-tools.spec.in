@@ -1,6 +1,6 @@
 %define with_32bit 0
 Name: smc-tools
-Version: 1.1.0
+Version: 1.2.0
 Release: 0.ibm
 Summary: Shared Memory Communication
 Source: %{name}-%{version}.tar.gz

@@ -46,10 +46,13 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
-1.x.x (201x-xx-xx)
+1.2.0 (2019-02-08)
     Changes:
     - smc_rnics: Initial version added
     - smc_dbg: Initial version added
+
+Bug fixes:
+    - smcss: Parse address family of ip address
 
 1.1.0 (2018-06-29)
     Changes:
