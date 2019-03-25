@@ -60,7 +60,11 @@ if [ "$ARCH" == "s390" ]; then
 	echo "  -------------------------------------------";
 	for device in `ls -1 /sys/bus/ccwgroup/devices`; do
 		chpid=`cat /sys/bus/ccwgroup/devices/$device/chpid | tr [A-F] [a-f]`;
-		pnetid="`cat /sys/devices/css0/chp0.$chpid/util_string | iconv -f IBM-1047 -t ASCII 2>/dev/null | tr -d '\000' | sed  's/^/    /'`";
+		if [ -e /sys/devices/css0/chp0.$chpid/util_string ]; then
+			pnetid="`cat /sys/devices/css0/chp0.$chpid/util_string | iconv -f IBM-1047 -t ASCII 2>/dev/null | tr -d '\000' | sed  's/^/    /'`";
+		else
+			pnetid="";
+		fi
 		printf "  %8s  %4s   %s\n" $device 0x$chpid $pnetid;
 	done
 	echo;
