@@ -241,6 +241,13 @@ static int genl_command(void)
 
 	/* Receive reply message, returns number of cb invocations. */
 	rc = nl_recvmsgs_default(sk);
+	/* Kernel commit a9d8b0b1e3d689346b016316bd91980d60c6885d
+	 * introduced a misbehavior that a FLUSH of an empty table
+	 * returned -ENOENT. Fix it in smc-tools as long as kernel patch did'nt
+	 * land in the distros.
+	 */
+	if (pnetcmd.cmd == SMC_PNETID_FLUSH && rc != -NLE_OBJ_NOTFOUND)
+		rc = 0;
 	if (rc < 0) {
 		nl_perror(rc, progname);
 		rc = EXIT_FAILURE;
