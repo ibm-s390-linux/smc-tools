@@ -41,7 +41,7 @@ STUFF_32BIT	  = 0
 #
 ifeq ($(ARCH),64)
 ifeq ($(DISTRO),Ubuntu)
-LIBDIR		= ${PREFIX}/lib/s390x-linux-gnu
+LIBDIR		= ${PREFIX}/lib/${ARCHTYPE}-linux-gnu
 else
 LIBDIR		= ${PREFIX}/lib64
 endif
