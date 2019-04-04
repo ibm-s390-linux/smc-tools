@@ -1,7 +1,7 @@
 .\" smc_pnet.8
 .\"
 .\"
-.\" Copyright IBM Corp. 2017
+.\" Copyright IBM Corp. 2017, 2019
 .\" Author(s):  Thomas Richter <tmricht@linux.ibm.com>
 .\"             Ursula Braun <ubraun@linux.ibm.com>
 .\" ----------------------------------------------------------------------
@@ -15,30 +15,46 @@ smc_pnet \- create, destroy, and change the SMC PNET table.
 .SH SYNOPSIS
 
 .B smc_pnet
-.RB { \-\-add | \-a "} {" \-\-interface | \-I "} <ethernet-interface> {" \-\-ibdevice | \-D "} <infiniband-device> [ {" \-\-ibport | \-P "<infiniband-port> ] } <pnetid>"
+{ \fB\-a\fR | \fB\-\-add\fR \fI<pnetid>\fR }
+{ \fB\-I\fR | \fB\-\-interface\fR <ethernet-interface> }
 .P
 .B smc_pnet
-.RB { \-\-show | -s } <pnetid>
+{ \fB\-a\fR | \fB\-\-add\fR \fI<pnetid>\fR }
+{ \fB\-D\fR | \fB\-\-ibdevice\fR <infiniband-or-ISM-device> }
+[ \fB\-P\fR | \fB\-\-ibport\fR <infiniband-port> ]
 .P
 .B smc_pnet
-.RB { \-\-delete | \-d } <pnetid>
+{ \fB\-a\fR | \fB\-\-add\fR \fI<pnetid>\fR }
+{ \fB\-I\fR | \fB\-\-interface\fR <ethernet-interface> }
+{ \fB\-D\fR | \fB\-\-ibdevice\fR <infiniband-or-ISM-device> }
+[ \fB\-P\fR | \fB\-\-ibport\fR <infiniband-port> ]
 .P
 .B smc_pnet
-.RB { \-\-flush | \-f }
+{ \fB\-s\fR | \fB\-\-show\fR \fI<pnetid>\fR }
 .P
 .B smc_pnet
-.RB { \-\-version | \-v }
+{ \fB\-d\fR | \fB\-\-delete\fR \fI<pnetid>\fR }
 .P
 .B smc_pnet
-.RB { \-\-help | \-h }
+{ \fB\-f\fR | \fB\-\-flush\fR }
+.P
+.B smc_pnet
+{ \fB\-v\fR | \fB\-\-version\fR }
+.P
+.B smc_pnet
+{ \fB\-h\fR | \fB\-\-help\fR }
 
 .SH DESCRIPTION
-The SMC protocol requires grouping of standard Ethernet and RoCE networks.
+The SMC protocol requires grouping of standard Ethernet and RoCE networks or ISM
+devices.
 Such groups are called \fIPhysical Networks\fR (PNETs). The mapping is configured
 within a table called \fIpnet table\fR. Any available Ethernet interface can be
-combined with an available RDMA-capable network interface card (RNIC), if they
+combined with an available RDMA-capable network interface card (RNIC) or a
+DMA-capable ISM device, if they
 belong to the same Converged Ethernet fabric. To configure mapping of a RoCE Adapter
-port to a standard Ethernet interface, an entry in the pnet table must be created.
+port or an ISM device to a standard Ethernet interface, both devices need to have
+the same pnetid; either hardware-defined or user-defined using the pnet table.
+Hardware-defined pnetids cannot be overwritten.
 .P
 The
 .B smc_pnet
@@ -49,16 +65,15 @@ By default,
 .B smc_pnet
 shows all entries of the pnet table.
 .TP
-.BR <pnetid>
-defines a name for a grouping of Ethernet interface and RNIC.
+.IR <pnetid>
+defines a name for a grouping of Ethernet interface and RNICs or ISM devices.
 A pnetid name consists of up to 16 alphanumeric uppercase characters without blanks.
 .TP
 .BR "\-a, \-\-add"
 creates a new pnetid definition to the pnet table (if it does not already exist).
 Only one pnetid can be defined for a certain
-Ethernet interface and for a certain infiniband device port.
-Adding an ethernet interface or an infiniband device port more than once
-fails.
+Ethernet interface, a certain InfiniBand device port or a certain ISM device.
+Adding more than one pnetid fails. Hardware defined pnetids cannot be overwritten.
 .TP
 .BR "\-s, \-\-show"
 shows a certain pnetid definition in the pnet table.
@@ -73,11 +88,11 @@ removes all pnetid definitions from the pnet table.
 specifies the name of the Ethernet interface to be added for a certain pnetid
 definition.
 .TP
-.BR "\-D, \-\-ibdevice <infiniband-device>"
-specifies the name of the Infiniband device.
+.BR "\-D, \-\-ibdevice <infiniband-or-ISM-device>"
+specifies the ID of the InfiniBand device or ISM device.
 .TP
 .BR "\-P, \-\-ibport <infiniband-port>"
-specifies the port number of the Infiniband device port. Valid numbers are
+specifies the port number of the InfiniBand device port. Valid numbers are
 1 or 2.
 The default value is 1.
 .TP
@@ -88,31 +103,57 @@ displays smc_pnet program version.
 displays a brief smc_pnet usage information.
 
 .SH EXAMPLES
-.B Create a pnetid ABC with ethernet interface name encf500, infiniband
-.B device name mlx4_0 and port number 2:
+.B Define pnetid ABC for the ethernet device names encf500 and bond0, and define
+.B pnetid ABC for the InfiniBand device ID 0001:00:00.0 (port 2) and the ISM
+.B device ID 0004:00:00.0:
 .RS 4
 .PP
-$ smc_pnet \-a ABC \-I encf500 \-D mlx4_0 \-P 2
+.nf
+$ smc_pnet \-a ABC \-I encf500
+$ smc_pnet \-a ABC \-I bond0
+$ smc_pnet \-a ABC \-D 0001:00:00:00.0 \-P 2
+$ smc_pnet \-a ABC \-D 0004:00:00:00.0
 .RE
 .PP
 .
-.B Delete a pnet table entry with pnetid named ABC:
+.B Show all pnet table entries:
+.RS 4
+.PP
+.nf
+$ smc_pnet
+ABC encf500 n/a 255
+ABC bond0 n/a 255
+ABC n/a 0001:00:00.0 2
+ABC n/a 0004:00:00.0 1
+.RE
+.PP
+.
+.B Define pnetid XYZ for the ethernet interface name vlan0201 and the InfiniBand
+.B device ID 0001:00:00.0 (port 1):
+.RS 4
+.PP
+$ smc_pnet \-a XYZ \-I vlan0201 \-D 0001:00:00.0 \-P 1
+.RE
+.PP
+.
+.B Show all entries for pnetid XYZ:
+.RS 4
+.PP
+.nf
+$ smc_pnet \-s XYZ
+XYZ vlan0201 n/a 255
+XYZ n/a 0001:00:00.0 1
+.RE
+.PP
+.
+.B Delete all pnet table entries with pnetid named ABC:
 .RS 4
 .PP
 $ smc_pnet \-d ABC
 .RE
 .PP
 .
-.B Show the mapping of ethernet interface name and infiniband device port for pnetid ABC:
-.RS 4
-.PP
-.nf
-$ smc_pnet \-s ABC
-ABC encf500 mlx4_0 2
-.RE
-.PP
-.
-.B Delete all entries in the pnet table
+.B Delete all entries in the pnet table:
 .RS 4
 .PP
 $ smc_pnet \-f
@@ -121,13 +162,9 @@ $ smc_pnet \-f
 .
 .
 .SH RETURN CODES
-Successful
-.IR smc_pnet
-commands return 0.
-If an error occurs,
-.IR smc_pnet
-writes a message to stderr and completes with a return code
-other than 0.
+Successful \fBsmc_pnet\fR commands return 0.
+If an error occurs, \fBsmc_pnet\fR writes a message to stderr and 
+completes with a return code other than 0.
 .P
 .SH SEE ALSO
 .BR af_smc (7),
