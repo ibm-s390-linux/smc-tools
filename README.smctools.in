@@ -54,6 +54,7 @@ Release History:
     - smc_rnics: Install man page on s390 only
     - smc-preload: Handle behavior flags in type argument to socket() call
     - Makefile: Fixed install target on Ubuntu for platforms other than s390
+    - smc_pnet: changes in support of kernel 5.1
 
 1.2.0 (2019-02-08)
     Changes:
