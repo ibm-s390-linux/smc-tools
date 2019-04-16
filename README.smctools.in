@@ -46,6 +46,11 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
+1.2.99 (2019-xx-xx)
+    Changes:
+
+    Bug fixes:
+
 1.2.1 (2019-04-15)
     Bug fixes:
     - smc_rnics: Install man page on s390 only
