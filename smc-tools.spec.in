@@ -1,58 +1,47 @@
-%define with_32bit 0
-Name: smc-tools
-Version: 1.2.99
-Release: 0.ibm
-Summary: Shared Memory Communication
-Source: %{name}-%{version}.tar.gz
-Group: System/Administration
-License: Eclipse Public License v1.0
-BuildRoot: /var/tmp/%{name}-root
-BuildRequires: glibc-devel, libnl3-devel
-Requires: libnl3
+Name:           smc-tools
+Version:        1.2.99
+Release:        1%{?dist}
+Summary:        Shared Memory Communication Tools
+
+License:        EPL
+URL:            https://www.ibm.com/developerworks/linux/linux390/smc-tools.html
+Source0:        %{name}-%{version}.tar.gz
+
+BuildRequires:  gcc
+BuildRequires:  libnl3-devel
+
 
 %description
-The smc-tools package enables usage of SMC sockets in Linux.
-It contains these tools:
-* Preload library "libsmc-preload.so" together with the calling script "smc_run"
-  to trigger transparent usage of SMC-sockets for existing TCP socket applications.
-*  Configuration tool called "smc_pnet"
-* Tool "smcss" to print information about SMC sockets
-* Manpages, among them af_smc.7
-
-%global debug_package %{nil}
+The Shared Memory Communication Tools (smc-tools) package enables usage of SMC
+sockets in Linux.
 
 %prep
-%setup
+%autosetup
+
 
 %build
-CFLAGS="%{optflags}" make PREFIX=/usr
+CFLAGS="%{build_cflags}" LDFLAGS="%{build_ldflags}" V=1
+# Requires rpm v4.12 or later
+#%make_build CFLAGS="%{build_cflags}" LDFLAGS="%{build_ldflags}" V=1
+
 
 %install
-rm -rf %{buildroot}
-make install PREFIX=%{buildroot}%{_prefix}
+%make_install V=1
 
-%clean
-rm -rf %{buildroot}
 
 %files
-%defattr (-,root,root)
-%doc LICENSE
+%license LICENSE
 %doc README.smctools
-%{_bindir}/smc_run
-%{_bindir}/smc_pnet
-%{_bindir}/smcss
-%{_bindir}/smc_rnics
 %{_bindir}/smc_dbg
+%{_bindir}/smc_pnet
+%{_bindir}/smc_run
+%{_bindir}/smcss
+%{_libdir}/libsmc-preload.so
 %{_mandir}/man7/af_smc.7*
-%{_mandir}/man8/smc_run.8*
 %{_mandir}/man8/smc_pnet.8*
-%{_mandir}/man8/smc_rnics.8*
+%{_mandir}/man8/smc_run.8*
 %{_mandir}/man8/smcss.8*
-%{_libdir}/libsmc-preload.so*
-%if %{with_32bit}
-%define _libdir32="` tr -d '64' < %{_libdir}`"
-%{_libdir32}/libsmc-preload.so
+%ifarch s390 s390x
+%{_bindir}/smc_rnics
+%{_mandir}/man8/smc_rnics.8*
 %endif
-
-%post
-ldconfig

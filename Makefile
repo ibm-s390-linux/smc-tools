@@ -127,10 +127,10 @@ install: all
 	echo "  INSTALL"
 	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_LIB) libsmc-preload.so $(DESTDIR)$(LIBDIR)
-ifeq ($(STUFF_32BIT),1)
-	install -d -m755 $(DESTDIR)$(LIBDIR32)
-	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
-endif
+#ifeq ($(STUFF_32BIT),1)
+#	install -d -m755 $(DESTDIR)$(LIBDIR32)
+#	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
+#endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
