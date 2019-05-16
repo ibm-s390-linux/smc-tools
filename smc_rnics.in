@@ -144,7 +144,8 @@ for fid in `ls -1 /sys/bus/pci/slots`; do
 		"0x1014" ) # IBM
 			case "$id" in
 			"0x04ed") dev_type="ISM";
-				  port="n/a";;
+				  port="n/a";
+				  int="n/a";;
 			"0x044b") continue;;		# zEDC
 			esac;;
 		"0x15b3" ) # Mellanox
