@@ -115,6 +115,7 @@ smc_pnet: smc_pnet.c smc.h smctools_common.h
 		printf "* Install package..............: %-45s\n" "devel package for libnl3" >&2; \
 		printf "* Install package..............: %-45s\n" "devel package for libnl3-genl" >&2; \
 		printf "* NOTE: Package names might differ by platform\n" >&2; \
+		printf "*       On Ubuntu try libnl-3-dev and libnl-genl-3-dev\n" >&2; \
 		printf "**************************************************************\n" >&2; \
 		exit 1; \
 	fi
