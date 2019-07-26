@@ -29,6 +29,7 @@ DESTDIR          ?=
 PREFIX            = /usr
 BINDIR		  = ${PREFIX}/bin
 MANDIR		  = ${PREFIX}/share/man
+BASH_AUTODIR	  = $(shell pkg-config --variable=completionsdir bash-completion 2>/dev/null)
 OWNER		  = $(shell id -un)
 GROUP		  = $(shell id -gn)
 INSTALL_FLAGS_BIN = -g $(GROUP) -o $(OWNER) -m755
@@ -126,7 +127,8 @@ smcss: smcss.c smc_diag.h smctools_common.h
 
 install: all
 	echo "  INSTALL"
-	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
+	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 \
+	                 $(DESTDIR)$(BASH_AUTODIR) $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_LIB) libsmc-preload.so $(DESTDIR)$(LIBDIR)
 #ifeq ($(STUFF_32BIT),1)
 #	install -d -m755 $(DESTDIR)$(LIBDIR32)
@@ -144,6 +146,13 @@ endif
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
+ifneq ($(BASH_AUTODIR),)
+	install $(INSTALL_FLAGS_MAN) smc-tools.autocomplete $(DESTDIR)$(BASH_AUTODIR)/smc-tools
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_rnics
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_dbg
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smcss
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_pnet
+endif
 
 clean:
 	echo "  CLEAN"

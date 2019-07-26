@@ -62,6 +62,7 @@ cp smc_pnet.8 $build_dir;
 cp smc_rnics.8 $build_dir;
 cp smc_run $build_dir;
 cp smc_run.8 $build_dir;
+cp smc-tools.autocomplete $build_dir;
 
 cd $build_dir;
 num=`ls -1 | wc -l`;
