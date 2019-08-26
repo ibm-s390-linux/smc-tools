@@ -3,6 +3,13 @@
 VERSION=`grep -w SMC_TOOLS_RELEASE Makefile | head -1 | awk '{print($3)}'`;
 LEVEL=`git log --pretty=format:'%h' -n 1`;
 
+# Build to make sure the final files are up to date
+make
+if [ $? -ne 0 ]; then
+        echo "Error: Build failed";
+        exit 7;
+fi
+
 # Consistency check: Do we have an entry in the README's "History" section...?
 if [ ! -e README.smctools ]; then
 	make;
