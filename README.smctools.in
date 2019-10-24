@@ -46,6 +46,11 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
+1.2.2 (20xx-xx-xx)
+    Changes:
+
+    Bug fixes:
+
 1.2.2 (2019-10-24)
     Changes:
     - Add bash autocompletion support
