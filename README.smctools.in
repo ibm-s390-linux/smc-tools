@@ -48,6 +48,7 @@ Release History:
 
 1.2.x (20xx-xx-xx)
     Changes:
+    - smcss: Add description of Linux error codes to man page
 
     Bug fixes:
     - smc_rnics: FIDs can have up to 4 digits and are planned to be extended
