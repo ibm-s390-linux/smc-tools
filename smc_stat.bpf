@@ -1,0 +1,230 @@
+#!/usr/bin/python
+
+from __future__ import print_function
+from bcc import BPF
+from time import sleep, strftime
+from ctypes import c_int
+import sys
+import optparse
+
+src="""
+#include <uapi/linux/ptrace.h>
+#include <linux/socket.h>
+#include <net/sock.h>
+//#include <net/smc.h>
+#define KBUILD_MODNAME "foo"
+
+
+#include "smc.h"
+
+
+enum stat_types {
+	TX_COUNT = 1,
+	RX_COUNT,
+	TX_BYTES,
+	RX_BYTES,
+	TX_RMBE_FULL,
+	TX_SNDBUF_FULL,
+	TX_PEERMAXFILL,
+	STATSLEN
+};
+
+BPF_ARRAY(stats, u64, STATSLEN);
+
+static void bump_cnt(int key) {
+	u64 *val = stats.lookup(&key);
+
+	if (val)
+		*val += 1;
+}
+
+static void updt_max(int key, int max) {
+	u64 *val = stats.lookup(&key);
+
+	//if (val && (min < *val || *val == 0))
+	if (val && max > *val)
+		*val = max;
+}
+
+static void bump_sum(int key, u64 incr) {
+	u64 *val = stats.lookup(&key);
+
+	if (val)
+		*val += incr;
+}
+
+void account_smc_tx_ret(struct pt_regs *ctx) {
+	int rc = PT_REGS_RC(ctx);
+
+	if (rc > 0)
+		bump_sum(TX_BYTES, rc);
+	bump_cnt(TX_COUNT);
+}
+
+void account_smc_rx_ret(struct pt_regs *ctx) {
+	int rc = PT_REGS_RC(ctx);
+
+	if (rc > 0)
+		bump_sum(RX_BYTES, rc);
+	bump_cnt(RX_COUNT);
+}
+
+void account_smc_tx_sendmsg(struct pt_regs *ctx, struct smc_sock *smc, struct msghdr *msg, size_t len) {
+	struct smc_connection *conn = &smc->conn;
+	int peer_rmbe_space;
+
+	//if (!atomic_read(&conn->sndbuf_space))
+	// Look, there: A Bigfoot!
+	if (!conn->sndbuf_space.counter)
+		bump_cnt(TX_SNDBUF_FULL);
+
+	//peer_rmbe_space = atomic_read(&conn->peer_rmbe_space);
+	// Look: A UFO!!!
+	peer_rmbe_space = conn->peer_rmbe_space.counter;
+	if (!peer_rmbe_space)
+		bump_cnt(TX_RMBE_FULL);
+	updt_max(TX_PEERMAXFILL, (conn->peer_rmbe_size - peer_rmbe_space) * 1000 /
+		 (unsigned int)conn->peer_rmbe_size);
+}
+"""
+
+
+stat_types = {
+	"TX_CNT": 1,
+	"RX_CNT": 2,
+	"TX_BS": 3,
+	"RX_BS": 4,
+	"TX_PBF": 5,    # peer buffer full
+	"TX_SBF": 6,    # send buffer full
+	"MaxFil": 7     # peer minimum fill in percent * 1000
+}
+
+def get_options():
+	description_text = """Collect statistics for SMC
+
+Output Columns:
+  TX_CNT: Number of transmits
+  TX_BS : Number of Bytes transmitted
+  RX_CNT: Number of receives
+  RX_BS : Number of Bytes received
+  TX_PBF: Number of occurences where peer's RMB was full
+  TX_SBF: Number of occurences where our send buffer was full (i.e. tansmission blocked)
+  MaxFil: Maximum RMB fill level in percent (across all RMBs)
+
+Notes:
+  * Covers any kind of SMC. I.e. does not differentiate between SMC-D and SMC-R.
+  * Performance: We attach a number of k(ret)probes to collect data. These probes
+    have an impact on performance: The more probes you install, the higher the
+    impact. And kretprobes (txret, rxret) are more expensive than kprobes (tx).
+    Use option '-p' to limit the number/kind of probes to install to ease impact.
+  * More Performance: Enable in-kernel JIT for a small performance increase:
+      echo 1 > /proc/sys/net/core/bpf_jit_enable
+  * Accuracy: We can only hook into functions at start or end, but not inbetween.
+    However, some conditions like buffer-full happen only in the middle of a
+    function. The output for buffer-full conditions is evaluated at the beginning
+    of a function. There is always a chance that this condition may disappear by
+    the time we reach the actual code in the middle of said function. Chances of
+    that happening are very small, yet present."""
+
+	class PlainHelpFormatter(optparse.IndentedHelpFormatter):
+		def format_description(self, description):
+			if description:
+				return description + "\n"
+			else:
+				return ""
+
+	optparser = optparse.OptionParser(description=description_text,
+                                      formatter=PlainHelpFormatter())
+	optparser.add_option('-i', '--interval',
+			     action='store',
+			     type='int',
+			     default=1,
+			     dest='interval',
+			     help='set refresh interval in seconds (default: 1 sec)',
+			    )
+	optparser.add_option('-p', '--probes',
+			     action='store',
+			     type='string',
+			     default='tx,txret,rxret',
+			     dest='probes',
+			     help='comma-separated list of probes to attach (default is '
+			          'to attach all probes). Adjusts output columns '
+			          'accordingly. '
+			          'Available values: tx, txret, rxret',
+			    )
+	opts, unkn = optparser.parse_args(sys.argv)
+	if len(unkn) != 1:
+		sys.exit('Error: Extra argument(s): ' + ' '.join(unkn[1:]))
+	if (opts.interval < 1):
+		sys.exit('Error: Refresh interval must be >= 1')
+	opts.probes = opts.probes.split(',')
+	for i in opts.probes:
+		if i not in ['tx', 'txret', 'rxret']:
+			sys.exit('Error: "%s" is not a valid argument to option "-p"' % i)
+	# sort list in a fixed sequence
+	t = []
+	for i in ['txret', 'rxret', 'tx']:
+		if i in opts.probes:
+			t.append(i)
+	opts.probes = t
+
+	return opts
+
+def abbrev(num):
+	if (num >= 1024**4):
+		return '%.2fT' % (num / 1024.**4)
+	else:
+		if (num >= 1073741824):
+			return '%.2fG' % (num / 1073741824.)
+		else:
+			if (num >= 1048576):
+				return '%.2fM' % (num / 1048576.)
+			else:
+				if (num >= 1024):
+					return '%.2fK' % (num / 1024.)
+				else:
+					return num
+
+opts = get_options()
+
+b = BPF(text=src, cflags=["-I/root/linux/net/smc"])
+
+print("%-8s: " % "Time", end='')
+for i in opts.probes:
+	if i == 'txret':
+		b.attach_kretprobe(event="smc_tx_sendmsg", fn_name="account_smc_tx_ret")
+		print(" %9s %9s" % ("TX_CNT", "TX_BS"), end='')
+	if i == 'rxret':
+		b.attach_kretprobe(event="smc_rx_recvmsg", fn_name="account_smc_rx_ret")
+		print(" %9s %9s" % ("RX_CNT", "RX_BS"), end='')
+	if i == 'tx':
+		b.attach_kprobe(event="smc_tx_sendmsg", fn_name="account_smc_tx_sendmsg")
+		print(" %7s %7s %7s" % ("TX_PBF", "TX_SBF", "MaxFil"), end='')
+print('')
+
+while (1):
+	try:
+		sleep(float(opts.interval))
+	except KeyboardInterrupt:
+		pass
+		exit()
+
+	maxfil = b["stats"][c_int(stat_types["MaxFil"])].value
+	print("%-8s: " % strftime("%H:%M:%S"), end='')
+	for i in opts.probes:
+	        if i == 'txret':
+                	print(" %9s %8sB" %
+                	      (abbrev(b["stats"][c_int(stat_types["TX_CNT"])].value),
+                	       abbrev(b["stats"][c_int(stat_types["TX_BS"])].value)), end='')
+		if i == 'rxret':
+                	print(" %9s %8sB" %
+                	      (abbrev(b["stats"][c_int(stat_types["RX_CNT"])].value),
+                	       abbrev(b["stats"][c_int(stat_types["RX_BS"])].value)), end='')
+        	if i == 'tx':
+                	print(" %7s %7s %7s" %
+                	      (abbrev(b["stats"][c_int(stat_types["TX_PBF"])].value),
+                	       abbrev(b["stats"][c_int(stat_types["TX_SBF"])].value),
+                	       format(maxfil / 10., '.1f') if maxfil != 0 else "-"
+                	      ), end='')
+	print('')
+	b["stats"].clear()
