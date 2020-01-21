@@ -103,12 +103,12 @@ def get_options():
 	description_text = """Collect statistics for SMC
 
 Output Columns:
-  TX_CNT: Number of transmits
+  TX_CNT: Count of transmits
   TX_BS : Number of Bytes transmitted
-  RX_CNT: Number of receives
+  RX_CNT: Count of receives
   RX_BS : Number of Bytes received
-  TX_PBF: Number of occurences where peer's RMB was full
-  TX_SBF: Number of occurences where our send buffer was full (i.e. tansmission blocked)
+  TX_PBF: Count of peer's RMB full conditions
+  TX_SBF: Count of send buffer full conditions (i.e. transmission blocked)
   MaxFil: Maximum RMB fill level in percent (across all RMBs)
 
 Notes:
