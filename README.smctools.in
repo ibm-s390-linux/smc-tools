@@ -110,8 +110,6 @@ smc_run			SMC preload library environment setup script
 smc_pnet.c		PNET Table handling source code
 smcss.c			SMC socket display source code
 smctools_common.h	common definitions for smctools
-smc.h			include file from kernel include/uapi/linux/smc.h
-smc_diag.h		include file from kernel include/uapi/linux/smc_diag.h
 af_smc.7		manpage for AF_SMC sockets
 smc_pnet.8		manpage for smc_pnet
 smcss.8			manpage for smcss

@@ -11,11 +11,10 @@ src="""
 #include <uapi/linux/ptrace.h>
 #include <linux/socket.h>
 #include <net/sock.h>
-//#include <net/smc.h>
 #define KBUILD_MODNAME "foo"
 
 
-#include "smc.h"
+#include "smctools_common.h"
 
 
 enum stat_types {

@@ -30,7 +30,6 @@
 #include <arpa/inet.h>
 
 #include "smctools_common.h"
-#include "smc_diag.h"
 
 #define MAGIC_SEQ 123456
 #define ADDR_LEN_SHORT	23

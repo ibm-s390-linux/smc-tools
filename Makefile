@@ -110,7 +110,7 @@ SMC_PNET_CFLAGS = -I /usr/include/libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
-smc_pnet: smc_pnet.c smc.h smctools_common.h
+smc_pnet: smc_pnet.c smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \
 		printf "**************************************************************\n" >&2; \
 		printf "* Missing build requirement for: %-45s\n" $@ >&2; \
@@ -123,7 +123,7 @@ smc_pnet: smc_pnet.c smc.h smctools_common.h
 	fi
 	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} ${LDFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
 
-smcss: smcss.c smc_diag.h smctools_common.h
+smcss: smcss.c smctools_common.h
 	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $< -o $@
 
 install: all

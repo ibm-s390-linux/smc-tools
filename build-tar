@@ -50,8 +50,6 @@ sed -e "s/=SMC LEVEL=/$LEVEL/" smc_rnics > $build_dir/smc_rnics
 sed -e "s/=SMC LEVEL=/$LEVEL/" smc_dbg > $build_dir/smc_dbg
 chmod a+x $build_dir/smc_rnics
 chmod a+x $build_dir/smc_dbg
-cp smc.h $build_dir
-cp smc_diag.h $build_dir;
 cp smc_pnet.c $build_dir;
 cp smcss.c $build_dir;
 cp smc-preload.c $build_dir;
