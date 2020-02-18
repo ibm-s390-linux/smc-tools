@@ -155,6 +155,22 @@ ifneq ($(BASH_AUTODIR),)
 	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_pnet
 endif
 
+check:
+	if which cppcheck >/dev/null; then \
+	    echo "Running cppcheck"; \
+	    cppcheck . 2>&1; \
+	else \
+	    echo "cppcheck not available"; \
+	fi
+	@echo;
+	if which valgrind >/dev/null; then \
+	    echo "Running valgrind"; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smcss 2>&1; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smc_pnet 2>&1; \
+	else \
+	    echo "valgrind not available"; \
+	fi
+	@echo;
 clean:
 	echo "  CLEAN"
 	rm -f *.o *.so smcss smc_pnet README.smctools af_smc.7 smc-tools.spec smc_dbg smc_rnics
