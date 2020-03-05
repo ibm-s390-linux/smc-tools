@@ -19,11 +19,11 @@ function usage() {
 
 function print_rnic() {
 	if [ $header -eq 0 ]; then
-		printf "FID  Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
-		echo '------------------------------------------------------------------------------------';
+		printf "     FID  Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
+		echo '-----------------------------------------------------------------------------------------';
 		header=1;
 	fi
-	printf "%3x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
 	(( printed++ ));
 }
 

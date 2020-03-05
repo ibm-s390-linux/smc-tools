@@ -50,6 +50,8 @@ Release History:
     Changes:
 
     Bug fixes:
+    - smc_rnics: FIDs can have up to 4 digits and are planned to be extended
+                 to a total of 8 digits - adjusting output format accordingly
 
 1.2.2 (2019-10-24)
     Changes:
