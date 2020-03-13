@@ -53,6 +53,9 @@ Release History:
     Bug fixes:
     - smc_rnics: FIDs can have up to 4 digits and are planned to be extended
                  to a total of 8 digits - adjusting output format accordingly
+    - smc_rnics: Do not display port attribute for RoCE Express2 devices
+                 unless we have an accurate value
+    - smc_rnics: Sort output by PCHID
 
 1.2.2 (2019-10-24)
     Changes:
