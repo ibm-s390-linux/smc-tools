@@ -52,6 +52,7 @@ Release History:
     - smc_rnics:
          * Sort output by PCHID
          * Replace spaces in output by underscores for easier parsing
+         * Add new option --IB-dev to display IB-specific attributes
 
     Bug fixes:
     - smc_rnics:

@@ -12,13 +12,18 @@ function usage() {
 	echo "   -d, --disable <FID>  disable the specified FID";
 	echo "   -e, --enable <FID>   enable the specified FID";
 	echo "   -h, --help           display this message";
+	echo "   -I, --IB-dev         display IB-dev instead of netdev attributes";
 	echo "   -r, --rawids         display 'type' as raw vendor/device IDs";
 	echo "   -v, --version        display version info";
 	echo;
 }
 
 function print_header() {
-	printf "     FID  Power  PCI_ID        PCHID  Type           Port  PNET_ID           Interface\n";
+	if [ $IBdev -eq 0 ]; then
+		printf "     FID  Power  PCI_ID        PCHID  Type           PPrt  PNET_ID           Net-Dev\n";
+	else
+		printf "     FID  Power  PCI_ID        PCHID  Type           IPrt  PNET_ID           IB-Dev\n";
+	fi
 	echo '-----------------------------------------------------------------------------------------';
 }
 
@@ -80,28 +85,51 @@ function print_rnics() {
 				"0x1016") dev_type="RoCE_Express2";
 					  if [ -e port ]; then
 						port=`cat port`;
-						let port=$port-1;
+						if [ $IBdev -ne 0 ]; then
+							let port=$port-1;
+						fi
+					  else
+						port="n/a";
 					  fi;;
 				esac;;
 			esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
 		pnet="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII | cut -c 1-16`";
-		if [ -d net ]; then
-			interfaces="`ls -1 net`";
-		fi
-		if [ "$interfaces" == "" ]; then
-			print_rnic;
-			continue;
-		fi
-		# one device can have multiple interfaces (one per port)
-		for int in $interfaces; do
-			cd /sys/bus/pci/devices/$addr/net/$int;
-			if [ "$dev_type" == "RoCE_Express" ] && [ -e dev_port ]; then
-				port=`cat dev_port`;
+		if [ $IBdev -eq 0 ]; then
+			if [ -d "net" ]; then
+				interfaces="`ls -1 net`";
 			fi
-			print_rnic;
-		done
+			if [ "$interfaces" == "" ]; then
+				print_rnic;
+				continue;
+			fi
+			# one device can have multiple interfaces (one per port)
+			for int in $interfaces; do
+				cd /sys/bus/pci/devices/$addr/net/$int;
+				if [ "$dev_type" == "RoCE_Express" ] && [ -e dev_port ]; then
+					port=`cat dev_port`;
+				fi
+				print_rnic;
+			done
+		else
+			if [ "$dev_type" == "ISM" ]; then
+				print_rnic;
+				continue;
+			fi
+			if [ -d "infiniband" ]; then
+				int="`ls -1 infiniband`";
+			fi
+			if [ "$int" == "" ]; then
+				print_rnic;
+				continue;
+			fi
+			# only one IB interface per card
+			cd /sys/bus/pci/devices/$addr/infiniband/$int
+			for port in `ls -1 ports`; do
+				print_rnic;
+			done
+		fi
 	done
 }
 
@@ -131,12 +159,13 @@ if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
 	exit 1;
 fi
 
-args=`getopt -u -o hrve:d: -l enable:,disable:,help,rawids,version -- $*`;
+args=`getopt -u -o hIrve:d: -l enable:,disable:,help,IB-dev,rawids,version -- $*`;
 [ $? -ne 0 ] && exit 2;
 set -- $args;
 action="print";
 rawIDs=0;
 target="";
+IBdev=0;
 printed=0;
 while [ $# -gt 0 ]; do
 	case $1 in
@@ -151,6 +180,8 @@ while [ $# -gt 0 ]; do
 	"-h" | "--help" )
 		usage;
 		exit 0;;
+	"-I" | "--IB-dev" )
+	        IBdev=1;;
 	"-r" | "--rawids" )
 		rawIDs=1;;
 	"-v" | "--version" )
