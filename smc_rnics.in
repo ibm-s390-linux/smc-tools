@@ -27,8 +27,26 @@ function print_header() {
 	echo '-----------------------------------------------------------------------------------------';
 }
 
+function get_pnet_from_port() {
+	local idx;
+	local end;
+	local lport=$port;
+
+	if [ "$lport" == "n/a" ] || [ "$dev_type" == "RoCE_Express2" ]; then
+		if [ $IBdev -eq 0 ]; then
+			lport=0;
+		else
+			lport=1;
+		fi
+	fi
+	[ $IBdev -ne 0 ] && let lport=$lport-1;
+	(( idx=16*$lport+1 ))
+	(( end=$idx+15 ))
+	echo "$pnetids" | cut -c $idx-$end;
+}
+
 function print_rnic() {
-	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
 	(( printed++ ));
 }
 
@@ -42,7 +60,7 @@ function print_rnics() {
 		fi
 		power=`cat power`;
 		interfaces="";
-		port="";
+		port="n/a";
 		addr="";
 		int="";
 		if [ $power -eq 0 ]; then
@@ -74,7 +92,6 @@ function print_rnics() {
 			"0x1014" ) # IBM
 				case "$id" in
 				"0x04ed") dev_type="ISM";
-					  port="n/a";
 					  int="n/a";;
 				"0x044b") continue;;		# zEDC
 				esac;;
@@ -85,22 +102,22 @@ function print_rnics() {
 				"0x1016") dev_type="RoCE_Express2";
 					  if [ -e port ]; then
 						port=`cat port`;
-						if [ $IBdev -ne 0 ]; then
+						if [ $IBdev -eq 0 ]; then
 							let port=$port-1;
+						else
+							port=1;	
 						fi
-					  else
-						port="n/a";
 					  fi;;
 				esac;;
 			esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
-		pnet="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII | cut -c 1-16`";
+		pnetids="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII`";
 		if [ $IBdev -eq 0 ]; then
 			if [ -d "net" ]; then
 				interfaces="`ls -1 net`";
-			fi
-			if [ "$interfaces" == "" ]; then
+			else
+				int="n/a";
 				print_rnic;
 				continue;
 			fi
@@ -113,14 +130,10 @@ function print_rnics() {
 				print_rnic;
 			done
 		else
-			if [ "$dev_type" == "ISM" ]; then
-				print_rnic;
-				continue;
-			fi
 			if [ -d "infiniband" ]; then
 				int="`ls -1 infiniband`";
-			fi
-			if [ "$int" == "" ]; then
+			else
+				int="n/a";
 				print_rnic;
 				continue;
 			fi
@@ -142,16 +155,6 @@ function format_fid() {
 	fi
 
 	res="`printf "%08x" $((16#$res))`";
-}
-
-function set_pnet_from_port() {
-	local idx;
-	local end;
-	local port=$1;
-
-	(( idx=16*$port+1 ))
-	(( end=$idx+15 ))
-	pnet=`echo "$pnetids" | cut -c $idx-$end`;
 }
 
 if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
