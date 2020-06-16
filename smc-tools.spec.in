@@ -1,5 +1,5 @@
 Name:           smc-tools
-Version:        1.3.0
+Version:        1.3.99
 Release:        1%{?dist}
 Summary:        Shared Memory Communication Tools
 
