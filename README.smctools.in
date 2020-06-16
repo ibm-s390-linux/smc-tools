@@ -46,7 +46,7 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
-1.2.x (20xx-xx-xx)
+1.3.0 (2020-06-16)
     Changes:
     - smcss: Add description of Linux error codes to man page
     - smc_rnics:
