@@ -1,5 +1,5 @@
-SMC Tools (1.2.2)
-===================
+SMC Tools (1.3.x)
+=================
 
 The SMC Tools provided in this package allow execution of existing TCP
 applications over RoCE network without need to make changes in them.
