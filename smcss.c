@@ -433,6 +433,7 @@ newline:
 
 static int rtnl_dump(struct rtnl_handle *rth)
 {
+	int msglen, found_done = 0;
 	struct sockaddr_nl nladdr;
 	struct iovec iov;
 	struct msghdr msg = {
@@ -442,7 +443,6 @@ static int rtnl_dump(struct rtnl_handle *rth)
 		.msg_iovlen = 1,
 	};
 	char buf[32768];
-	int msglen;
 	struct nlmsghdr *h = (struct nlmsghdr *)buf;
 
 	memset(buf, 0, sizeof(buf));
@@ -465,8 +465,10 @@ again:
 	while(NLMSG_OK(h, msglen)) {
 		if (h->nlmsg_flags & NLM_F_DUMP_INTR)
 			fprintf(stderr, "Dump interrupted\n");
-		if (h->nlmsg_type == NLMSG_DONE)
-			break; /* process next */
+		if (h->nlmsg_type == NLMSG_DONE) {
+			found_done = 1;
+			break;
+		}
 		if (h->nlmsg_type == NLMSG_ERROR) {
 			if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
 				fprintf(stderr, "ERROR truncated\n");
@@ -480,6 +482,10 @@ again:
 	}
 	if (msg.msg_flags & MSG_TRUNC) {
 		fprintf(stderr, "Message truncated\n");
+		goto again;
+	}
+	if (!found_done) {
+		h = (struct nlmsghdr *)buf;
 		goto again;
 	}
 	return EXIT_SUCCESS;
