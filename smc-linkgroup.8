@@ -1,0 +1,216 @@
+.\" smc-linkgroup.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2020
+.\" Author(s):  Guvenc Gulce <guvenc@linux.ibm.com>
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMC-LINKGROUP 8 "June 2020" "smc-tools" "Linux Programmer's Manual"
+
+.SH NAME
+smc-linkgroup \- Print information about SMC linkgroups and links
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B smc
+.RI "[ " OPTIONS " ]"
+.B linkgroup
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "smc linkgroup" " { " show " | " link-show " } [" 
+.B "all " 
+.RI "| " LG-ID " ] [ "  
+.B type
+.IR TYPE " ] [ " 
+.B  netdev
+.IR NETDEV " ] [ "
+.B  ibdev
+.IR IBDEV " ]
+
+.ti -8
+.IR TYPE " := [ "
+.BR smcr " | "
+.BR smcd " ]"
+
+.SH "DESCRIPTION"
+The
+.B smc linkgroup
+command displays linkgroups, links and their properties. Links can be 
+listed only for SMC-R linkgroups. The command operates with type smcr 
+per default on all command levels. 
+
+.SS smc linkgroup show - look at the linkgroup properties
+
+.TP
+.B all  (default)
+Show all the linkgroups.
+
+.TP
+.I LG-ID
+Show the linkgroup with the id
+.I LG-ID
+
+.TP
+.BI type " TYPE"
+List only linkgroups of the given type.
+
+.TP
+.BI netdev " NETDEV"
+List linkgroups making use of the given network device only.
+
+.TP
+.BI ibdev " IBDEV"
+List only linkgroups of the given RoCE (infiniband) device.
+
+.SS smc linkgroup link-show - look at the link properties (SMC-R only)
+
+.TP
+.B all  (default)
+Show all the links of the linkgroups.
+
+.TP
+.I LG-ID
+Show links of the linkgroup with the id
+.I LG-ID
+
+.TP
+.BI type " TYPE"
+List only links of the linkgroups of the given type.
+
+.TP
+.BI netdev " NETDEV"
+List only links of the linkgroups making use of the given network device.
+
+.TP
+.BI ibdev " IBDEV"
+List only links of the linkgroups of the given RoCE (InfiniBand) device.
+
+.SH OUTPUT
+
+.SS "LG-ID"
+ID of the linkgroup.
+.SS "LG-Role"
+Role of the linkgroup.
+.TP
+.I
+SERV
+The linkgroup has a SERVER role.
+.TP
+.I
+CLNT
+The linkgroup has a CLIENT role.
+.SS "LG-Type"
+Linkgroup type of the linkgroup.
+.TP
+.I
+NONE
+The linkgroup has the initial type.
+.TP
+.I
+SINGLE
+The linkgroup has only a single link, i.e.
+the local and the peer system can offer one device port only for this linkgroup,
+which means a link outage on any side cannot be covered.
+.TP
+.I
+SYM
+The linkgroup has two symmetric links, i.e.
+the local and the peer system can offer two device ports for this linkgroup,
+which means a link outage on any side can be covered.
+.TP
+.I
+ASYMP
+The linkgroup has asymmetric links, i.e.
+the peer system can offer one device port only for this linkgroup,
+which means a link outage on the peer side cannot be covered.
+.TP
+.I
+ASYML
+The linkgroup has asymmetric links, i.e.
+the local system can offer one device port only for this linkgroup,
+which means a link outage on the local side cannot be covered.
+.SS "VLAN"
+VLAN the linkgroup belongs to.
+.SS "#Conns"
+Number of connections(sockets) running on the link/linkgroup.
+.SS "PNET-ID"
+PNET-ID of the linkgroup. "*" means PNET-ID is set by the user. 
+.SS "Net-Dev"
+Network device name corresponding to the link.
+.SS "Link-State"
+The state of the link.
+.TP
+.I
+LINK_UNUSED
+The link is not in use and in initial state.
+.TP
+.I
+LINK_INACTIVE
+The link is inactive and will go away.
+.TP
+.I
+LINK_ACTIVATING
+The link is being activated with the peer.
+.TP
+.I
+LINK_ACTIVE
+The link is active and operates on an established link with the peer.
+Data is being exchanged via RDMA.
+.SS "Link-UID"
+Unique identifier of the link. This identifier consists of linkgroup id and 
+link id.
+.SS "Peer-UID"
+Unique identifier of the link on peer side. This identifier consists of 
+linkgroup id and link id.
+.SS "IB-Dev"
+Name of the RoCE device used by the link.
+.SS "IB-P"
+Port of the RoCE device used by the link.
+.SS "Local-GID"
+GID of the RoCE port used by the link.
+.SS "Peer-GID"
+GID of the peer RoCE port used by the link.
+
+.SH "EXAMPLES"
+
+.br
+
+1. Show all linkgroups of the type smcd:
+.br
+
+\fB# smc linkgroup show all type smcd\fP
+.br
+
+2. Show all links of the linkgroups with type smcr:
+.br
+
+\fB# smc linkgroup link-show all type smcr\fP
+.br
+
+3. Show all links with linkgroup id 40:
+.br
+
+\fB# smc linkgroup link-show 40\fP
+.br
+
+4. Show all links on RoCE device "mlx4_0":
+.br
+
+\fB# smc linkgroup link-show ibdev mlx4_0\fP
+.br
+
+5. Shows all links on network device "eth0":
+.br
+
+\fB# smc linkgroup link-show netdev eth0\fP
+.br
+
+.SH SEE ALSO
+.br
+.BR smc (8),
+.BR smc-device (8)
