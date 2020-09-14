@@ -1,3 +1,52 @@
+_smc()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="device linkgroup -v -vv -V"
+    opts_short="device linkgroup"
+    opts_show="show link-show"
+    opts_type="smcd smcr"
+    opts_final="all type netdev ibdev"
+    case "${prev}" in
+        -v)
+            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}))
+            return 0
+            ;;
+        -vv)
+            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}))
+            return 0
+            ;;
+        device)
+            COMPREPLY=( $(compgen -W "${opts_show}" -- ${cur}))
+            return 0
+            ;;
+        linkgroup)
+            COMPREPLY=( $(compgen -W "${opts_show}" -- ${cur}) )
+            return 0
+            ;;
+        show)
+            COMPREPLY=( $(compgen -W "${opts_final}" -- ${cur}) )
+            return 0
+            ;;
+        link-show)
+            COMPREPLY=( $(compgen -W "${opts_final}" -- ${cur}) )
+            return 0
+            ;;
+        type)
+            COMPREPLY=( $(compgen -W "${opts_type}" -- ${cur}) )
+            return 0
+            ;;
+        smc)
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        *)
+        ;;
+    esac
+}
+
 function _smc_pnet_complete_() {
     case "${COMP_WORDS[COMP_CWORD-1]}" in
         --interface*|-I*)
@@ -33,6 +82,7 @@ function _smc_rnics_complete_() {
 
 complete -W "--help --tgz --version" smc_dbg
 complete -W "--help --version --all --listening --debug --wide --smcd --smcr" smcss
+complete -F _smc smc
 complete -F _smc_pnet_complete_ smc_pnet
 complete -F _smc_rnics_complete_ smc_rnics
 
