@@ -14,8 +14,8 @@ fi
 if [ ! -e README.smctools ]; then
 	make;
 fi
-if [ `grep -A 20 "Release History:" README.smctools | grep "$VERSION" | wc -l` -le 1 ]; then
-	echo "Error: 'README.smctools' is missing two entries for version '$VERSION' (at the top and in 'Release History')";
+if [ `grep -w "$VERSION" README.smctools | wc -l` -ne 2 ]; then
+	echo "Error: 'README.smctools' is missing entries for version '$VERSION' (at the top and/or in 'Release History')";
 	exit 4;
 fi
 
