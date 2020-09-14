@@ -59,7 +59,7 @@ LIBDIR		= ${PREFIX}/lib
 endif
 endif
 
-all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet
+all: libsmc-preload.so libsmc-preload32.so smc smcss smc_pnet
 
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
@@ -72,6 +72,18 @@ endif
 
 %: %.in
 	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
+
+util.o: util.c  util.h
+	${CCC} ${CFLAGS} -c util.c
+
+libutil.a: util.o
+	ar rcs libutil.a util.o
+
+libnetlink.o: libnetlink.c  libnetlink.h
+	${CCC} ${CFLAGS} -c libnetlink.c
+
+libnetlink.a: libnetlink.o
+	ar rcs libnetlink.a libnetlink.o
 
 smc-preload.o: smc-preload.c
 	${CCC} ${CFLAGS} -fPIC -c smc-preload.c
@@ -102,6 +114,18 @@ SMC_PNET_CFLAGS = -I /usr/include/libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
+dev.o: dev.c
+	${CCC} ${ALL_CFLAGS} -c $< -o $@
+
+linkgroup.o: linkgroup.c
+	${CCC} ${ALL_CFLAGS} -c $< -o $@
+
+smc.o: smc.c
+	${CCC} ${ALL_CFLAGS} -c $< -o $@
+
+smc: smc.o dev.o linkgroup.o libnetlink.a libutil.a
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
+
 smc_pnet: smc_pnet.c smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \
 		printf "**************************************************************\n" >&2; \
@@ -128,6 +152,7 @@ install: all
 #	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
 #endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
+	install $(INSTALL_FLAGS_BIN) smc $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_dbg $(DESTDIR)$(BINDIR)
@@ -159,10 +184,11 @@ check:
 	    echo "Running valgrind"; \
 	    valgrind --leak-check=full --show-leak-kinds=all ./smcss 2>&1; \
 	    valgrind --leak-check=full --show-leak-kinds=all ./smc_pnet 2>&1; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smc 2>&1; \
 	else \
 	    echo "valgrind not available"; \
 	fi
 	@echo;
 clean:
 	echo "  CLEAN"
-	rm -f *.o *.so smcss smc_pnet
+	rm -f *.o *.so *.a smc smcss smc_pnet

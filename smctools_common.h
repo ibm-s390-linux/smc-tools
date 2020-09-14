@@ -24,6 +24,13 @@
 
 #define PF_SMC 43
 
+#include <net/if.h>
+
+#define SMC_MAX_PNETID_LEN 16 /* Max. length of PNET id */
+#define SMC_LGR_ID_SIZE 4
+#define SMC_MAX_PORTS 2 /* Max # of ports per ib device */
+#define SMC_PCI_ID_STR_LEN 16
+
 /***********************************************************
  * Mimic definitions in kernel/include/uapi/linux/smc.h
  ***********************************************************/
@@ -52,10 +59,17 @@ enum {				/* SMC PNET Table commands */
 /***********************************************************
  * Mimic definitions in kernel/include/uapi/linux/smc_diag.h
  ***********************************************************/
-
 #include <linux/types.h>
 #include <linux/inet_diag.h>
 #include <rdma/ib_user_verbs.h>
+
+#define SMC_DIAG_EXTS_PER_CMD 16
+/* Sequence numbers */
+enum {
+	MAGIC_SEQ = 123456,
+	MAGIC_SEQ_V2,
+	MAGIC_SEQ_V2_ACK,
+};
 
 /* Request structure */
 struct smc_diag_req {
@@ -63,6 +77,17 @@ struct smc_diag_req {
 	__u8	pad[2];
 	__u8	diag_ext;		/* Query extended information */
 	struct inet_diag_sockid	id;
+};
+
+/* Request structure v2 */
+struct smc_diag_req_v2 {
+	__u8	diag_family;
+	__u8	pad[2];
+	__u8	diag_ext;		/* Query extended information */
+	struct inet_diag_sockid	id;
+	__u32	cmd;
+	__u32	cmd_ext;
+	__u8	cmd_val[8];
 };
 
 /* Base info structure. It contains socket identity (addrs/ports/cookie) based
@@ -86,7 +111,7 @@ enum {
 	SMC_DIAG_MODE_SMCD,
 };
 
-/* Extensions */
+/* GET_SOCK_DIAG command extensions */
 
 enum {
 	SMC_DIAG_NONE,
@@ -98,9 +123,31 @@ enum {
 	__SMC_DIAG_MAX,
 };
 
+/* V2 Commands */
+enum {
+	SMC_DIAG_GET_LGR_INFO = SMC_DIAG_EXTS_PER_CMD,
+	SMC_DIAG_GET_DEV_INFO,
+	__SMC_DIAG_EXT_MAX,
+};
+
+/* SMC_DIAG_GET_LGR_INFO command extensions */
+enum {
+	SMC_DIAG_LGR_INFO_SMCR = 1,
+	SMC_DIAG_LGR_INFO_SMCR_LINK,
+	SMC_DIAG_LGR_INFO_SMCD,
+};
+
+/* SMC_DIAG_GET_DEV_INFO command extensions */
+enum {
+	SMC_DIAG_DEV_INFO_SMCD = 1,
+	SMC_DIAG_DEV_INFO_SMCR,
+};
+
 #define SMC_DIAG_MAX (__SMC_DIAG_MAX - 1)
+#define SMC_DIAG_EXT_MAX (__SMC_DIAG_EXT_MAX - 1)
 
 /* SMC_DIAG_CONNINFO */
+#define IB_DEVICE_NAME_MAX	64
 
 struct smc_diag_cursor {
 	__u16	reserved;
@@ -130,7 +177,6 @@ struct smc_diag_conninfo {
 };
 
 /* SMC_DIAG_LINKINFO */
-#define IB_DEVICE_NAME_MAX	64
 
 struct smc_diag_linkinfo {
 	__u8 link_id;			/* link identifier */
@@ -138,6 +184,11 @@ struct smc_diag_linkinfo {
 	__u8 ibport;			/* RDMA device port number */
 	__u8 gid[40];			/* local GID */
 	__u8 peer_gid[40];		/* peer GID */
+	__u32 conn_cnt;
+	__u8 netdev[IFNAMSIZ];
+	__u8 link_uid[4];
+	__u8 peer_link_uid[4];
+	__u32 link_state;
 };
 
 struct smc_diag_lgrinfo {
@@ -156,6 +207,34 @@ struct smcd_diag_dmbinfo {		/* SMC-D Socket internals */
 	__u64 my_gid;			/* My GID */
 	__u64 token;			/* Token of DMB */
 	__u64 peer_token;		/* Token of remote DMBE */
+	__u8		pnet_id[SMC_MAX_PNETID_LEN];
+	__u32		conns_num;
+	__u8		vlan_id;
 };
 
+struct smc_diag_dev_info {
+	__u8		pnet_id[SMC_MAX_PORTS][SMC_MAX_PNETID_LEN];
+	__u8		pnetid_by_user[SMC_MAX_PORTS];
+	__u32		use_cnt;
+	__u8		is_critical;
+	__u32		pci_fid;
+	__u16		pci_pchid;
+	__u16		pci_vendor;
+	__u16		pci_device;
+	__u8		pci_id[SMC_PCI_ID_STR_LEN];
+	__u8		dev_name[IB_DEVICE_NAME_MAX];
+	__u8		netdev[SMC_MAX_PORTS][IFNAMSIZ];
+	__u8		port_state[SMC_MAX_PORTS];
+	__u8		port_valid[SMC_MAX_PORTS];
+};
+
+
+struct smc_diag_lgr {
+	__u8		lgr_id[SMC_LGR_ID_SIZE];
+	__u8		lgr_role;
+	__u8		lgr_type;
+	__u8		pnet_id[SMC_MAX_PNETID_LEN];
+	__u8		vlan_id;
+	__u32		conns_num;
+};
 #endif /* SMCTOOLS_COMMON_H */

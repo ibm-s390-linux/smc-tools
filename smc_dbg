@@ -52,6 +52,7 @@ smcss -v
 smc_dbg -v
 smc_pnet -v
 smc_rnics -v
+smc -V
 
 if [ "$ARCH" == "s390" ]; then
 	redirect devices.txt;
@@ -84,6 +85,12 @@ smcss --smcr;
 
 redirect pnet_table.txt;
 smc_pnet --show;
+
+redirect smcr_links.txt;
+smc -v linkgroup link-show;
+
+redirect smcd_lgs.txt;
+smc -v linkgroup show type smcd;
 
 if [ "$tgz" == "on" ]; then
 	exec >&3 2>&4
