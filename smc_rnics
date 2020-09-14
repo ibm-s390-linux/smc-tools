@@ -88,12 +88,14 @@ function print_rnics() {
 		vend=`cat vendor`;
 		dev_type="${vend#0x}:${id#0x}";
 		if [ $rawIDs -eq 0 ]; then
+			# suppress all output except the devices we know
 			case "$vend" in
 			"0x1014" ) # IBM
 				case "$id" in
 				"0x04ed") dev_type="ISM";
 					  int="n/a";;
-				"0x044b") continue;;		# zEDC
+				*)
+					continue;
 				esac;;
 			"0x15b3" ) # Mellanox
 				case "$id" in
@@ -108,7 +110,11 @@ function print_rnics() {
 							port=1;	
 						fi
 					  fi;;
+				*)
+					continue;
 				esac;;
+			*)
+				continue;
 			esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";

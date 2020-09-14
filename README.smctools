@@ -51,6 +51,9 @@ Release History:
     - smcss: Add further error codes to man page
 
     Bug fixes:
+    - smcss: Display more than 321 connections
+    - smc_rnics: Suppress any unknown non-networking device unless
+                 option -r is specified
 
 1.3.0 (2020-06-16)
     Changes:
