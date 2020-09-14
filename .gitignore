@@ -1,0 +1,5 @@
+*.o
+*.so
+smc
+smc_pnet
+smcss
