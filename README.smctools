@@ -127,24 +127,6 @@ Release History:
     The initial version
 
 
-Parts:
-======
-
-The SMC Tools package includes the following files:
-
-Makefile		smctools Makefile
-smc-preload.c		libsmc-preload.so, SMC preload library source code
-smc_run			SMC preload library environment setup script
-smc_pnet.c		PNET Table handling source code
-smcss.c			SMC socket display source code
-smctools_common.h	common definitions for smctools
-af_smc.7		manpage for AF_SMC sockets
-smc_pnet.8		manpage for smc_pnet
-smcss.8			manpage for smcss
-smc_run.8		manpage for preload library usage
-smc_dbg			collect debugging data
-
-
 Requirements:
 =============
 
