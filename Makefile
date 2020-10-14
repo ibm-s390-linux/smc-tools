@@ -1,4 +1,3 @@
-
 #
 # SMC Tools - Shared Memory Communication Tools
 #
@@ -59,7 +58,7 @@ LIBDIR		= ${PREFIX}/lib
 endif
 endif
 
-all: libsmc-preload.so libsmc-preload32.so smc smcss smc_pnet
+all: libsmc-preload.so libsmc-preload32.so smcd smcr smcss smc_pnet
 
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
@@ -114,16 +113,22 @@ SMC_PNET_CFLAGS = -I /usr/include/libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
-dev.o: dev.c
-	${CCC} ${ALL_CFLAGS} -c $< -o $@
+%d.o: %.c
+	${CCC} ${ALL_CFLAGS} -DSMCD -c $< -o $@
 
-linkgroup.o: linkgroup.c
-	${CCC} ${ALL_CFLAGS} -c $< -o $@
+%r.o: %.c
+	${CCC} ${ALL_CFLAGS} -DSMCR -c $< -o $@
 
-smc.o: smc.c
+%.o: %.c
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
 smc: smc.o dev.o linkgroup.o libnetlink.a libutil.a
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
+
+smcd: smcd.o devd.o linkgroupd.o libnetlink.a libutil.a
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
+
+smcr: smcr.o devr.o linkgroupr.o libnetlink.a libutil.a
 	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
@@ -152,7 +157,8 @@ install: all
 #	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
 #endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
-	install $(INSTALL_FLAGS_BIN) smc $(DESTDIR)$(BINDIR)
+	install $(INSTALL_FLAGS_BIN) smcd $(DESTDIR)$(BINDIR)
+	install $(INSTALL_FLAGS_BIN) smcr $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_dbg $(DESTDIR)$(BINDIR)
@@ -195,4 +201,4 @@ check:
 	@echo;
 clean:
 	echo "  CLEAN"
-	rm -f *.o *.so *.a smc smcss smc_pnet
+	rm -f *.o *.so *.a smc smcd smcr smcss smc_pnet

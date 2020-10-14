@@ -33,8 +33,13 @@ static int ibdev_entered = 0;
 static int type_entered = 0;
 static int all_entered = 0;
 static int show_links = 0;
+#if defined(SMCD)
+static int lgr_smcr = 0;
+static int lgr_smcd = 1;
+#else
 static int lgr_smcr = 1;
 static int lgr_smcd = 0;
+#endif
 static int d_level = 0;
 
 static char target_ibdev[IB_DEVICE_NAME_MAX] = {0};
@@ -44,9 +49,18 @@ static char target_ndev[IFNAMSIZ] = {0};
 static void usage(void)
 {
 	fprintf(stderr,
+#if defined(SMCD)
+		"Usage: smcd linkgroup [show] [all | LG-ID]\n"
+#elif defined(SMCR)
+		"Usage: smcr linkgroup [show | link-show] [all | LG-ID]\n"
+		"                                         [ibdev <dev>]\n"
+		"                                         [netdev <dev>]\n"
+#else
 		"Usage: smc linkgroup [show | link-show] [all | LG-ID] [type {smcd | smcr}]\n"
 		"                                                      [ibdev <dev>]\n"
-		"                                                      [netdev <dev>]\n");
+		"                                                      [netdev <dev>]\n"
+#endif
+	);
 	exit(-1);
 }
 
@@ -272,12 +286,16 @@ static void handle_cmd_params(int argc, char **argv)
 			usage();
 		} else if (contains(argv[0], "all") == 0) {
 			all_entered=1;
+#if !defined(SMCD) && !defined(SMCR)
 		} else if (contains(argv[0], "type") == 0) {
 			type_entered=1;
+#endif
+#if !defined(SMCD)
 		} else if (contains(argv[0], "ibdev") == 0) {
 			ibdev_entered =1;
 		} else if (contains(argv[0], "netdev") == 0) {
 			netdev_entered =1;
+#endif
 		} else if (!all_entered){
 			unmasked_trgt_lgid = (unsigned int)strtol(argv[0], NULL, 16);
 			target_lgid = (unmasked_trgt_lgid & SMC_MASK_LINK_ID);

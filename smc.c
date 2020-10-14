@@ -31,19 +31,30 @@
 
 struct rtnl_handle rth = { .fd = -1 };
 static int detail_level = 0;
+#if defined(SMCD)
+char *myname = "smcd";
+#elif defined(SMCR)
+char *myname = "smcr";
+#else
+char *myname = "smc";
+#endif
 
 static void version(void)
 {
 	fprintf(stderr,
-		"smc utility, smc-tools-%s (%s)\n", RELEASE_STRING, RELEASE_LEVEL);
+		"%s utility, smc-tools-%s (%s)\n", myname, RELEASE_STRING, RELEASE_LEVEL);
 	exit(-1);
 }
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: smc  [ OPTIONS ] OBJECT {COMMAND | help}\n"
+		"Usage: %s  [ OPTIONS ] OBJECT {COMMAND | help}\n"
 		"where  OBJECT := {linkgroup | device}\n"
-		"       OPTIONS := {-V[ersion] | -v[erbose] | -vv[erbose]}\n");
+#if defined(SMCD)
+		"       OPTIONS := {-V[ersion]}\n", myname);
+#else
+		"       OPTIONS := {-V[ersion] | -v[erbose] | -vv[erbose]}\n", myname);
+#endif
 	exit(-1);
 }
 
@@ -72,7 +83,7 @@ static int run_cmd(const char *argv0, int argc, char **argv)
 			return -(c->func(argc-1, argv+1, detail_level));
 	}
 
-	fprintf(stderr, "Object \"%s\" is unknown, try \"smc help\".\n", argv0);
+	fprintf(stderr, "Object \"%s\" is unknown, try \"%s help\".\n", argv0, myname);
 	return EXIT_FAILURE;
 }
 
@@ -100,8 +111,8 @@ int main(int argc, char **argv)
 			usage();
 		} else {
 			fprintf(stderr,
-				"Option \"%s\" is unknown, try \"smc help\".\n",
-				opt);
+				"Option \"%s\" is unknown, try \"%s help\".\n",
+				opt, myname);
 			exit(-1);
 		}
 		argc--;	argv++;
