@@ -30,6 +30,9 @@
 #define SMC_LGR_ID_SIZE 4
 #define SMC_MAX_PORTS 2 /* Max # of ports per ib device */
 #define SMC_PCI_ID_STR_LEN 16
+#define SMC_MAX_HOSTNAME_LEN 32
+#define SMC_MAX_EID_LEN 32
+#define SMC_MAX_EID 8
 
 /***********************************************************
  * Mimic definitions in kernel/include/uapi/linux/smc.h
@@ -127,6 +130,7 @@ enum {
 enum {
 	SMC_DIAG_GET_LGR_INFO = SMC_DIAG_EXTS_PER_CMD,
 	SMC_DIAG_GET_DEV_INFO,
+	SMC_DIAG_GET_SYS_INFO,
 	__SMC_DIAG_EXT_MAX,
 };
 
@@ -141,6 +145,11 @@ enum {
 enum {
 	SMC_DIAG_DEV_INFO_SMCD = 1,
 	SMC_DIAG_DEV_INFO_SMCR,
+};
+
+/* SMC_DIAG_GET_SYS_INFO command extensions */
+enum {
+	SMC_DIAG_SYS_INFO = 1,
 };
 
 #define SMC_DIAG_MAX (__SMC_DIAG_MAX - 1)
@@ -176,6 +185,25 @@ struct smc_diag_conninfo {
 	struct smc_diag_cursor	tx_fin;		/* confirmed sent cursor */
 };
 
+struct smc_v2_lgr_info {
+	__u8		smc_version;
+	__u8		peer_smc_release;
+	__u8		peer_os;	/* peer operating system */
+	__u8		negotiated_eid[SMC_MAX_EID_LEN];
+	__u8		peer_hostname[SMC_MAX_HOSTNAME_LEN];
+};
+
+struct smc_system_info {
+	__u8		smc_version;
+	__u8		smc_release;
+	__u8		ueid_count;
+	__u8		smc_ism_is_v2;
+	__u32		reserved;
+	__u8		local_hostname[SMC_MAX_HOSTNAME_LEN];
+	__u8		seid[SMC_MAX_EID_LEN];
+	__u8		ueid[SMC_MAX_EID][SMC_MAX_EID_LEN];
+};
+
 /* SMC_DIAG_LINKINFO */
 
 struct smc_diag_linkinfo {
@@ -209,7 +237,9 @@ struct smcd_diag_dmbinfo {		/* SMC-D Socket internals */
 	__u64 peer_token;		/* Token of remote DMBE */
 	__u8		pnet_id[SMC_MAX_PNETID_LEN];
 	__u32		conns_num;
+	__u16		chid;
 	__u8		vlan_id;
+	struct smc_v2_lgr_info v2_lgr_info;
 };
 
 struct smc_diag_dev_info {
@@ -236,5 +266,6 @@ struct smc_diag_lgr {
 	__u8		pnet_id[SMC_MAX_PNETID_LEN];
 	__u8		vlan_id;
 	__u32		conns_num;
+	struct smc_v2_lgr_info v2_lgr_info;
 };
 #endif /* SMCTOOLS_COMMON_H */
