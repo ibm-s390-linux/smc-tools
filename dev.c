@@ -135,7 +135,7 @@ static void show_devs_smcr_details(struct smc_diag_dev_info *dev, int idx)
 			printf("%-12s  ", dev->pci_id);
 			printf("%04x    ", dev->pci_pchid);
 		}
-		printf("%5d ", dev->use_cnt);
+		printf("%5d ", dev->lnk_cnt_by_port[idx]);
 		if (dev->pnetid_by_user[idx])
 			snprintf(buf, sizeof(buf),"*%s", dev->pnet_id[idx]);
 		else

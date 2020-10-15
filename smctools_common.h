@@ -256,6 +256,7 @@ struct smc_diag_dev_info {
 	__u8		netdev[SMC_MAX_PORTS][IFNAMSIZ];
 	__u8		port_state[SMC_MAX_PORTS];
 	__u8		port_valid[SMC_MAX_PORTS];
+	__u32		lnk_cnt_by_port[SMC_MAX_PORTS]; /* # lnks per port */
 };
 
 
