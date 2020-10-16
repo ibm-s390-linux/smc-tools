@@ -128,7 +128,7 @@ static const char *smc_lgr_type(unsigned int x)
 	}
 }
 
-static int filter_item(struct smc_diag_linkinfo *link, struct smc_diag_lgr *lgr)
+static int filter_item(struct smc_diag_linkinfo_v2 *link, struct smc_diag_lgr *lgr)
 {
 	int ignore = 0;
 
@@ -141,7 +141,7 @@ static int filter_item(struct smc_diag_linkinfo *link, struct smc_diag_lgr *lgr)
 		else
 			ignore = 1;
 	} else if (!is_str_empty(target_ibdev) && show_links) {
-		if (strncmp(target_ibdev, (char*)link->ibname, sizeof(target_ibdev)) == 0)
+		if (strncmp(target_ibdev, (char*)link->v1.ibname, sizeof(target_ibdev)) == 0)
 			ignore = 0;
 		else
 			ignore = 1;
@@ -158,7 +158,7 @@ static int filter_item(struct smc_diag_linkinfo *link, struct smc_diag_lgr *lgr)
 static void show_lgr_smcr_info(struct rtattr *tb[])
 {
 	static struct smc_diag_lgr lgr = {0};
-	struct smc_diag_linkinfo link = {0};
+	struct smc_diag_linkinfo_v2 link = {0};
 
 	if (tb[SMC_DIAG_LGR_INFO_SMCR]) {
 		lgr = *(struct smc_diag_lgr *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCR]);
@@ -166,7 +166,7 @@ static void show_lgr_smcr_info(struct rtattr *tb[])
 			return;
 	}
 	if (tb[SMC_DIAG_LGR_INFO_SMCR_LINK]) {
-		link = *(struct smc_diag_linkinfo *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCR_LINK]);
+		link = *(struct smc_diag_linkinfo_v2 *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCR_LINK]);
 	}
 
 	if (filter_item(&link, &lgr))
@@ -182,11 +182,11 @@ static void show_lgr_smcr_info(struct rtattr *tb[])
 		if (d_level >= SMC_DETAIL_LEVEL_V) {
 			printf("%08x  ",  ntohl(*(__u32*)link.link_uid));
 			printf("%08x  ", ntohl(*(__u32*)link.peer_link_uid));
-			printf("%-.8s  ", link.ibname);
-			printf("%4d  ", link.ibport);
+			printf("%-.8s  ", link.v1.ibname);
+			printf("%4d  ", link.v1.ibport);
 			if (d_level >= SMC_DETAIL_LEVEL_VV) {
-				printf("%-40s  ", link.gid);
-				printf("%s  ", link.peer_gid);
+				printf("%-40s  ", link.v1.gid);
+				printf("%s  ", link.v1.peer_gid);
 			}
 		}
 	} else {
@@ -200,10 +200,10 @@ static void show_lgr_smcr_info(struct rtattr *tb[])
 static void show_lgr_smcd_info(struct rtattr *tb[])
 {
 	if (tb[SMC_DIAG_LGR_INFO_SMCD]) {
-		struct smcd_diag_dmbinfo lgr;
+		struct smcd_diag_dmbinfo_v2 lgr;
 
-		lgr = *(struct smcd_diag_dmbinfo *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCD]);
-		printf("%08x ", lgr.linkid);
+		lgr = *(struct smcd_diag_dmbinfo_v2 *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCD]);
+		printf("%08x ", lgr.v1.linkid);
 		printf("%#4x  ", lgr.vlan_id);
 		printf("%6d  ", lgr.conns_num);
 		printf("%-16s ", trim_space((char *)lgr.pnet_id));

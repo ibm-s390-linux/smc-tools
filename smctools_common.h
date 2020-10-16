@@ -212,6 +212,10 @@ struct smc_diag_linkinfo {
 	__u8 ibport;			/* RDMA device port number */
 	__u8 gid[40];			/* local GID */
 	__u8 peer_gid[40];		/* peer GID */
+};
+
+struct smc_diag_linkinfo_v2 {
+	struct smc_diag_linkinfo v1;
 	__u32 conn_cnt;
 	__u8 netdev[IFNAMSIZ];
 	__u8 link_uid[4];
@@ -235,6 +239,10 @@ struct smcd_diag_dmbinfo {		/* SMC-D Socket internals */
 	__u64 my_gid;			/* My GID */
 	__u64 token;			/* Token of DMB */
 	__u64 peer_token;		/* Token of remote DMBE */
+};
+
+struct smcd_diag_dmbinfo_v2 {
+	struct smcd_diag_dmbinfo v1;
 	__u8		pnet_id[SMC_MAX_PNETID_LEN];
 	__u32		conns_num;
 	__u16		chid;
