@@ -1,0 +1,89 @@
+.\" smcd.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2020
+.\" Author(s):  Guvenc Gulce <guvenc@linux.ibm.com>
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMCD 8 "June 2020" "smc-tools" "Linux Programmer's Manual"
+
+.SH NAME
+smcd \- Print information about SMC-D linkgroups and devices
+
+.SH SYNOPSIS
+.B smcd
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.IR OBJECT " := { "
+.BR linkgroup " | " device " }"
+.sp
+
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR]}
+
+.SH OPTIONS
+
+.TP
+.BR "\-V" , " -Version"
+Print the version of the
+.B smcd
+utility and exit.
+
+.SH SMCD - COMMAND SYNTAX
+
+.SS
+.I OBJECT
+
+.TP
+.B linkgroup
+Linkgroup(s) used by SMC-D.
+
+.TP
+.B device
+Device(s) of the SMC-D.
+
+.PP
+The names of all objects can be abbreviated down to
+a unique stem. For example
+.B device
+can be abbreviated to
+.B dev
+or just
+.B d.
+Man pages in
+.B SEE ALSO
+section contain more 
+information for individual objects.
+
+.SS
+.I COMMAND
+
+Specifies the action to perform on the object.
+As a general rule, it is possible to
+.BR " show "
+the objects. The
+.B help
+command is available for all objects. It prints
+out a list of available commands and argument syntax conventions.
+.sp
+If no command is given, a default command 
+is assumed.
+
+.SH RETURN CODES
+Successful
+.IR smcd
+command returns 0 and displays the
+requested linkgroup or device information.
+If an error occurs,
+.IR smcd
+writes a message to stderr and completes with a return code other than 0.
+.P
+.SH SEE ALSO
+.BR af_smc (7),
+.BR smcr (8),
+.BR smcd-device (8),
+.BR smcr-device (8),
+.BR smcd-linkgroup (8),
+.BR smcr-linkgroup (8)

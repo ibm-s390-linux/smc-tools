@@ -1,0 +1,169 @@
+.\" smcd-device.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2020
+.\" Author(s):  Guvenc Gulce <guvenc@linux.ibm.com>
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMCD-DEVICE 8 "June 2020" "smc-tools" "Linux Programmer's Manual"
+
+.SH NAME
+smcd-device \- Print information about SMC-D devices
+
+smcr-device \- Print information about SMC-R devices
+
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B smcd
+.RI "[ " OPTIONS " ]"
+.B device
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "smcd device" 
+.RI "[" 
+.B "show"
+.RI "] ["  
+.B "all" 
+.RI "] "  
+
+.ti -8
+.B smcr
+.RI "[ " OPTIONS " ]"
+.B device
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "smcr device" 
+.RI "[" 
+.B "show"
+.RI "] ["  
+.B "all" 
+.RI "] [ "  
+.B  netdev
+.IR NETDEV " ] [ "
+.B  ibdev
+.IR IBDEV " ]
+
+.SH "DESCRIPTION"
+The
+.B smcd device
+command displays SMC-D devices and their properties. 
+The
+.B smcr device
+command displays SMC-R devices and their properties. 
+
+.SS smcd,smcr device show
+inspect the device properties
+
+.TP
+.B all  (default)
+Show all the devices.
+
+.TP
+.BI netdev " NETDEV"
+.B SMC-R
+only: list only the device with the given network device name.
+
+.TP
+.BI ibdev " IBDEV"
+.B SMC-R
+only: list only the device ports with the given RoCE device name.
+
+.SH OUTPUT
+
+.SS "Net-Dev"
+Network device name.
+.SS "IB-Dev"
+RoCE (InfiniBand) device name.
+.SS "IB-P"
+InfiniBand port of the RoCE device. Note that per InfiniBand convention, the port counting starts at 1. Consequently, devices where each port is represented as a separate device will indicate the port as the first port for all ports.
+.SS "IB-State"
+State of the RoCE device port.
+.TP
+.I
+INACTIVE
+The RoCE device port is inactive.
+.TP
+.I
+ACTIVE
+The RoCE device port is active.
+.SS "Type"
+Type of the underlying PCI device.
+.TP
+.I
+RoCE_Express
+Underlying used device is RoCE Express.
+.TP
+.I
+RoCE_Express2
+Underlying used device is RoCE Express 2.
+.TP
+.I
+ISM
+Underlying used device is ISM.
+.SS "Crit / InUse"
+Show whether the device is critical i.e. without failover possibility(SMC-R) or
+whether the device is in use.(SMC-D)
+.TP
+.I
+Yes
+In case of SMC-R, there is at least one linkgroup running on the
+device with state "SINGLE" or locally "ASYMMETRIC" which
+means the linkgroups do not have any fail-over device in case of
+a failure.
+In case of SMC-D, there is at least one linkgroup running on the 
+ISM device.
+.TP
+.I
+No
+In case of SMC-R, there is no linkgroup running on the device with 
+state "SINGLE" or locally "ASYMMETRIC" which means the linkgroup(s) 
+have a fallback device in case of a failure.
+In case of SMC-D, there is no linkgroup running on the ISM device.
+.SS "FID"
+Functional ID of the PCI device.
+.SS "PCI-ID"
+ID of the PCI device.
+.SS "PCHID"
+Physical channel ID of the PCI device.
+.SS "#Links"
+Number of links(SMC-R)/linkgroups(SMC-D) on the device.
+.SS "PNET-ID"
+PNET-ID of the device. Preceding "*" means PNET-ID is set by the user. (e.g "*PNET-ID")
+
+.SH "EXAMPLES"
+.br
+.HP 2
+1. Show all SMC-D devices:
+.br
+\fB# smcd device show all\fP
+.br
+.HP 2
+2. Show all SMC-R devices:
+.br
+\fB# smcr devices show all\fP
+.br
+.HP 2
+3. Shows all SMC-R devices with RoCE (InfiniBand) device name "mlx4_0":
+.br
+\fB# smcr device show ibdev mlx4_0\fP
+.br
+.HP 2
+4. Shows all SMC-R devices with network device name "eth0":
+.br
+\fB# smcr device show netdev eth0\fP
+.br
+.SH SEE ALSO
+.br
+.BR smcd (8),
+.BR smcr (8),
+.BR smcd-linkgroup (8),
+.BR smcr-linkgroup (8)

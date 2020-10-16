@@ -170,9 +170,12 @@ endif
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_MAN) smc.8 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_MAN) smc-linkgroup.8 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_MAN) smc-device.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcr.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd-device.8 $(DESTDIR)$(MANDIR)/man8
+	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8/smcr-linkgroup.8
+	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-device.8 $(DESTDIR)$(MANDIR)/man8/smcr-device.8
 ifneq ($(BASH_AUTODIR),)
 	install $(INSTALL_FLAGS_MAN) smc-tools.autocomplete $(DESTDIR)$(BASH_AUTODIR)/smc-tools
 	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_rnics
