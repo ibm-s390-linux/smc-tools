@@ -5,40 +5,59 @@ _smc()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="device linkgroup -v -vv -V"
+    opts_smcd="device linkgroup -V"
     opts_short="device linkgroup"
     opts_show="show link-show"
+    opts_show_smcd="show"
     opts_type="smcd smcr"
-    opts_final="all type netdev ibdev"
+    opts_final="all netdev ibdev"
+    opts_final_smcd="all"
     case "${prev}" in
         -v)
-            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}))
+            if [ $1 = "smcr" ]; then
+                COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}))
+            fi
             return 0
             ;;
         -vv)
-            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}))
+            if [ $1 = "smcr" ]; then
+                COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}))
+            fi
             return 0
             ;;
         device)
-            COMPREPLY=( $(compgen -W "${opts_show}" -- ${cur}))
+            if [ $1 = "smcr" ]; then
+                COMPREPLY=( $(compgen -W "${opts_show}" -- ${cur}))
+            else
+                COMPREPLY=( $(compgen -W "${opts_show_smcd}" -- ${cur}))
+            fi
             return 0
             ;;
         linkgroup)
-            COMPREPLY=( $(compgen -W "${opts_show}" -- ${cur}) )
+            if [ $1 = "smcr" ]; then
+                COMPREPLY=( $(compgen -W "${opts_show}" -- ${cur}) )
+            else
+                COMPREPLY=( $(compgen -W "${opts_show_smcd}" -- ${cur}) )
+            fi
             return 0
             ;;
         show)
-            COMPREPLY=( $(compgen -W "${opts_final}" -- ${cur}) )
+            if [ $1 = "smcr" ]; then
+                COMPREPLY=( $(compgen -W "${opts_final}" -- ${cur}) )
+            else
+                COMPREPLY=( $(compgen -W "${opts_final_smcd}" -- ${cur}) )
+            fi
             return 0
             ;;
         link-show)
             COMPREPLY=( $(compgen -W "${opts_final}" -- ${cur}) )
             return 0
             ;;
-        type)
-            COMPREPLY=( $(compgen -W "${opts_type}" -- ${cur}) )
+        smcd)
+            COMPREPLY=( $(compgen -W "${opts_smcd}" -- ${cur}) )
             return 0
             ;;
-        smc)
+        smcr)
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             return 0
             ;;
@@ -82,7 +101,8 @@ function _smc_rnics_complete_() {
 
 complete -W "--help --tgz --version" smc_dbg
 complete -W "--help --version --all --listening --debug --wide --smcd --smcr" smcss
-complete -F _smc smc
+complete -F _smc smcd
+complete -F _smc smcr
 complete -F _smc_pnet_complete_ smc_pnet
 complete -F _smc_rnics_complete_ smc_rnics
 
