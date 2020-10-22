@@ -25,6 +25,7 @@
 #include "linkgroup.h"
 
 #define SMC_MASK_LINK_ID 0xFFFFFF00
+#define SMC_INVALID_LINK_ID 0xFFFFFFFF
 
 static __u32 unmasked_trgt_lgid = 0;
 static int netdev_entered = 0;
@@ -128,7 +129,19 @@ static const char *smc_lgr_type(unsigned int x)
 	}
 }
 
-static int filter_item(struct smc_diag_linkinfo_v2 *link, struct smc_diag_lgr *lgr)
+static int filter_smcd_item(struct smcd_diag_dmbinfo_v2 *lgr)
+{
+	int ignore = 0;
+
+	if (unmasked_trgt_lgid == 0 )
+		return ignore; /* No filter set */
+	else if (unmasked_trgt_lgid != lgr->v1.linkid)
+		ignore = 1;
+
+	return ignore;
+}
+
+static int filter_smcr_item(struct smc_diag_linkinfo_v2 *link, struct smc_diag_lgr *lgr)
 {
 	int ignore = 0;
 
@@ -169,7 +182,7 @@ static void show_lgr_smcr_info(struct rtattr *tb[])
 		link = *(struct smc_diag_linkinfo_v2 *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCR_LINK]);
 	}
 
-	if (filter_item(&link, &lgr))
+	if (filter_smcr_item(&link, &lgr))
 		return;
 
 	printf("%08x ", *(__u32*)lgr.lgr_id);
@@ -203,6 +216,8 @@ static void show_lgr_smcd_info(struct rtattr *tb[])
 		struct smcd_diag_dmbinfo_v2 lgr;
 
 		lgr = *(struct smcd_diag_dmbinfo_v2 *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCD]);
+		if(filter_smcd_item(&lgr))
+			return;
 		printf("%08x ", lgr.v1.linkid);
 		printf("%#4x  ", lgr.vlan_id);
 		printf("%6d  ", lgr.conns_num);
@@ -297,8 +312,13 @@ static void handle_cmd_params(int argc, char **argv)
 			netdev_entered =1;
 #endif
 		} else if (!all_entered){
-			unmasked_trgt_lgid = (unsigned int)strtol(argv[0], NULL, 16);
-			target_lgid = (unmasked_trgt_lgid & SMC_MASK_LINK_ID);
+			char *endptr = NULL;
+
+			unmasked_trgt_lgid = (unsigned int)strtol(argv[0], &endptr, 16);
+			if (argv[0] == endptr) /* string doesn't contain any digits */
+				unmasked_trgt_lgid = SMC_INVALID_LINK_ID;
+			else
+				target_lgid = (unmasked_trgt_lgid & SMC_MASK_LINK_ID);
 			break;
 		} else {
 			usage();
