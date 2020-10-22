@@ -89,7 +89,7 @@ static void print_devs_smcd_header(void)
 	printf("Type  ");
 	printf("PCI-ID        ");
 	printf("PCHID  ");
-	printf("Crit  ");
+	printf("InUse  ");
 	printf("#LGs  ");
 	printf("PNET-ID  ");
 	printf("\n");
@@ -184,7 +184,7 @@ static void show_dev_smcd_info(struct rtattr *tb[])
 		printf("%-4s  ", smc_ib_dev_type(dev.pci_device));
 		printf("%-12s  ", dev.pci_id);
 		printf("%04x   ", dev.pci_pchid);
-		printf("%-3s  ", dev.is_critical?"Yes":"No");
+		printf("%-4s  ", dev.is_critical?"Yes":"No");
 		printf("%5d ", dev.use_cnt);
 		if (dev.pnetid_by_user[0])
 			snprintf(buf, sizeof(buf),"*%s", dev.pnet_id[0]);
