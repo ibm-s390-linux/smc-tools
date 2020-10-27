@@ -14,6 +14,14 @@ function usage() {
 	echo;
 }
 
+function get_pnet_from_osa_port() {
+	local idx;
+	local end;
+
+	(( idx=16*$1+1 ))
+	(( end=$idx+15 ))
+	echo "$pnetids" | cut -c $idx-$end;
+}
 
 function redirect() {
 	if [ "$tgz" == "on" ]; then
@@ -57,16 +65,17 @@ smc -V
 if [ "$ARCH" == "s390" ]; then
 	redirect devices.txt;
 	echo "CCW Devices:"
-	printf "  Device    CHPID  PNET ID\n";
+	printf "  Device    CHPID  Port  PNET ID\n";
 	echo "  -------------------------------------------";
 	for device in `ls -1 /sys/bus/ccwgroup/devices`; do
 		chpid=`cat /sys/bus/ccwgroup/devices/$device/chpid | tr [A-F] [a-f]`;
+		osaport=`cat /sys/bus/ccwgroup/devices/$device/portno`;
 		if [ -e /sys/devices/css0/chp0.$chpid/util_string ]; then
-			pnetid="`cat /sys/devices/css0/chp0.$chpid/util_string | iconv -f IBM-1047 -t ASCII 2>/dev/null | tr -d '\000' | sed  's/^/    /'`";
+			pnetids="`cat /sys/devices/css0/chp0.$chpid/util_string | iconv -f IBM-1047 -t ASCII 2>/dev/null`";
 		else
-			pnetid="";
+			pnetids="";
 		fi
-		printf "  %8s  %4s   %s\n" $device 0x$chpid $pnetid;
+		printf "  %8s  %4s   %-4s  %s\n" $device 0x$chpid $osaport `get_pnet_from_osa_port $osaport`;
 	done
 	echo;
 
