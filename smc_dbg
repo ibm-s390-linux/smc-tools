@@ -71,7 +71,7 @@ if [ "$ARCH" == "s390" ]; then
 		chpid=`cat /sys/bus/ccwgroup/devices/$device/chpid | tr [A-F] [a-f]`;
 		osaport=`cat /sys/bus/ccwgroup/devices/$device/portno`;
 		if [ -e /sys/devices/css0/chp0.$chpid/util_string ]; then
-			pnetids="`cat /sys/devices/css0/chp0.$chpid/util_string | iconv -f IBM-1047 -t ASCII 2>/dev/null`";
+			pnetids="`cat /sys/devices/css0/chp0.$chpid/util_string | sed 's/\x0/\x40/g' | iconv -f IBM-1047 -t ASCII 2>/dev/null`";
 		else
 			pnetids="";
 		fi

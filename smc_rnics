@@ -118,7 +118,7 @@ function print_rnics() {
 			esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
-		pnetids="`cat util_string | iconv -f IBM-1047 -t ASCII`";
+		pnetids="`cat util_string | sed 's/\x0/\x40/g' | iconv -f IBM-1047 -t ASCII`";
 		if [ $IBdev -eq 0 ]; then
 			if [ -d "net" ]; then
 				interfaces="`ls -1 net`";
