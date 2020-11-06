@@ -77,7 +77,7 @@ static void print_lgr_smcr_header(void)
 		if (d_level >= SMC_DETAIL_LEVEL_V) {
 			printf("Link-UID  ");
 			printf("Peer-UID  ");
-			printf("IB-Dev  ");
+			printf("IB-Dev    ");
 			printf("IB-P  ");
 			if (d_level >= SMC_DETAIL_LEVEL_VV) {
 				printf("Local-GID                                 ");
@@ -189,13 +189,19 @@ static void show_lgr_smcr_info(struct rtattr *tb[])
 	printf("%-8s ", lgr.lgr_role ? "SERV" : "CLNT");
 	printf("%-8s ", smc_lgr_type(lgr.lgr_type));
 	if (show_links) {
-		printf("%-15s ", link.netdev);
+		if (strnlen((char*)link.netdev, sizeof(link.netdev)) > (IFNAMSIZ - 1))
+			printf("%-.15s ", link.netdev);
+		else
+			printf("%-15s ", link.netdev);
 		printf("%-15s ", smc_link_state(link.link_state));
 		printf("%6d  ", link.conn_cnt);
 		if (d_level >= SMC_DETAIL_LEVEL_V) {
 			printf("%08x  ",  ntohl(*(__u32*)link.link_uid));
 			printf("%08x  ", ntohl(*(__u32*)link.peer_link_uid));
-			printf("%-.8s  ", link.v1.ibname);
+			if (strnlen((char*)link.v1.ibname, sizeof(link.v1.ibname)) > SMC_MAX_IBNAME)
+				printf("%-.8s  ", link.v1.ibname);
+			else
+				printf("%-8s  ", link.v1.ibname);
 			printf("%4d  ", link.v1.ibport);
 			if (d_level >= SMC_DETAIL_LEVEL_VV) {
 				printf("%-40s  ", link.v1.gid);

@@ -33,6 +33,7 @@
 #define SMC_MAX_HOSTNAME_LEN 32
 #define SMC_MAX_EID_LEN 32
 #define SMC_MAX_EID 8
+#define SMC_MAX_IBNAME 8
 
 /***********************************************************
  * Mimic definitions in kernel/include/uapi/linux/smc.h

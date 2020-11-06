@@ -98,7 +98,7 @@ static void print_devs_smcd_header(void)
 static void print_devs_smcr_header(void)
 {
 	printf("Net-Dev         ");
-	printf("IB-Dev    ");
+	printf("IB-Dev   ");
 	printf("IB-P  ");
 	printf("IB-State  ");
 	printf("Type          ");
@@ -139,8 +139,14 @@ static void show_devs_smcr_details(struct smc_diag_dev_info *dev, int idx)
 	char buf[SMC_MAX_PNETID_LEN+1] = {0};
 
 	if (dev->port_valid[idx] && !filter_item(dev, idx)) {
-		printf("%-15s ", (char *)&dev->netdev[idx]);
-		printf("%-.8s    ",  dev->dev_name);
+		if (strnlen((char*)dev->netdev[idx], sizeof(dev->netdev[idx])) > (IFNAMSIZ - 1))
+			printf("%-.15s ", (char *)&dev->netdev[idx]);
+		else
+			printf("%-15s ", (char *)&dev->netdev[idx]);
+		if (strnlen((char*)dev->dev_name, sizeof(dev->dev_name)) > SMC_MAX_IBNAME)
+			printf("%-.8s ", dev->dev_name);
+		else
+			printf("%-8s ", dev->dev_name);
 		printf("%4d  ", idx+1);
 		printf("%8s  ", smc_ib_port_state(dev->port_state[idx]));
 		printf("%-13s  ", smc_ib_dev_type(dev->pci_device));
