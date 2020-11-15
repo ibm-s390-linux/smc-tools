@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 		argc--;	argv++;
 	}
 
-	if (rtnl_open(&rth) < 0)
+	if (gen_nl_open(myname) < 0)
 		exit(1);
 
 	if (argc > 1)

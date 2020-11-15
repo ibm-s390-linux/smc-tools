@@ -63,6 +63,15 @@ all: libsmc-preload.so libsmc-preload32.so smcd smcr smcss smc_pnet
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
 
+ifneq ($(shell sh -c 'command -v pkg-config'),)
+SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
+SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
+else
+SMC_PNET_CFLAGS = -I /usr/include/libnl3
+SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
+endif
+CFLAGS += ${SMC_PNET_CFLAGS}
+
 ifeq ($(ARCHTYPE),s390x)
 	MACHINE_OPT32="-m31"
 else
@@ -79,7 +88,7 @@ libutil.a: util.o
 	ar rcs libutil.a util.o
 
 libnetlink.o: libnetlink.c  libnetlink.h
-	${CCC} ${CFLAGS} -c libnetlink.c
+	${CCC} ${CFLAGS} ${LDFLAGS} -c libnetlink.c
 
 libnetlink.a: libnetlink.o
 	ar rcs libnetlink.a libnetlink.o
@@ -105,13 +114,6 @@ else
 endif
 endif
 
-ifneq ($(shell sh -c 'command -v pkg-config'),)
-SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
-SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
-else
-SMC_PNET_CFLAGS = -I /usr/include/libnl3
-SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
-endif
 
 %d.o: %.c
 	${CCC} ${ALL_CFLAGS} -DSMCD -c $< -o $@
@@ -123,13 +125,13 @@ endif
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
 smc: smc.o dev.o linkgroup.o libnetlink.a libutil.a
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ ${SMC_PNET_LFLAGS} -o $@
 
 smcd: smcd.o devd.o linkgroupd.o libnetlink.a libutil.a
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ ${SMC_PNET_LFLAGS} -o $@
 
 smcr: smcr.o devr.o linkgroupr.o libnetlink.a libutil.a
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ -o $@
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ ${SMC_PNET_LFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \

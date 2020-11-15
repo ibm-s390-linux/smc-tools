@@ -18,6 +18,14 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
+#include <netlink/genl/genl.h>
+#include <netlink/handlers.h>
+#include <netlink/attr.h>
+
+static const struct nla_policy smc_gen_net_policy[SMC_GEN_MAX + 1] = {
+	[SMC_GEN_UNSPEC]	= { .type = NLA_UNSPEC, },
+	[SMC_GEN_SYS_INFO]	= { .type = NLA_NESTED, },
+};
 
 struct rtnl_handle {
 	int			fd;
@@ -49,3 +57,5 @@ int rtnl_dump(struct rtnl_handle *rth, void (*handler)(struct nlmsghdr *nlh));
 void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 int sockdiag_send(int fd, int cmd);
 void set_extension(int ext);
+int gen_nl_open();
+int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg));

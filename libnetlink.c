@@ -24,11 +24,18 @@
 #include <time.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include <netlink/socket.h>
+#include <netlink/msg.h>
+#include <netlink/genl/ctrl.h>
 
 #include "smctools_common.h"
 #include "libnetlink.h"
 
-static int local_ext;
+static int local_ext, smc_id = 0;
+static struct nl_sock *sk;
+static char progname[16];
+
+/* Operations on sock_diag netlink socket */
 
 void set_extension(int ext)
 {
@@ -202,4 +209,89 @@ int sockdiag_send(int fd, int cmd)
 	}
 
 	return 0;
+}
+
+/* Operations on generic netlink sockets */
+
+int gen_nl_open(char *pname)
+{
+	int rc = EXIT_FAILURE;
+
+	snprintf(progname, sizeof(progname), "%s", pname);
+	/* Allocate a netlink socket and connect to it */
+	sk = nl_socket_alloc();
+	if (!sk) {
+		nl_perror(NLE_NOMEM, progname);
+		return rc;
+	}
+	rc = genl_connect(sk);
+	if (rc) {
+		nl_perror(rc, progname);
+		rc = EXIT_FAILURE;
+		goto err1;
+	}
+	smc_id = genl_ctrl_resolve(sk, SMC_GENL_FAMILY_NAME);
+	if (smc_id < 0) {
+		rc = EXIT_FAILURE;
+		if (smc_id == -NLE_OBJ_NOTFOUND)
+			fprintf(stderr, "%s: SMC module not loaded\n",
+				progname);
+		else
+			nl_perror(smc_id, progname);
+		goto err2;
+	}
+
+	return EXIT_SUCCESS;
+err2:
+	nl_close(sk);
+err1:
+	nl_socket_free(sk);
+	return rc;
+
+}
+
+int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg))
+{
+	int rc = EXIT_FAILURE, nlmsg_flags = 0;
+	struct nl_msg *msg;
+
+	nl_socket_modify_cb(sk, NL_CB_VALID, NL_CB_CUSTOM, cb_handler, NULL);
+
+	/* Allocate a netlink message and set header information. */
+	msg = nlmsg_alloc();
+	if (!msg) {
+		nl_perror(NLE_NOMEM, progname);
+		rc = EXIT_FAILURE;
+		goto err;
+	}
+
+	nlmsg_flags = NLM_F_DUMP;
+
+	if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, smc_id, 0, nlmsg_flags,
+			 cmd, SMC_GENL_FAMILY_VERSION)) {
+		nl_perror(rc, progname);
+		rc = EXIT_FAILURE;
+		goto err;
+	}
+
+	/* Send message */
+	rc = nl_send_auto(sk, msg);
+	if (rc < 0) {
+		nl_perror(rc, progname);
+		rc = EXIT_FAILURE;
+		goto err;
+	}
+
+	/* Receive reply message, returns number of cb invocations. */
+	rc = nl_recvmsgs_default(sk);
+
+	if (rc < 0) {
+		nl_perror(rc, progname);
+		rc = EXIT_FAILURE;
+		goto err;
+	}
+
+	return EXIT_SUCCESS;
+err:
+	return rc;
 }
