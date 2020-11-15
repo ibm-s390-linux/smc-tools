@@ -58,6 +58,23 @@ static struct nla_policy smc_gen_lgr_smcr_sock_policy[SMC_NLA_LGR_R_MAX + 1] = {
 	[SMC_NLA_LGR_R_CONNS_NUM]	= { .type = NLA_U32 },
 };
 
+static struct nla_policy smc_gen_link_smcr_sock_policy[SMC_NLA_LINK_MAX + 1] = {
+	[SMC_NLA_LINK_UNSPEC]		= { .type = NLA_UNSPEC },
+	[SMC_NLA_LINK_ID]		= { .type = NLA_U8 },
+	[SMC_NLA_LINK_IB_DEV]		= { .type = NLA_NUL_STRING,
+					    .maxlen = IB_DEVICE_NAME_MAX + 1 },
+	[SMC_NLA_LINK_IB_PORT]		= { .type = NLA_U8 },
+	[SMC_NLA_LINK_GID]		= { .type = NLA_NUL_STRING,
+					    .maxlen = 40 + 1 },
+	[SMC_NLA_LINK_PEER_GID]		= { .type = NLA_NUL_STRING,
+					    .maxlen = 40 + 1 },
+	[SMC_NLA_LINK_CONN_CNT]		= { .type = NLA_U32 },
+	[SMC_NLA_LINK_NET_DEV]          = { .type = NLA_U32},
+	[SMC_NLA_LINK_UID]		= { .type = NLA_U32 },
+	[SMC_NLA_LINK_PEER_UID]		= { .type = NLA_U32 },
+	[SMC_NLA_LINK_STATE]		= { .type = NLA_U32 },
+};
+
 static void usage(void)
 {
 	fprintf(stderr,
@@ -179,6 +196,45 @@ static int filter_smcr_item(struct smc_diag_linkinfo_v2 *link, struct smc_diag_l
 	return ignore;
 }
 
+static int fill_link_struct(struct smc_diag_linkinfo_v2 *link, struct nlattr **attrs)
+{
+	struct nlattr *link_attrs[SMC_NLA_LINK_MAX + 1];
+	__u32 temp_link_uid;
+
+	if (nla_parse_nested(link_attrs, SMC_NLA_LINK_MAX,
+			     attrs[SMC_GEN_LINK_SMCR],
+			     smc_gen_link_smcr_sock_policy)) {
+		fprintf(stderr, "failed to parse nested attributes: smc_gen_link_smcr_sock_policy\n");
+		return NL_STOP;
+	}
+	if (link_attrs[SMC_NLA_LINK_STATE])
+		link->link_state = nla_get_u32(link_attrs[SMC_NLA_LINK_STATE]);
+	if (link_attrs[SMC_NLA_LINK_CONN_CNT])
+		link->conn_cnt = nla_get_u32(link_attrs[SMC_NLA_LINK_CONN_CNT]);
+	if (link_attrs[SMC_NLA_LINK_UID]) {
+		temp_link_uid = nla_get_u32(link_attrs[SMC_NLA_LINK_UID]);
+		memcpy(&link->link_uid[0], &temp_link_uid, sizeof(temp_link_uid));
+	}
+	if (link_attrs[SMC_NLA_LINK_IB_PORT])
+		link->v1.ibport = nla_get_u8(link_attrs[SMC_NLA_LINK_IB_PORT]);
+	if (link_attrs[SMC_NLA_LINK_PEER_UID]) {
+		temp_link_uid = nla_get_u32(link_attrs[SMC_NLA_LINK_PEER_UID]);
+		memcpy(&link->peer_link_uid[0], &temp_link_uid, sizeof(temp_link_uid));
+	}
+	if (link_attrs[SMC_NLA_LINK_NET_DEV] && nla_get_u32(link_attrs[SMC_NLA_LINK_NET_DEV]))
+		if_indextoname(nla_get_u32(link_attrs[SMC_NLA_LINK_NET_DEV]), (char*)link->netdev);
+	if (link_attrs[SMC_NLA_LINK_IB_DEV])
+		snprintf((char*)link->v1.ibname, sizeof(link->v1.ibname), "%s",
+			 nla_get_string(link_attrs[SMC_NLA_LINK_IB_DEV]));
+	if (link_attrs[SMC_NLA_LINK_GID])
+		snprintf((char*)link->v1.gid, sizeof(link->v1.gid), "%s",
+			 nla_get_string(link_attrs[SMC_NLA_LINK_GID]));
+	if (link_attrs[SMC_NLA_LINK_PEER_GID])
+		snprintf((char*)link->v1.peer_gid, sizeof(link->v1.peer_gid), "%s",
+			 nla_get_string(link_attrs[SMC_NLA_LINK_PEER_GID]));
+	return NL_OK;
+}
+
 static int fill_lgr_struct(struct smc_diag_lgr *lgr, struct nlattr **attrs)
 {
 	struct nlattr *lgr_attrs[SMC_NLA_LGR_R_MAX + 1];
@@ -211,11 +267,14 @@ static int show_lgr_smcr_info(struct nlattr **attr)
 	struct smc_diag_linkinfo_v2 link = {0};
 	int rc = NL_OK;
 
-	if (attr[SMC_GEN_LGR_SMCR] && show_links)
-		return rc;
-
 	if (attr[SMC_GEN_LGR_SMCR])
 		rc = fill_lgr_struct(&lgr, attr);
+
+	if (attr[SMC_GEN_LINK_SMCR])
+		rc = fill_link_struct(&link, attr);
+
+	if (attr[SMC_GEN_LGR_SMCR] && show_links)
+		return rc;
 
 	if (filter_smcr_item(&link, &lgr))
 		return rc;
@@ -290,10 +349,10 @@ static int handle_gen_lgr_reply(struct nl_msg *msg, void *arg)
 		nl_msg_dump(msg, stderr);
 		return NL_STOP;
 	}
-	if (!attrs[SMC_GEN_LGR_SMCR])
+	if (!attrs[SMC_GEN_LGR_SMCR] && !attrs[SMC_GEN_LINK_SMCR])
 		return NL_STOP;
 
-	if (lgr_smcr && attrs[SMC_GEN_LGR_SMCR])
+	if (lgr_smcr && (attrs[SMC_GEN_LGR_SMCR] || attrs[SMC_GEN_LINK_SMCR]))
 		rc = show_lgr_smcr_info(&attrs[0]);
 
 	return rc;
@@ -372,6 +431,10 @@ int invoke_lgs(int argc, char **argv, int detail_level)
 
 	handle_cmd_params(argc, argv);
 	gen_nl_handle(SMC_NETLINK_GET_LGR_SMCR, handle_gen_lgr_reply);
+	if (show_links)
+		gen_nl_handle(SMC_NETLINK_GET_LINK_SMCR, handle_gen_lgr_reply);
+	else
+		gen_nl_handle(SMC_NETLINK_GET_LGR_SMCR, handle_gen_lgr_reply);
 
 	return 0;
 }
