@@ -58,6 +58,15 @@ static struct nla_policy smc_gen_lgr_smcr_sock_policy[SMC_NLA_LGR_R_MAX + 1] = {
 	[SMC_NLA_LGR_R_CONNS_NUM]	= { .type = NLA_U32 },
 };
 
+static struct nla_policy smc_gen_lgr_smcd_sock_policy[SMC_NLA_LGR_D_MAX + 1] = {
+	[SMC_NLA_LGR_D_UNSPEC]		= { .type = NLA_UNSPEC },
+	[SMC_NLA_LGR_D_ID]		= { .type = NLA_U32 },
+	[SMC_NLA_LGR_D_PNETID]		= { .type = NLA_NUL_STRING,
+					    .maxlen = SMC_MAX_PNETID_LEN + 1 },
+	[SMC_NLA_LGR_D_VLAN_ID]		= { .type = NLA_U8 },
+	[SMC_NLA_LGR_D_CONNS_NUM]	= { .type = NLA_U32 },
+};
+
 static struct nla_policy smc_gen_link_smcr_sock_policy[SMC_NLA_LINK_MAX + 1] = {
 	[SMC_NLA_LINK_UNSPEC]		= { .type = NLA_UNSPEC },
 	[SMC_NLA_LINK_ID]		= { .type = NLA_U8 },
@@ -261,6 +270,28 @@ static int fill_lgr_struct(struct smc_diag_lgr *lgr, struct nlattr **attrs)
 	return NL_OK;
 }
 
+static int fill_lgr_smcd_struct(struct smcd_diag_dmbinfo_v2 *lgr, struct nlattr **attrs)
+{
+	struct nlattr *lgr_attrs[SMC_NLA_LGR_D_MAX + 1];
+
+	if (nla_parse_nested(lgr_attrs, SMC_NLA_LGR_D_MAX,
+			     attrs[SMC_GEN_LGR_SMCD],
+			     smc_gen_lgr_smcd_sock_policy)) {
+		fprintf(stderr, "failed to parse nested attributes: smc_gen_lgr_smcd_sock_policy\n");
+		return NL_STOP;
+	}
+	if (lgr_attrs[SMC_NLA_LGR_D_ID])
+		lgr->v1.linkid = nla_get_u32(lgr_attrs[SMC_NLA_LGR_D_ID]);
+	if (lgr_attrs[SMC_NLA_LGR_D_VLAN_ID])
+		lgr->vlan_id = nla_get_u8(lgr_attrs[SMC_NLA_LGR_D_VLAN_ID]);
+	if (lgr_attrs[SMC_NLA_LGR_D_CONNS_NUM])
+		lgr->conns_num = nla_get_u32(lgr_attrs[SMC_NLA_LGR_D_CONNS_NUM]);
+	if (lgr_attrs[SMC_NLA_LGR_D_PNETID])
+		snprintf((char*)lgr->pnet_id, sizeof(lgr->pnet_id), "%s",
+			 nla_get_string(lgr_attrs[SMC_NLA_LGR_D_PNETID]));
+	return NL_OK;
+}
+
 static int show_lgr_smcr_info(struct nlattr **attr)
 {
 	static struct smc_diag_lgr lgr = {0};
@@ -312,20 +343,21 @@ static int show_lgr_smcr_info(struct nlattr **attr)
 	return rc;
 }
 
-static void show_lgr_smcd_info(struct rtattr *tb[])
+static int show_lgr_smcd_info(struct nlattr **attr)
 {
-	if (tb[SMC_DIAG_LGR_INFO_SMCD]) {
-		struct smcd_diag_dmbinfo_v2 lgr;
+	struct smcd_diag_dmbinfo_v2 lgr;
+	int rc = NL_OK;
 
-		lgr = *(struct smcd_diag_dmbinfo_v2 *)RTA_DATA(tb[SMC_DIAG_LGR_INFO_SMCD]);
-		if(filter_smcd_item(&lgr))
-			return;
-		printf("%08x ", lgr.v1.linkid);
-		printf("%#4x  ", lgr.vlan_id);
-		printf("%6d  ", lgr.conns_num);
-		printf("%-16s ", trim_space((char *)lgr.pnet_id));
-		printf("\n");
-	}
+	if (attr[SMC_GEN_LGR_SMCD])
+		rc = fill_lgr_smcd_struct(&lgr, attr);
+	if(filter_smcd_item(&lgr))
+		return rc;
+	printf("%08x ", lgr.v1.linkid);
+	printf("%#4x  ", lgr.vlan_id);
+	printf("%6d  ", lgr.conns_num);
+	printf("%-16s ", trim_space((char *)lgr.pnet_id));
+	printf("\n");
+	return rc;
 }
 
 static int handle_gen_lgr_reply(struct nl_msg *msg, void *arg)
@@ -349,12 +381,14 @@ static int handle_gen_lgr_reply(struct nl_msg *msg, void *arg)
 		nl_msg_dump(msg, stderr);
 		return NL_STOP;
 	}
-	if (!attrs[SMC_GEN_LGR_SMCR] && !attrs[SMC_GEN_LINK_SMCR])
+	if (!attrs[SMC_GEN_LGR_SMCR] && !attrs[SMC_GEN_LINK_SMCR] && !attrs[SMC_GEN_LGR_SMCD])
 		return NL_STOP;
 
 	if (lgr_smcr && (attrs[SMC_GEN_LGR_SMCR] || attrs[SMC_GEN_LINK_SMCR]))
 		rc = show_lgr_smcr_info(&attrs[0]);
 
+	if (lgr_smcd && attrs[SMC_GEN_LGR_SMCD])
+		rc = show_lgr_smcd_info(&attrs[0]);
 	return rc;
 }
 
@@ -430,8 +464,10 @@ int invoke_lgs(int argc, char **argv, int detail_level)
 	d_level = detail_level;
 
 	handle_cmd_params(argc, argv);
-	gen_nl_handle(SMC_NETLINK_GET_LGR_SMCR, handle_gen_lgr_reply);
-	if (show_links)
+
+	if (lgr_smcd)
+		gen_nl_handle(SMC_NETLINK_GET_LGR_SMCD, handle_gen_lgr_reply);
+	else if (show_links)
 		gen_nl_handle(SMC_NETLINK_GET_LINK_SMCR, handle_gen_lgr_reply);
 	else
 		gen_nl_handle(SMC_NETLINK_GET_LGR_SMCR, handle_gen_lgr_reply);
