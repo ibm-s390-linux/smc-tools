@@ -42,6 +42,24 @@ static char target_ibdev[IB_DEVICE_NAME_MAX] = {0};
 static char target_type[SMC_TYPE_STR_MAX] = {0};
 static char target_ndev[IFNAMSIZ] = {0};
 
+static struct nla_policy smc_gen_dev_smcd_sock_policy[SMC_NLA_DEV_MAX + 1] = {
+	[SMC_NLA_DEV_UNSPEC]		= { .type = NLA_UNSPEC },
+	[SMC_NLA_DEV_USE_CNT]		= { .type = NLA_U32 },
+	[SMC_NLA_DEV_IS_CRIT]		= { .type = NLA_U8 },
+	[SMC_NLA_DEV_PCI_FID]		= { .type = NLA_U32 },
+	[SMC_NLA_DEV_PCI_CHID]		= { .type = NLA_U16 },
+	[SMC_NLA_DEV_PCI_VENDOR]	= { .type = NLA_U16 },
+	[SMC_NLA_DEV_PCI_DEVICE]	= { .type = NLA_U16 },
+	[SMC_NLA_DEV_PCI_ID]		= { .type = NLA_NUL_STRING },
+	[SMC_NLA_DEV_PORT]		= { .type = NLA_NESTED },
+};
+
+static struct nla_policy smc_gen_dev_port_smcd_sock_policy[SMC_NLA_DEV_PORT_MAX + 1] = {
+	[SMC_NLA_DEV_PORT_UNSPEC]	= { .type = NLA_UNSPEC },
+	[SMC_NLA_DEV_PORT_PNET_USR]	= { .type = NLA_U8 },
+	[SMC_NLA_DEV_PORT_PNETID]	= { .type = NLA_NUL_STRING },
+};
+
 static void usage(void)
 {
 	fprintf(stderr,
@@ -179,13 +197,65 @@ static void show_dev_smcr_info(struct rtattr *tb[])
 	}
 }
 
-static void show_dev_smcd_info(struct rtattr *tb[])
+static int fill_dev_port_smcd_struct(struct smc_diag_dev_info *dev, struct nlattr **attrs, int idx)
+{
+	struct nlattr *port_attrs[SMC_NLA_DEV_PORT_MAX + 1];
+
+	if (nla_parse_nested(port_attrs, SMC_NLA_DEV_PORT_MAX,
+			     attrs[SMC_NLA_DEV_PORT],
+			     smc_gen_dev_port_smcd_sock_policy)) {
+		fprintf(stderr, "failed to parse nested attributes: smc_gen_dev_port_smcd_sock_policy\n");
+		return NL_STOP;
+	}
+	if (port_attrs[SMC_NLA_DEV_PORT_PNETID])
+		snprintf((char*)&dev->pnet_id[idx], sizeof(dev->pnet_id[idx]), "%s",
+				nla_get_string(port_attrs[SMC_NLA_DEV_PORT_PNETID]));
+	if (port_attrs[SMC_NLA_DEV_PORT_PNET_USR])
+		dev->pnetid_by_user[idx] = nla_get_u8(port_attrs[SMC_NLA_DEV_PORT_PNET_USR]);
+
+	return NL_OK;
+}
+
+static int fill_dev_smcd_struct(struct smc_diag_dev_info *dev, struct nlattr **attrs)
+{
+	struct nlattr *dev_attrs[SMC_NLA_DEV_MAX + 1];
+
+	if (nla_parse_nested(dev_attrs, SMC_NLA_DEV_MAX,
+			     attrs[SMC_GEN_DEV_SMCD],
+			     smc_gen_dev_smcd_sock_policy)) {
+		fprintf(stderr, "failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
+		return NL_STOP;
+	}
+	if (dev_attrs[SMC_NLA_DEV_USE_CNT])
+		dev->use_cnt = nla_get_u32(dev_attrs[SMC_NLA_DEV_USE_CNT]);
+	if (dev_attrs[SMC_NLA_DEV_IS_CRIT])
+		dev->is_critical = nla_get_u8(dev_attrs[SMC_NLA_DEV_IS_CRIT]);
+	if (dev_attrs[SMC_NLA_DEV_PCI_FID])
+		dev->pci_fid = nla_get_u32(dev_attrs[SMC_NLA_DEV_PCI_FID]);
+	if (dev_attrs[SMC_NLA_DEV_PCI_CHID])
+		dev->pci_pchid = nla_get_u16(dev_attrs[SMC_NLA_DEV_PCI_CHID]);
+	if (dev_attrs[SMC_NLA_DEV_PCI_VENDOR])
+		dev->pci_vendor = nla_get_u16(dev_attrs[SMC_NLA_DEV_PCI_VENDOR]);
+	if (dev_attrs[SMC_NLA_DEV_PCI_DEVICE])
+		dev->pci_device = nla_get_u16(dev_attrs[SMC_NLA_DEV_PCI_DEVICE]);
+	if (dev_attrs[SMC_NLA_DEV_PCI_ID])
+		snprintf((char*)dev->pci_id, sizeof(dev->pci_id), "%s",
+			 nla_get_string(dev_attrs[SMC_NLA_DEV_PCI_ID]));
+
+	if (fill_dev_port_smcd_struct(dev, &dev_attrs[0], 0) != NL_OK)
+		return NL_STOP;
+
+	return NL_OK;
+}
+
+static int show_dev_smcd_info(struct nlattr **attr)
 {
 	char buf[SMC_MAX_PNETID_LEN+1] = {0};
 	struct smc_diag_dev_info dev;
 
-	if (tb[SMC_DIAG_DEV_INFO_SMCD]) {
-		dev = *(struct smc_diag_dev_info *)RTA_DATA(tb[SMC_DIAG_DEV_INFO_SMCD]);
+	if (attr[SMC_GEN_DEV_SMCD]) {
+		if (fill_dev_smcd_struct(&dev, attr) != NL_OK)
+			return NL_STOP;
 		printf("%04x ", dev.pci_fid);
 		printf("%-4s  ", smc_ib_dev_type(dev.pci_device));
 		printf("%-12s  ", dev.pci_id);
@@ -199,41 +269,39 @@ static void show_dev_smcd_info(struct rtattr *tb[])
 		printf(" %-16s ", trim_space(buf));
 		printf("\n");
 	}
+
+	return NL_OK;
 }
 
-static void handle_devs_reply(struct nlmsghdr *nlh)
+static int handle_gen_dev_reply(struct nl_msg *msg, void *arg)
 {
-	struct rtattr *rt_attr;
-	struct rtattr *tb[SMC_DIAG_EXT_MAX + 1];
+	struct nlattr *attrs[SMC_GEN_MAX + 1];
+	struct nlmsghdr *hdr = nlmsg_hdr(msg);
 	static int header_printed = 0;
-	static int warning_printed = 0;
+	int rc = NL_OK;
 
 	if (!header_printed) {
-		if (nlh->nlmsg_seq >= MAGIC_SEQ_V2_ACK) {
-			if (dev_smcr)
-				print_devs_smcr_header();
-			else
-				print_devs_smcd_header();
-		} else if (nlh->nlmsg_seq == MAGIC_SEQ_V2) {
-			/* This is an old kernel (<v2) responding */
-			if (!warning_printed) {
-				print_unsup_msg();
-				warning_printed = 1;
-			}
-			return;
-		}
+		if (dev_smcr)
+			print_devs_smcr_header();
+		else
+			print_devs_smcd_header();
 		header_printed = 1;
 	}
 
-	if (nlh->nlmsg_seq >= MAGIC_SEQ_V2_ACK) {
-		rt_attr = (struct rtattr *)NLMSG_DATA(nlh);
-		parse_rtattr(tb, SMC_DIAG_EXT_MAX, rt_attr,
-			     nlh->nlmsg_len - NLMSG_HDRLEN);
-		if (dev_smcr && tb[SMC_DIAG_GET_DEV_INFO] && tb[SMC_DIAG_DEV_INFO_SMCR])
-			show_dev_smcr_info(tb);
-		if (dev_smcd && tb[SMC_DIAG_GET_DEV_INFO] && tb[SMC_DIAG_DEV_INFO_SMCD])
-			show_dev_smcd_info(tb);
+	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
+			  (struct nla_policy *)smc_gen_net_policy) < 0) {
+		fprintf(stderr, "invalid data returned: smc_gen_net_policy\n");
+		nl_msg_dump(msg, stderr);
+		return NL_STOP;
 	}
+
+	if (!attrs[SMC_GEN_DEV_SMCD])
+		return NL_STOP;
+
+	if (dev_smcd && attrs[SMC_GEN_DEV_SMCD])
+		rc = show_dev_smcd_info(&attrs[0]);
+
+	return rc;
 }
 
 static void handle_cmd_params(int argc, char **argv)
@@ -290,18 +358,11 @@ static void handle_cmd_params(int argc, char **argv)
 
 int invoke_devs(int argc, char **argv, int detail_level)
 {
-	rth.dump = MAGIC_SEQ_V2;
 	d_level = detail_level;
 
 	handle_cmd_params(argc, argv);
-
 	if (dev_smcd)
-		set_extension(SMC_DIAG_DEV_INFO_SMCD);
-	else
-		set_extension(SMC_DIAG_DEV_INFO_SMCR);
-
-	sockdiag_send(rth.fd, SMC_DIAG_GET_DEV_INFO);
-	rtnl_dump(&rth, handle_devs_reply);
+		gen_nl_handle(SMC_NETLINK_GET_DEV_SMCD, handle_gen_dev_reply);
 
 	return 0;
 }
