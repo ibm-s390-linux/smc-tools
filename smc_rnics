@@ -237,7 +237,7 @@ if [ "$action" != "print" ]; then
 fi
 
 print_header;
-print_rnics | sort -k 4;
+print_rnics | sort -k 1;
 
 if [ "$target" != "" ] && [ $printed -eq 0 ]; then
 	exit 8;
