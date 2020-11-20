@@ -9,7 +9,7 @@ smc_rnics \- list, enable and disable (R)NICS as used by SMC-R and SMC-D.
 
 .SH SYNOPSIS
 .B smc_rnics
-.RB [ \-hrv ]
+.RB [ \-ahrv ]
 .RB [ \-d
 .IR FID ]
 .RB [ \-e
@@ -27,11 +27,14 @@ to handle, and to identify hotplugged (R)NICs.
 .SH OPTIONS
 By default,
 .B smc_rnics
-shows all available (R)NICs in the system.
+shows all enabled (R)NICs in the system.
 .TP
 .I FID
 Limit output to the specified function ID
 .RI ( FID ).
+.TP
+.BR "\-a, \-\-all"
+Include disabled devices in output
 .TP
 .BR "\-d, \-\-disable " \fIFID
 Set (R)NIC

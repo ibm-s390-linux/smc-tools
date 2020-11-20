@@ -51,6 +51,7 @@ Release History:
     Changes:
     - smc: Create a new tool named "smc" which can list linkgroups, links
            and devices.
+    - smc_rnics: Display enabled devices per default, add new option --all
 
     Bug fixes:
 

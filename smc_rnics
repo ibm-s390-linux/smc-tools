@@ -1,14 +1,15 @@
 #!/bin/bash
 
-# Copyright IBM Corp. 2018
+# Copyright IBM Corp. 2018, 2020
 
 
 function usage() {
 	echo;
 	echo "Usage: smc_rnics [ OPTIONS ] [ FID ]";
 	echo;
-	echo "List all available RNICs";
+	echo "List RNICs";
 	echo;
+	echo "   -a, --all            include disabled devices in output";
 	echo "   -d, --disable <FID>  disable the specified FID";
 	echo "   -e, --enable <FID>   enable the specified FID";
 	echo "   -h, --help           display this message";
@@ -65,10 +66,12 @@ function print_rnics() {
 		int="";
 		if [ $power -eq 0 ]; then
 			# device not yet hotplugged
-			dev_type="";
-			pchid="";
-			pnet="";
-			print_rnic;
+			if [ $all -ne 0 ]; then
+				dev_type="";
+				pchid="";
+				pnet="";
+				print_rnic;
+			fi
 			continue;
 		fi
 		# device is hotplugged - locate it
@@ -168,16 +171,19 @@ if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
 	exit 1;
 fi
 
-args=`getopt -u -o hIrve:d: -l enable:,disable:,help,IB-dev,rawids,version -- $*`;
+args=`getopt -u -o hIrvae:d: -l all,enable:,disable:,help,IB-dev,rawids,version -- $*`;
 [ $? -ne 0 ] && exit 2;
 set -- $args;
 action="print";
 rawIDs=0;
+all=0;
 target="";
 IBdev=0;
 printed=0;
 while [ $# -gt 0 ]; do
 	case $1 in
+	"-a" | "--all" )
+		all=1;;
 	"-e" | "--enable" )
 		action="enable";
 		fid=$2;
