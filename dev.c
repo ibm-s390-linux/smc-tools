@@ -436,13 +436,14 @@ static void handle_cmd_params(int argc, char **argv)
 
 int invoke_devs(int argc, char **argv, int detail_level)
 {
-	d_level = detail_level;
+	int rc = EXIT_SUCCESS;
 
+	d_level = detail_level;
 	handle_cmd_params(argc, argv);
 	if (dev_smcd)
-		gen_nl_handle(SMC_NETLINK_GET_DEV_SMCD, handle_gen_dev_reply);
+		rc = gen_nl_handle(SMC_NETLINK_GET_DEV_SMCD, handle_gen_dev_reply);
 	else
-		gen_nl_handle(SMC_NETLINK_GET_DEV_SMCR, handle_gen_dev_reply);
+		rc = gen_nl_handle(SMC_NETLINK_GET_DEV_SMCR, handle_gen_dev_reply);
 
-	return 0;
+	return rc;
 }

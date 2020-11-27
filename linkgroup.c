@@ -461,16 +461,16 @@ static void handle_cmd_params(int argc, char **argv)
 
 int invoke_lgs(int argc, char **argv, int detail_level)
 {
+	int rc = EXIT_SUCCESS;
+
 	d_level = detail_level;
-
 	handle_cmd_params(argc, argv);
-
 	if (lgr_smcd)
-		gen_nl_handle(SMC_NETLINK_GET_LGR_SMCD, handle_gen_lgr_reply);
+		rc = gen_nl_handle(SMC_NETLINK_GET_LGR_SMCD, handle_gen_lgr_reply);
 	else if (show_links)
-		gen_nl_handle(SMC_NETLINK_GET_LINK_SMCR, handle_gen_lgr_reply);
+		rc = gen_nl_handle(SMC_NETLINK_GET_LINK_SMCR, handle_gen_lgr_reply);
 	else
-		gen_nl_handle(SMC_NETLINK_GET_LGR_SMCR, handle_gen_lgr_reply);
+		rc = gen_nl_handle(SMC_NETLINK_GET_LGR_SMCR, handle_gen_lgr_reply);
 
-	return 0;
+	return rc;
 }
