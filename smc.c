@@ -53,7 +53,7 @@ static void usage(void)
 #if defined(SMCD)
 		"       OPTIONS := {-V[ersion]}\n", myname);
 #else
-		"       OPTIONS := {-V[ersion] | -v[erbose] | -vv[erbose]}\n", myname);
+		"       OPTIONS := {-V[ersion] | -d[etails] | -dd[details]}\n", myname);
 #endif
 	exit(-1);
 }
@@ -103,9 +103,9 @@ int main(int argc, char **argv)
 			opt++;
 		if (contains(opt, "-Version") == 0) {
 			version();
-		} else if (contains(opt, "-verbose") == 0) {
+		} else if (contains(opt, "-detail") == 0) {
 			detail_level = SMC_DETAIL_LEVEL_V;
-		} else if (contains(opt, "-vverbose") == 0) {
+		} else if (contains(opt, "-ddetail") == 0) {
 			detail_level = SMC_DETAIL_LEVEL_VV;
 		} else if (contains(opt, "-help") == 0) {
 			usage();

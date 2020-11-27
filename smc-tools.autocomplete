@@ -4,7 +4,7 @@ _smc()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="device linkgroup -v -vv -V"
+    opts="device linkgroup -d -dd -V"
     opts_smcd="device linkgroup -V"
     opts_short="device linkgroup"
     opts_show="show link-show"

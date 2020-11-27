@@ -97,10 +97,10 @@ redirect pnet_table.txt;
 smc_pnet --show;
 
 redirect smcr_links.txt;
-smcr -v linkgroup link-show;
+smcr -d linkgroup link-show;
 
 redirect smcd_lgs.txt;
-smcd -v linkgroup show;
+smcd -d linkgroup show;
 
 if [ "$tgz" == "on" ]; then
 	exec >&3 2>&4
