@@ -79,6 +79,12 @@ requested linkgroup or device information.
 If an error occurs,
 .IR smcd
 writes a message to stderr and completes with a return code other than 0.
+Possible error messages to stderr in case of non-zero return code:
+.TP
+.BR "SMC module not loaded"
+Either kernel is not supporting the
+.IR smcd
+tool or the smc kernel module is not loaded.
 .P
 .SH SEE ALSO
 .BR af_smc (7),
