@@ -10,7 +10,7 @@
 smc_run \- start a TCP socket program with the capability to use SMC as
 networking protocol.
 
-.SH SYNOPSYS
+.SH SYNOPSIS
 
 .B smc_run
 .RB [ \-d ]
@@ -24,10 +24,9 @@ starts a
 specified as argument with its
 .IR parameters
 allowing to use the SMC protocol for program-used TCP socket connections.
-The script checks whether the ld_pre_smc.so preload library exists
-and specifies it as a preload shared library for the Linux program
-loader.
-The ld_pre_smc.so library intercepts a few TCP socket calls and
+The script specifies libsmc-preload.so as a preload shared library for the
+Linux program loader.
+The preload library libsmc-preload.so intercepts a few TCP socket calls and
 triggers the equivalent execution through SMC.
 
 The following options can be specified:
@@ -36,7 +35,7 @@ The following options can be specified:
 Display additional diagnostic messages during the program
 execution.
 .SH RETURN CODES
-Successful
+On success, the
 .IR smc_run
 command returns 0.
 If an error occurs
@@ -47,18 +46,10 @@ than 0.
 .TP
 .B 1
 An invalid option was specified.
-.TP
-.B 2
-The script could not find the ld_pre_smc.so shared library in the /usr/lib64
-directory.
-.TP
-.B 3
-The script could not find the ld_pre_smc.so shared library in the /usr/lib
-directory.
 .P
 .SH AUTHOR
 .nf
-Copyright (c) IBM Corp., 2017
+Copyright (c) IBM Corp. 2017
 
 Published under the terms and conditions of the EPL
 (Eclipse Public License).

@@ -1,7 +1,7 @@
 #
 # SMC Tools - Shared Memory Communication Tools
 #
-# Copyright IBM Corp. 2016, 2017
+# Copyright IBM Corp. 2016, 2018
 #
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
@@ -9,7 +9,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE = 1.0.1
+SMC_TOOLS_RELEASE = 1.1.0
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
@@ -32,6 +32,7 @@ OWNER		  = $(shell id -un)
 GROUP		  = $(shell id -gn)
 INSTALL_FLAGS_BIN = -g $(GROUP) -o $(OWNER) -m755
 INSTALL_FLAGS_MAN = -g $(GROUP) -o $(OWNER) -m644
+INSTALL_FLAGS_LIB = -g $(GROUP) -o $(OWNER) -m4755
 
 STUFF_32BIT	  = 0
 #
@@ -47,7 +48,7 @@ else
 LIBDIR		= ${PREFIX}/lib
 endif
 
-all: ld_pre_smc.so ld_pre_smc32.so smcss smc_pnet smc_run
+all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet
 
 CFLAGS ?= -Wall -O3 -g
 ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
@@ -58,21 +59,19 @@ else
 	MACHINE_OPT32="-m32"
 endif
 
-smc_run: smc_run.in
-	my_installdir=${PREFIX} $(GEN) -e "s#@install_dir@#$$my_installdir#g" < $< > $@
-	chmod a+x $@
+smc-preload.o: smc-preload.c
+	${CCC} ${CFLAGS} -fPIC -c smc-preload.c
 
-ld_pre_smc.o: ld_pre_smc.c
-	${CCC} ${CFLAGS} -fPIC -c ld_pre_smc.c
+libsmc-preload.so: smc-preload.o
+	${LINK} ${LDFLAGS} -shared smc-preload.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
+	chmod u+s $@
 
-ld_pre_smc.so: ld_pre_smc.o
-	${LINK} ${LDFLAGS} -shared ld_pre_smc.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
-
-ld_pre_smc32.so: ld_pre_smc.c
+libsmc-preload32.so: smc-preload.c
 ifeq ($(ARCH),64)
 ifeq ($(STUFF_32BIT),1)
-	${CCC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o ld_pre_smc32.o
-	${LINK} ${LDFLAGS} -shared ld_pre_smc32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
+	${CCC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o smc-preload32.o
+	${LINK} ${LDFLAGS} -shared smc-preload32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
+	chmod u+s $@
 else
 	$(warning "Warning: Skipping 31/32-bit library build because 31/32-bit build tools")
 	$(warning "         are unavailable. SMC will not support 31/32 bit applications")
@@ -107,19 +106,19 @@ smcss: smcss.c smc_diag.h smctools_common.h
 install: all
 	echo "  INSTALL"
 	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_BIN) ld_pre_smc.so $(DESTDIR)$(LIBDIR)
+	install $(INSTALL_FLAGS_LIB) libsmc-preload.so $(DESTDIR)$(LIBDIR)
 ifeq ($(STUFF_32BIT),1)
 	install -d -m755 $(DESTDIR)$(LIBDIR32)
-	install $(INSTALL_FLAGS_BIN) ld_pre_smc32.so $(DESTDIR)$(LIBDIR32)/ld_pre_smc.so
+	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
 endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
-	install $(INSTALL_FLAGS_MAN) $(DESTDIR)$(MANDIR)/man7
+	install $(INSTALL_FLAGS_MAN) af_smc.7 $(DESTDIR)$(MANDIR)/man7
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
 
 clean:
 	echo "  CLEAN"
-	rm -f *.o *.so smc_run smcss smc_pnet
+	rm -f *.o *.so smcss smc_pnet

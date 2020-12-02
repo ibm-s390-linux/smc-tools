@@ -12,7 +12,7 @@
 .SH NAME
 smc_pnet \- create, destroy, and change the SMC PNET table.
 
-.SH SYNOPSYS
+.SH SYNOPSIS
 
 .B smc_pnet
 .RB { \-\-add | \-a "} {" \-\-interface | \-I "} <ethernet-interface> {" \-\-ibdevice | \-D "} <infiniband-device> [ {" \-\-ibport | \-P "<infiniband-port> ] } <pnetid>"
@@ -51,7 +51,7 @@ shows all entries of the pnet table.
 .TP
 .BR <pnetid>
 defines a name for a grouping of Ethernet interface and RNIC.
-A pnetid name consists of up to 16 alpanumeric uppercase characters without blanks.
+A pnetid name consists of up to 16 alphanumeric uppercase characters without blanks.
 .TP
 .BR "\-a, \-\-add"
 creates a new pnetid definition to the pnet table (if it does not already exist).
@@ -134,7 +134,7 @@ other than 0.
 This man page was written by
 Ursula Braun <ubraun@linux.vnet.ibm.com>
 
-Copyright (c) IBM Corp., 2017
+Copyright (c) IBM Corp. 2017
 
 Published under the terms and conditions of the EPL
 (Eclipse Public License).

@@ -1,23 +1,43 @@
 .\" smcss.8
 .\"
 .\"
-.\" Copyright IBM Corp. 2017
+.\" Copyright IBM Corp. 2017, 2018
 .\" Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
 .\" ----------------------------------------------------------------------
 .\"
 
-.TH SMCSS 8 "January 2017" "smc-tools" "Linux Programmer's Manual"
+.TH SMCSS 8 "June 2018" "smc-tools" "Linux Programmer's Manual"
 
 .SH NAME
 smcss \- print information about the AF_SMC sockets and link groups.
 
-.SH SYNOPSYS
+.SH SYNOPSIS
 
 .B smcss
-.RB "[ {" \-\-all | -a "} ] [ {" \-\-extended | \-e "} ] [ {" \-\-linkgroup | \-L "} ]"
+.RB [ \-\-debug | \-d ]
+.RB [ \-\-smcd | \-D ]
+.RB [ \-\-wide | \-W ]
+.P
+.B smcss
+.RB { \-\-all | -a }
+.RB [ \-\-debug | \-d ]
+.RB [ \-\-smcd | \-D ]
+.RB [ \-\-wide | \-W ]
+.P
+.B smcss
+.RB [ \-\-debug | \-d ]
+.RB [ \-\-smcr | \-R ]
+.RB [ \-\-wide | \-W ]
+.P
+.B smcss
+.RB { \-\-all | -a }
+.RB [ \-\-debug | \-d ]
+.RB [ \-\-smcr | \-R ]
+.RB [ \-\-wide | \-W ]
 .P
 .B smcss
 .RB { \-\-listening | \-l }
+.RB [ \-\-wide | \-W ]
 .P
 .B smcss
 .RB { \-\-version | \-v }
@@ -26,38 +46,44 @@ smcss \- print information about the AF_SMC sockets and link groups.
 .RB { \-\-help | \-h }
 
 .SH DESCRIPTION
+
 .B smcss
 prints information about the Linux AF_SMC sockets and link groups.
-The type of information printed is controlled by its arguments, as follows:
-
-By default,
-.B smcss
+The type of information printed is controlled by the first argument, as follows:
+.TP
+.BR (none)
+.br
 displays a list of connecting, closing, or connected SMC sockets with basic
 information.
+
 .TP
 .BR "\-a, \-\-all"
-shows all types of SMC sockets: listening, opening, closing, and connected.
-.TP
-.BR "\-e, \-\-extend"
-displays additional information, such as shutdown state.
-.TP
-.BR "\-L, \-\-linkgroup
-displays additional information about the linkgroup to which the socket is connected.
+displays all types of SMC sockets: listening, opening, closing, and connected.
+
 .TP
 .BR "\-l, \-\-listening"
-shows listening sockets only.
-(These are omitted by default.)
+shows listening sockets only. These are omitted by default.
+
+.SH OPTIONS
+
 .TP
-.BR "\-K, \-\-kill"
-attempts to forcibly close sockets. This options displays sockets that are
-successfully closed and silently skips sockets that the kernel does not support closing.
+.BR "\-d, \-\-debug"
+displays additional debug information, such as shutdown state.
+
 .TP
-.BR "\-v, \-\-version"
-displays smcss program version and copyright information.
+.BR "\-D, \-\-smcd
+displays additional SMC-D specific information. Shows SMC-D sockets only.
+
 .TP
-.BR "\-h, \-\-help"
-displays brief smcss option usage information.
+.BR "\-R, \-\-smcr
+displays additional SMC-R specific information. Shows SMC-R sockets only.
+
+.TP
+.BR "\-W, \-\-wide"
+do not truncate IP addresses.
+
 .SH OUTPUT
+
 .SS "State"
 The state of the socket.
 The state can be one of these values:
@@ -114,28 +140,35 @@ The socket was abnormally closed locally.
 .I
 PROCESSABORT
 The peer has closed the socket abnormally.
+.SS "UID"
+User ID of the SMC socket.
 .SS "Inode"
 Inode attribute of the socket.
-.SS "UID"
-Unique ID of the SMC socket.
 .SS "Local Address"
-Address and port number of the local end of the SMC
-socket.
-.SS "Foreign Address"
+Address and port number of the local end of the SMC socket. 
+The displayed address is truncated when it ends with '..'.
+.BR "-W, --wide"
+can be used to display addresses untruncated.
+.SS "Peer Address"
 Address and port number of the remote end of the socket.
 Analogous to "Local Address".
 .SS "Intf"
-If socket is explicitly bound with setsockopt option SO_BINDTODEVICE,
+When the socket is explicitly bound with setsockopt option SO_BINDTODEVICE then
 Intf shows the interface number of the Ethernet device to which the socket is bound.
 .SS "Mode"
 .TP
 .I
-RDMA
-The SMC socket uses RDMA for data exchange.
+SMCD
+The SMC socket uses SMC-D for data exchange.
+.TP
+.I
+SMCR
+The SMC socket uses SMC-R for data exchange.
 .TP
 .I
 TCP
-The SMC socket uses the TCP protocol for data exchange.
+The SMC socket uses the TCP protocol for data exchange, because an SMC connection 
+could not be established.
 .SS "ShutD"
 .TP
 .I
@@ -220,9 +253,9 @@ writes a message to stderr and completes with a return code other than 0.
 .SH AUTHOR
 .nf
 This man page was written by
-Ursula Braun <ubraun@linux.vnet.ibm.com>
+Ursula Braun <ubraun@linux.ibm.com>
 
-Copyright (c) IBM Corp., 2017
+Copyright (c) IBM Corp. 2017, 2018
 
 Published under the terms and conditions of the EPL
 (Eclipse Public License).

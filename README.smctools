@@ -1,4 +1,4 @@
-SMC Tools (1.0.1)
+SMC Tools (1.1.0)
 ===================
 
 The SMC Tools provided in this package allow execution of existing TCP
@@ -7,16 +7,16 @@ In addition tools are provided to display SMC socket information.
 
 This package consists of the tools:
 
-- ld_preload_smc.so : preload library.
+- libsmc-preload.so : preload library.
 - smc_run           : preload library environment setup script.
 - smc_pnet          : C program for PNET Table handling
 - smcss             : C program for displaying the information about active
                       SMC sockets.
 
-The preload shared library ld_pre_smc.so provides mapping of TCP socket
+The preload shared library libsmc-preload.so provides mapping of TCP socket
 operations to SMC sockets.
 The environment setup script smc_run sets up the preload environment
-for the ld_pre_smc.so shared library before starting application.
+for the libsmc-preload.so shared library before starting application.
 The smcss program is used to gather and display information about the
 SMC sockets.
 The smc_pnet program is used to create, destroy, and change the SMC-R PNET
@@ -45,19 +45,26 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
-1.0.1 (2018-01-12)
+1.1.0 (2018-06-29)
     Changes:
+    - smcss:    Add IPv6 support
+    - preload:  Add IPv6 support
+    - smcss:    Output format changed
+    - preload:  Rename preload library into libsmc-preload.so
     - Makefile: Improve distro compatibility
     - Makefile: Add SONAME to shared libraries
     - Makefile: Do not strip binaries on install
     - Makefile: Use LDFLAGS to allow addition of externally set link flags
-    - ld_pre..: Remove hardcoded reference to libc
+    - libsmc..: Remove hardcoded reference to libc
     - Manpages: Formatting changes
 
     Bug fixes:
     - Makefile: Fix target 'install' dependencies
     - smcss:    Fix "--version" output
     - smc_pnet: Fix "--version" output
+    - smc_run:	Append preload library to LD_PRELOAD instead of potentially
+                overwriting pre-set values
+    - preload:  Set suid flag to work with suid executables
 
 1.0.0 (2017-02-13)
     The initial version
@@ -69,7 +76,7 @@ Parts:
 The SMC Tools package includes the following files:
 
 Makefile		smctools Makefile
-ld_pre_smc.c		ld_pre_smc.so, SMC preload library source code
+smc-preload.c		libsmc-preload.so, SMC preload library source code
 smc_run			SMC preload library environment setup script
 smc_pnet.c		PNET Table handling source code
 smcss.c			SMC socket display source code

@@ -2,16 +2,14 @@
 #
 # SMC Tools - Shared Memory Communication Tools
 #
-# Copyright IBM Corp. 2017
+# Copyright IBM Corp. 2017, 2018
 #
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
 # http://www.eclipse.org/legal/epl-v10.html
 #
-LIB_NAME="ld_pre_smc.so"
-LIBDIR="@install_dir@/lib/"
-LIBDIR64="@install_dir@/lib64/"
+LIB_NAME="libsmc-preload.so"
 
 #
 # Verify command line arguments and specify the preload library debug mode
@@ -37,33 +35,12 @@ if [ "x$command_line" = "x" ]; then
 	echo "`basename "$0"`: Error: Missing command parameter";
 	exit 1;
 fi
-#
-# Verify that preload libraries were properly installed.
-#
-if [ $SMC_DEBUG = 1 ]; then
-	app_path=$2;
-else
-	app_path=$1;
-fi
-
-app_path=$(which "$app_path");
-app_64bit=$(file -L "$app_path" | grep -c "ELF 64-bit");
-app_32bit=$(file -L "$app_path" | grep -c "ELF 3.-bit");
-
-if [ $app_64bit -gt 0 ] && [ ! -e "$LIBDIR64$LIB_NAME" ]; then
-	echo "`basename "$0"`: Error: Could not find '$LIB_NAME' in '$LIBDIR64'" >&2;
-	exit 2;
-fi
-if [ $app_32bit -gt 0 ] && [ ! -e "$LIB_PATH$LIB_NAME" ]; then
-	echo "`basename "$0"`: Error: Could not find '$LIB_NAME' in '$LIBDIR'" <&2;
-	exit 3;
-fi
 
 export SMC_DEBUG;
 #
 # Execute the specified command.
 #
-export LD_PRELOAD=$LIB_NAME;
+export LD_PRELOAD=$LD_PRELOAD:$LIB_NAME;
 
 exec $command_line
 exit $?;
