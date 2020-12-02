@@ -60,8 +60,8 @@ smcss -v
 smc_dbg -v
 smc_pnet -v
 smc_rnics -v
-smcd -V
-smcr -V
+smcd -v
+smcr -v
 
 if [ "$ARCH" == "s390" ]; then
 	redirect devices.txt;

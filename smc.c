@@ -51,9 +51,9 @@ static void usage(void)
 		"Usage: %s  [ OPTIONS ] OBJECT {COMMAND | help}\n"
 		"where  OBJECT := {linkgroup | device}\n"
 #if defined(SMCD)
-		"       OPTIONS := {-V[ersion]}\n", myname);
+		"       OPTIONS := {-v[ersion]}\n", myname);
 #else
-		"       OPTIONS := {-V[ersion] | -d[etails] | -dd[details]}\n", myname);
+		"       OPTIONS := {-v[ersion] | -d[etails] | -dd[details]}\n", myname);
 #endif
 	exit(-1);
 }
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 			break;
 		if (opt[1] == '-')
 			opt++;
-		if (contains(opt, "-Version") == 0) {
+		if (contains(opt, "-version") == 0) {
 			version();
 		} else if (contains(opt, "-detail") == 0) {
 			detail_level = SMC_DETAIL_LEVEL_V;
