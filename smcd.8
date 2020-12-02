@@ -8,7 +8,7 @@
 .TH SMCD 8 "June 2020" "smc-tools" "Linux Programmer's Manual"
 
 .SH NAME
-smcd \- Print information about SMC-D linkgroups and devices
+smcd \- Print information about SMC-D link groups and devices
 
 .SH SYNOPSIS
 .B smcd
@@ -57,7 +57,7 @@ Generic SMC information.
 
 .TP
 .B linkgroup
-Linkgroup(s) used by SMC-D.
+One or more SMC-D link groups or links.
 
 .TP
 .B stats
@@ -79,21 +79,20 @@ can be abbreviated to
 .B dev
 or just
 .B d.
-Man pages in
+For more information about individual objects see the man pages in
 .B SEE ALSO
-section contain more 
-information for individual objects.
+section.
 
 .SS
 .I COMMAND
 
 Specifies the action to perform on the object.
-As a general rule, it is possible to
-.BR " show "
-the objects. The
+The set of possible actions depends on the object type.
+For most objects you can specify the
+.BR " show " or " link-show"
+command. Use the
 .B help
-command is available for all objects. It prints
-out a list of available commands and argument syntax conventions.
+command for an object to print information about the available actions and the specific syntax for that object.
 .sp
 If no command is given, a default command 
 is assumed.
@@ -101,8 +100,8 @@ is assumed.
 .SH RETURN CODES
 Successful
 .IR smcd
-command returns 0 and displays the
-requested linkgroup or device information.
+commands return 0 and display the
+requested link group or device information.
 If an error occurs,
 .IR smcd
 writes a message to stderr and completes with a return code other than 0.

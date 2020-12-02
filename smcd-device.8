@@ -65,17 +65,17 @@ inspect the device properties
 
 .TP
 .B all  (default)
-Show all the devices.
+List all devices.
 
 .TP
 .BI netdev " NETDEV"
 .B SMC-R
-only: list only the device with the given network device name.
+only: limit the command output to the device with the specified network device name.
 
 .TP
 .BI ibdev " IBDEV"
 .B SMC-R
-only: list only the device ports with the given RoCE device name.
+only: limit the command output to the device port with the specified RoCE device name.
 
 .SH OUTPUT
 
@@ -84,7 +84,7 @@ Network device name.
 .SS "IB-Dev"
 RoCE (InfiniBand) device name.
 .SS "IB-P"
-InfiniBand port of the RoCE device. Note that per InfiniBand convention, the port counting starts at 1. Consequently, devices where each port is represented as a separate device will indicate the port as the first port for all ports.
+InfiniBand port of the RoCE device. According to the InfiniBand conventions, the port count starts at 1. Consequently, devices where each port is represented as a separate device will indicate the port as the first port for all ports.
 .SS "IB-State"
 State of the RoCE device port.
 .TP
@@ -115,29 +115,28 @@ whether the device is in use.(SMC-D)
 .TP
 .I
 Yes
-In case of SMC-R, there is at least one linkgroup running on the
+For SMC-R, there is at least one link group running on the
 device with state "SINGLE" or locally "ASYMMETRIC" which
-means the linkgroups do not have any fail-over device in case of
-a failure.
-In case of SMC-D, there is at least one linkgroup running on the 
+means one or more link groups without a failover device in case of a link failure.
+In case of SMC-D, there is at least one link group running on the 
 ISM device.
 .TP
 .I
 No
-In case of SMC-R, there is no linkgroup running on the device with 
-state "SINGLE" or locally "ASYMMETRIC" which means the linkgroup(s) 
+For SMC-R, there is no link group running on the device with 
+state "SINGLE" or locally "ASYMMETRIC" which means the link group(s) 
 have a fallback device in case of a failure.
-In case of SMC-D, there is no linkgroup running on the ISM device.
+In case of SMC-D, there is no link group running on the ISM device.
 .SS "FID"
-Functional ID of the PCI device.
+Function ID of the PCI device.
 .SS "PCI-ID"
 ID of the PCI device.
 .SS "PCHID"
 Physical channel ID of the PCI device.
 .SS "#Links"
-Number of links(SMC-R)/linkgroups(SMC-D) on the device.
+Number of links (SMC-R)/link groups (SMC-D) on the device.
 .SS "PNET-ID"
-PNET-ID of the device. Preceding "*" means PNET-ID is set by the user. (e.g "*PNET-ID")
+PNET ID of the device. Leading asterisk "*" means PNET ID is set by the user. (e.g "*PNET-ID")
 
 .SH "EXAMPLES"
 .br
@@ -152,12 +151,12 @@ PNET-ID of the device. Preceding "*" means PNET-ID is set by the user. (e.g "*PN
 \fB# smcr devices show all\fP
 .br
 .HP 2
-3. Shows all SMC-R devices with RoCE (InfiniBand) device name "mlx4_0":
+3. Show all SMC-R devices with RoCE (InfiniBand) device name "mlx4_0":
 .br
 \fB# smcr device show ibdev mlx4_0\fP
 .br
 .HP 2
-4. Shows all SMC-R devices with network device name "eth0":
+4. Show all SMC-R devices with network device name "eth0":
 .br
 \fB# smcr device show netdev eth0\fP
 .br

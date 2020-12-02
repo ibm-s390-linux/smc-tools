@@ -9,7 +9,7 @@
 
 .SH NAME
 
-smcr \- Print information about SMC-R linkgroups, links, devices
+smcr \- Print information about SMC-R link groups, links and devices
 
 .SH SYNOPSIS
 .B smcr
@@ -62,7 +62,7 @@ Generic SMC information.
 
 .TP
 .B linkgroup
-Linkgroup(s) or link(s) used by SMC-R.
+One or more SMC-R link groups or links.
 
 .TP
 .B stats
@@ -80,22 +80,20 @@ can be abbreviated to
 .B dev
 or just
 .B d.
-Man pages in
+For more information about individual objects see the man pages in
 .B SEE ALSO
-section contain more 
-information for individual objects.
+section.
 
 .SS
 .I COMMAND
 
 Specifies the action to perform on the object.
 The set of possible actions depends on the object type.
-As a general rule, it is possible to
+For most objects you can specify the
 .BR " show " or " link-show"
-objects, but some objects do not allow all of these operations. The
+command. Use the
 .B help
-command is available for all objects. It prints
-out a list of available commands and argument syntax conventions.
+command for an object to print information about the available actions and the specific syntax for that object.
 .sp
 If no command is given, a default command 
 is assumed.
@@ -103,8 +101,8 @@ is assumed.
 .SH RETURN CODES
 Successful
 .IR smcr
-command returns 0 and displays the
-requested linkgroup, link or device information.
+commands return 0 and display the
+requested link group, link or device information.
 If an error occurs,
 .IR smcr
 writes a message to stderr and completes with a return code other than 0. Possible 

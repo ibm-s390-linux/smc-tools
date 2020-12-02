@@ -8,9 +8,9 @@
 .TH SMCD-LINKGROUP 8 "June 2020" "smc-tools" "Linux Programmer's Manual"
 
 .SH NAME
-smcd-linkgroup \- Print information about SMC-D linkgroups
+smcd-linkgroup \- Print information about SMC-D link groups
 
-smcr-linkgroup \- Print information about SMC-R linkgroups and links
+smcr-linkgroup \- Print information about SMC-R link groups and links
 
 .SH "SYNOPSIS"
 .sp
@@ -50,103 +50,103 @@ smcr-linkgroup \- Print information about SMC-R linkgroups and links
 .SH "DESCRIPTION"
 The
 .B smcd linkgroup
-command displays SMC-D linkgroups and their properties. 
+command displays SMC-D link groups and their properties. 
 The
 .B smcr linkgroup
-command displays SMC-R linkgroups, links and their properties. 
+command displays SMC-R link groups and links with their properties. 
 
 .SS smcd,smcr linkgroup show  
-inspect the linkgroup properties
+inspect the link group properties
 
 .TP
 .B all  (default)
-Show all the linkgroups.
+Show all link groups.
 
 .TP
 .I LG-ID
-Show the linkgroup with the ID
+Show the link group with the ID
 .I LG-ID
 
 .TP
 .BI netdev " NETDEV"
 .B SMC-R
-only: list linkgroups making use of the given network device only.
+only: list the link groups for the specified network device.
 
 .TP
 .BI ibdev " IBDEV"
 .B SMC-R
-only: list only linkgroups of the given RoCE device.
+only: list the link groups for the specified RoCE device.
 
 .SS smcr linkgroup link-show
 SMC-R only: Inspect the link properties
 
 .TP
 .B all  (default)
-Show all the links in the linkgroups.
+List all links of all link groups.
 
 .TP
 .I LG-ID
-Show links of the linkgroup(SMC-R) or the linkgroup(SMC-R/SMC-D) with the id
+Show links of the link group with the id.
 .I LG-ID
 
 .TP
 .BI netdev " NETDEV"
-List only links of the linkgroups making use of the given network device.
+List the links of the link groups for the specified network device.
 
 .TP
 .BI ibdev " IBDEV"
-List only links of the linkgroups of the given RoCE device.
+List the links of the link groups for the specified RoCE device.
 
 .SH OUTPUT
 
 .SS "LG-ID"
-ID of the linkgroup.
+ID of the link group.
 .SS "LG-Role"
-Role of the linkgroup.
+Role of the link group.
 .TP
 .I
 SERV
-The linkgroup has a SERVER role.
+The link group has a SERVER role.
 .TP
 .I
 CLNT
-The linkgroup has a CLIENT role.
+The link group has a CLIENT role.
 .SS "LG-Type"
-Linkgroup type of the linkgroup.
+Type of the link group.
 .TP
 .I
 NONE
-The linkgroup has the initial type.
+The link group has the initial type.
 .TP
 .I
 SINGLE
-The linkgroup has only a single link, i.e.
-the local and the peer system can offer one device port only for this linkgroup,
-which means a link outage on any side cannot be covered.
+The link group has only a single link, i.e.
+the local and the peer system can offer one device port only for this link group,
+which means a link outage on either side cannot be recovered.
 .TP
 .I
 SYM
-The linkgroup has two symmetric links, i.e.
-the local and the peer system can offer two device ports for this linkgroup,
-which means a link outage on any side can be covered.
+The link group has two symmetric links, i.e.
+the local and the peer system can offer two device ports for this link group,
+which means a link outage on either side can be recovered.
 .TP
 .I
 ASYMP
-The linkgroup has asymmetric links, i.e.
-the peer system can offer one device port only for this linkgroup,
-which means a link outage on the peer side cannot be covered.
+The link group has asymmetric links, i.e.
+the peer system can offer one device port only for this link group,
+which means a link outage on the peer side cannot be recovered.
 .TP
 .I
 ASYML
-The linkgroup has asymmetric links, i.e.
-the local system can offer one device port only for this linkgroup,
-which means a link outage on the local side cannot be covered.
+The link group has asymmetric links, i.e.
+the local system can offer one device port only for this link group,
+which means a link outage on the local side cannot be recovered.
 .SS "VLAN"
-VLAN the linkgroup belongs to.
+The VLAN to which the link group belongs.
 .SS "#Conns"
-Number of connections(sockets) running on the link/linkgroup.
+Number of connections(sockets) running on the link or link group.
 .SS "PNET-ID"
-PNET-ID of the linkgroup. "*" means PNET-ID is set by the user. 
+PNET ID of the link group. Asterisk "*" means PNET ID is set by the user. 
 .SS "Net-Dev"
 Network device name corresponding to the link.
 .SS "Link-State"
@@ -169,11 +169,11 @@ LINK_ACTIVE
 The link is active and operates on an established link with the peer.
 Data is being exchanged via RDMA.
 .SS "Link-UID"
-Unique identifier of the link. This identifier consists of linkgroup id and 
+Unique identifier of the link. This identifier consists of link group id and 
 link id.
 .SS "Peer-UID"
-Unique identifier of the link on peer side. This identifier consists of 
-linkgroup id and link id.
+Unique identifier of the link on the peer side. This identifier consists of 
+link group id and link id.
 .SS "IB-Dev"
 Name of the RoCE device used by the link.
 .SS "IB-P"
@@ -186,12 +186,12 @@ GID of the peer RoCE port used by the link.
 .SH "EXAMPLES"
 
 .HP 2
-1. Show all SMC-D linkgroups:
+1. Show all SMC-D link groups:
 .br
 \fB# smcd linkgroup show all\fP
 .br
 .HP 2
-2. Show all SMC-D linkgroups with linkgroup id 50:
+2. Show all SMC-D link groups with link group id 50:
 .br
 \fB# smcd linkgroup show 50\fP
 .br
@@ -201,7 +201,7 @@ GID of the peer RoCE port used by the link.
 \fB# smcr linkgroup link-show all\fP
 .br
 .HP 2
-4. Show all SMC-R links with linkgroup id 40:
+4. Show all SMC-R links with link group ID 40:
 .br
 \fB# smcr linkgroup link-show 40\fP
 .br
@@ -211,7 +211,7 @@ GID of the peer RoCE port used by the link.
 \fB# smcr linkgroup link-show ibdev mlx4_0\fP
 .br
 .HP 2
-6. Shows all SMC-R links on network device "eth0":
+6. Show all SMC-R links on network device "eth0":
 .br
 \fB# smcr linkgroup link-show netdev eth0\fP
 .br
