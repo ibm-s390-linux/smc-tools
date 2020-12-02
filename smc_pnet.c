@@ -3,7 +3,7 @@
  *
  * Copyright IBM Corp. 2017
  *
- * Author(s):  Thomas Richter <tmricht@linux.vnet.ibm.com>
+ * Author(s):  Thomas Richter <tmricht@linux.ibm.com>
  *
  * User space program for SMC-R PNET Table manipulation with generic netlink.
  *

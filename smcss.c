@@ -1,9 +1,9 @@
 /*
  * SMC Tools - Shared Memory Communication Tools
  *
- * Copyright (c) IBM Corp. 2017, 2018
+ * Copyright IBM Corp. 2017, 2018
  *
- * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
+ * Author(s):  Ursula Braun <ubraun@linux.ibm.com>
  *
  * User space program for SMC Socket display
  *
@@ -251,11 +251,26 @@ static void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
 
 /* format one sockaddr / port */
 static void addr_format(char *buf, size_t buf_len, size_t short_len,
-			int af, void *addr, int port)
+			__be32 addr[4], int port)
 {
 	char *errmsg = "(inet_ntop error)"; /* very unlikely */
 	char addr_buf[64], port_buf[16];
 	int addr_len, port_len;
+	int af;
+
+	/* There was an upstream discussion about the content of the
+	 * diag_family field. Originally it was AF_SMC, but was changed with
+	 * IPv6 support to indicate AF_INET or AF_INET6. Upstream complained
+	 * later that there is no way to separate AF_INET from AF_SMC diag msgs.
+	 * We now change back the value of the diag_family field to be always
+	 * AF_SMC. We now 'parse' the IP address type.
+	 * Note that smc_diag.c in kernel always clears the whole addr field
+	 * before the ip address is copied into and we can rely on that here.
+	 */
+	if (addr[1] == 0 && addr[2] == 0 && addr[3] == 0)
+		af = AF_INET;
+	else
+		af = AF_INET6;
 
 	if (!inet_ntop(af, addr, addr_buf, sizeof(addr_buf))) {
 		strcpy(buf, errmsg);
@@ -307,13 +322,13 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 		goto newline;
 
 	addr_format(txtbuf, sizeof(txtbuf), ADDR_LEN_SHORT,
-		    r->diag_family, r->id.idiag_src, ntohs(r->id.idiag_sport));
+		    r->id.idiag_src, ntohs(r->id.idiag_sport));
 	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	if (r->diag_state == 10)		/* LISTEN state */
 		goto newline;
 
 	addr_format(txtbuf, sizeof(txtbuf), ADDR_LEN_SHORT,
-		    r->diag_family, r->id.idiag_dst, ntohs(r->id.idiag_dport));
+		    r->id.idiag_dst, ntohs(r->id.idiag_dport));
 	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	printf("%04x ", r->id.idiag_if);
 	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP) {

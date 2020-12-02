@@ -9,11 +9,12 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE = 1.1.0
+SMC_TOOLS_RELEASE = 1.2.0
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
 ARCH := $(shell getconf LONG_BIT)
+DISTRO := $(shell lsb_release -si 2>/dev/null)
 
 ifneq ("${V}","1")
         MAKEFLAGS += --quiet
@@ -39,13 +40,21 @@ STUFF_32BIT	  = 0
 # Check that 31/32-bit build tools are available.
 #
 ifeq ($(ARCH),64)
+ifeq ($(DISTRO),Ubuntu)
+LIBDIR		= ${PREFIX}/lib/s390x-linux-gnu
+else
 LIBDIR		= ${PREFIX}/lib64
+endif
 ifneq ("$(wildcard ${PREFIX}/include/gnu/stubs-32.h)","")
 STUFF_32BIT = 1
 LIBDIR32	= ${PREFIX}/lib
 endif
 else
+ifeq ($(DISTRO),Ubuntu)
+LIBDIR		= ${PREFIX}/lib/s390-linux-gnu
+else
 LIBDIR		= ${PREFIX}/lib
+endif
 endif
 
 all: libsmc-preload.so libsmc-preload32.so smcss smc_pnet
@@ -58,6 +67,9 @@ ifeq ($(ARCHTYPE),s390x)
 else
 	MACHINE_OPT32="-m32"
 endif
+
+%: %.in
+	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
 
 smc-preload.o: smc-preload.c
 	${CCC} ${CFLAGS} -fPIC -c smc-preload.c
@@ -114,8 +126,13 @@ endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
+	install $(INSTALL_FLAGS_BIN) smc_dbg $(DESTDIR)$(BINDIR)
+ifeq ($(shell uname -m | cut -c1-4),s390)
+	install $(INSTALL_FLAGS_BIN) smc_rnics $(DESTDIR)$(BINDIR)
+endif
 	install $(INSTALL_FLAGS_MAN) af_smc.7 $(DESTDIR)$(MANDIR)/man7
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smc_rnics.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
 

@@ -5,7 +5,7 @@
  *
  *  Copyright IBM Corp. 2017
  *
- *  Author(s):  Thomas Richter <tmricht@linux.vnet.ibm.com>
+ *  Author(s):  Thomas Richter <tmricht@linux.ibm.com>
  */
 
 #ifndef _UAPI_LINUX_SMC_H_

@@ -1,0 +1,111 @@
+.\" Copyright IBM Corp. 2018
+
+.TH SMC_RNICS 8 "October 2018" "smc-tools" "Linux Programmer's Manual"
+
+
+.SH NAME
+smc_rnics \- list, enable and disable (R)NICS as used by SMC-R and SMC-D.
+
+
+.SH SYNOPSIS
+.B smc_rnics
+.RB [ \-hrv ]
+.RB [ \-d
+.IR FID ]
+.RB [ \-e
+.IR FID ]
+.RI [ FID ]
+
+
+.SH DESCRIPTION
+The SMC protocol requires an (R)NIC for the (R)DMA traffic.
+Use
+.B smc_rnics
+to handle, and to identify hotplugged (R)NICs.
+
+
+.SH OPTIONS
+By default,
+.B smc_rnics
+shows all available (R)NICs in the system.
+.TP
+.I FID
+Limit output to the specified function ID
+.RI ( FID ).
+.TP
+.BR "\-d, \-\-disable " \fIFID
+Set (R)NIC
+.I FID
+offline.
+.TP
+.BR "\-e, \-\-enable " \fIFID
+Set (R)NIC
+.I FID
+online.
+.TP
+.BR "\-h, \-\-help"
+Display a brief
+.B smc_rnics
+usage information.
+.TP
+.BR "\-r, \-\-rawids"
+Display raw PCI vendor and device codes in column
+.I Type
+. .
+.TP
+.BR "\-v, \-\-version"
+Display version information.
+
+
+.SH OUTPUT
+.SS "FID"
+Function ID.
+
+.SS "Power"
+Indicates whether the PCI slot is on (1) or off (0). See option
+.B -d
+on how to enable a device that is offline.
+
+.SS "PCI ID"
+PCI ID in BDF (Bus:Device.Function) notation.
+
+.SS "PCHID"
+Physical channel identifier.
+
+.SS "Type"
+Device type in human readable form. See option
+.B -r
+to switch to display of PCI vendor and device instead.
+
+.SS "Port"
+Corresponding port of an RNIC, if applicable.
+
+.SS "PNET ID"
+Physical network ID, if defined in IOCDS.
+
+.SS "Interface"
+Network interface in Linux, if applicable.
+
+
+.SH RETURN CODES
+On success,
+.B smc_rnics
+returns 0.
+If an error occurs, a return code other than 0 is returned.
+.P
+
+
+.SH AUTHOR
+.nf
+Copyright IBM Corp. 2018
+
+Published under the terms and conditions of the EPL
+(Eclipse Public License).
+.fi
+
+
+.SH SEE ALSO
+.BR af_smc (7),
+.BR smc_pnet (8),
+.BR smc_run (8),
+.BR smcss (8)

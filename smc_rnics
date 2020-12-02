@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# Copyright IBM Corp. 2018
+
+
+function usage() {
+	echo;
+	echo "Usage: smc_rnics [ OPTIONS ] [ FID ]";
+	echo;
+	echo "List all available RNICs";
+	echo;
+	echo "   -d, --disable <FID>  disable the specified FID";
+	echo "   -e, --enable <FID>   enable the specified FID";
+	echo "   -h, --help           display this message";
+	echo "   -r, --rawids         display 'type' as raw vendor/device IDs";
+	echo "   -v, --version        display version info";
+	echo;
+}
+
+function print_rnic() {
+	if [ $header -eq 0 ]; then
+		printf "FID  Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
+		echo '------------------------------------------------------------------------------------';
+		header=1;
+	fi
+	printf "%3x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	(( printed++ ));
+}
+
+function format_fid() {
+	res="${1#0x}";
+
+	if [[ "$res" =~ ^([:xdigit:])+ ]]; then
+		printf "Error: '%s' is not a valid FID\n" "$res" >&2;
+		exit 3;
+	fi
+
+	res="`printf "%08x" $((16#$res))`";
+}
+
+if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
+	printf "Error: s390/s390x supported only\n" >&2;
+	exit 1;
+fi
+
+args=`getopt -u -o hrve:d: -l enable:,disable:,help,rawids,version -- $*`;
+[ $? -ne 0 ] && exit 2;
+set -- $args;
+action="print";
+rawIDs=0;
+target="";
+printed=0;
+while [ $# -gt 0 ]; do
+	case $1 in
+	"-e" | "--enable" )
+		action="enable";
+		fid=$2;
+		shift;;
+	"-d" | "--disable" )
+		action="disable";
+		fid=$2;
+		shift;;
+	"-h" | "--help" )
+		usage;
+		exit 0;;
+	"-r" | "--rawids" )
+		rawIDs=1;;
+	"-v" | "--version" )
+		echo "smc_rnics utility, smc-tools-1.2.0 (8a2dae6)";
+		exit 0;;
+	"--" ) ;;
+	* )	format_fid "$1";
+		target="$res";
+	esac
+	shift;
+done
+
+if [ "$action" != "print" ]; then
+	if [ "$target" != "" ]; then
+		usage;
+		exit 4;
+	fi
+	format_fid "$fid";
+	fid="$res";
+	ufid=`printf "%x" $((16#$fid))`;  # representation without leading zeros
+	if [ ! -d /sys/bus/pci/slots/$fid ]; then
+		echo "Error: FID $ufid does not exist" >&2;
+		exit 5;
+	fi
+	power=`cat /sys/bus/pci/slots/$fid/power 2>/dev/null`;
+	val=0;
+	[ "$action" == "enable" ] && val=1;
+	if [ $power -eq $val ]; then
+		echo "Error: FID $ufid is already ${action}d" >&2;
+		exit 6;
+	fi
+	echo $val  > /sys/bus/pci/slots/$fid/power 2>/dev/null;
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to $action FID $ufid" >&2;
+		exit 7;
+	fi
+	exit 0;
+fi
+
+header=0;
+# iterate over slots, as powered-off devices won't show elsewhere
+for fid in `ls -1 /sys/bus/pci/slots`; do
+	cd /sys/bus/pci/slots/$fid;
+	fid="$fid";
+	if [ "$target" != "" ] && [ "$fid" != "$target" ]; then
+		continue;
+	fi
+	power=`cat power`;
+	interfaces="";
+	port="";
+	addr="";
+	int="";
+	if [ $power -eq 0 ]; then
+		# device not yet hotplugged
+		dev_type="";
+		pchid="";
+		pnet="";
+		print_rnic;
+		continue;
+	fi
+	# device is hotplugged - locate it
+	for dev in `ls -1 /sys/bus/pci/devices`; do
+		cd /sys/bus/pci/devices/$dev;
+		if [ "`cat function_id`" == "0x$fid" ]; then
+			addr=$dev;
+			break;
+		fi
+	done
+	if [ "$addr" == "" ]; then
+		echo "Error: No matching device found for FID $fid" >&2;
+		continue;
+	fi
+	cd /sys/bus/pci/devices/$addr;
+	id=`cat device`;
+	vend=`cat vendor`;
+	dev_type="${vend#0x}:${id#0x}";
+	if [ $rawIDs -eq 0 ]; then
+		case "$vend" in
+		"0x1014" ) # IBM
+			case "$id" in
+			"0x04ed") dev_type="ISM";
+				  port="n/a";;
+			"0x044b") continue;;		# zEDC
+			esac;;
+		"0x15b3" ) # Mellanox
+			case "$id" in
+			"0x1003" | \
+			"0x1004") dev_type="RoCE Express";;
+			"0x1016") dev_type="RoCE Express2";;
+			esac;;
+		esac
+	fi
+	pchid="`cat pchid | sed 's/^0x//'`";
+	pnet="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII`";
+	if [ -d net ]; then
+		interfaces="`ls -1 net`";
+	fi
+	# one device can have multiple interfaces (one per port)
+	if [ "$interfaces" != "" ]; then
+		pnetids="$pnet";
+		for int in $interfaces; do
+			cd /sys/bus/pci/devices/$addr/net/$int;
+			if [ -e dev_port ]; then
+				port=`cat dev_port`;
+				(( idx=16*$port+1 ))
+				(( end=$idx+15 ))
+				pnet=`echo "$pnetids" | cut -c $idx-$end`;
+			fi
+			print_rnic;
+		done
+		continue;
+	fi
+	print_rnic;
+done
+
+if [ "$target" != "" ] && [ $printed -eq 0 ]; then
+	exit 8;
+fi
+
+exit 0;

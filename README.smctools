@@ -1,4 +1,4 @@
-SMC Tools (1.1.0)
+SMC Tools (1.2.0)
 ===================
 
 The SMC Tools provided in this package allow execution of existing TCP
@@ -12,6 +12,7 @@ This package consists of the tools:
 - smc_pnet          : C program for PNET Table handling
 - smcss             : C program for displaying the information about active
                       SMC sockets.
+- smc_rnics         : List available RDMA NICs
 
 The preload shared library libsmc-preload.so provides mapping of TCP socket
 operations to SMC sockets.
@@ -44,6 +45,14 @@ For enhancements, please describe the proposed change and its benefits.
 
 Release History:
 ================
+
+1.2.0 (2019-02-08)
+    Changes:
+    - smc_rnics: Initial version added
+    - smc_dbg: Initial version added
+
+Bug fixes:
+    - smcss: Parse address family of ip address
 
 1.1.0 (2018-06-29)
     Changes:
@@ -87,6 +96,7 @@ af_smc.7		manpage for AF_SMC sockets
 smc_pnet.8		manpage for smc_pnet
 smcss.8			manpage for smcss
 smc_run.8		manpage for preload library usage
+smc_dbg			collect debugging data
 
 
 Requirements:

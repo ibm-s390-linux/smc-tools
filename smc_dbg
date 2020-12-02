@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Copyright IBM Corp. 2019
+
+function usage() {
+	echo;
+	echo "Usage: smc_dbg [ OPTIONS ]";
+	echo;
+	echo "Collect debug information";
+	echo;
+	echo "   -h, --help           display this message";
+	echo "   -t, --tgz            generate .tgz file";
+	echo "   -v, --version        display version info";
+	echo;
+}
+
+
+function redirect() {
+	if [ "$tgz" == "on" ]; then
+		exec &>$tmpdir/$1;
+	else
+		echo;
+	fi
+}
+
+tgz="off";
+ARCH=`uname -m | cut -c1-4`;
+args=`getopt -u -o hvt -l help,version,tgz -- $*`;
+[ $? -ne 0 ] && exit 1;
+set -- $args;
+while [ $# -gt 0 ]; do
+        case $1 in
+        "-h" | "--help" )
+                usage;
+                exit 0;;
+        "-t" | "--tgz" )
+                tgz="on";;
+        "-v" | "--version" )
+		echo "smc_dbg utility, smc-tools-1.2.0 (8a2dae6)";
+		exit 0;;
+        * )
+        esac
+        shift;
+done
+if [ "$tgz" == "on" ]; then
+	exec 3>&1 4>&2
+	tmpdir=`mktemp -d /tmp/smc_dbg-XXXXXX`;
+fi
+
+redirect version.txt;
+smcss -v
+smc_dbg -v
+smc_pnet -v
+smc_rnics -v
+
+if [ "$ARCH" == "s390" ]; then
+	redirect devices.txt;
+	echo "CCW Devices:"
+	printf "  Device    CHPID  PNET ID\n";
+	echo "  -------------------------------------------";
+	for device in `ls -1 /sys/bus/ccwgroup/devices`; do
+		chpid=`cat /sys/bus/ccwgroup/devices/$device/chpid | tr [A-F] [a-f]`;
+		pnetid="`cat /sys/devices/css0/chp0.$chpid/util_string | iconv -f IBM-1047 -t ASCII 2>/dev/null | tr -d '\000' | sed  's/^/    /'`";
+		printf "  %8s  %4s   %s\n" $device 0x$chpid $pnetid;
+	done
+	echo;
+
+	echo "PCI Devices:"
+	smc_rnics | sed 's/^/  /';
+
+	redirect smcss_smcd;
+	smcss --smcd;
+fi
+
+redirect smcss_all.txt;
+smcss --all --debug;
+
+redirect smcss_smcr;
+smcss --smcr;
+
+redirect pnet_table.txt;
+smc_pnet --show;
+
+if [ "$tgz" == "on" ]; then
+	exec >&3 2>&4
+	cd /tmp;
+	tar cvfz $tmpdir.tgz `basename $tmpdir` >/dev/null 2>&1;
+	rm -rf $tmpdir;
+	echo "Debug output written to $tmpdir.tgz";
+fi
+exit 0;
