@@ -84,14 +84,8 @@ endif
 util.o: util.c  util.h
 	${CCC} ${CFLAGS} -c util.c
 
-libutil.a: util.o
-	ar rcs libutil.a util.o
-
 libnetlink.o: libnetlink.c  libnetlink.h
 	${CCC} ${CFLAGS} ${LDFLAGS} -c libnetlink.c
-
-libnetlink.a: libnetlink.o
-	ar rcs libnetlink.a libnetlink.o
 
 smc-preload.o: smc-preload.c
 	${CCC} ${CFLAGS} -fPIC -c smc-preload.c
@@ -124,14 +118,14 @@ endif
 %.o: %.c
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
-smc: smc.o dev.o linkgroup.o libnetlink.a libutil.a
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ ${SMC_PNET_LFLAGS} -o $@
+smc: smc.o dev.o linkgroup.o libnetlink.o util.o
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
 
-smcd: smcd.o devd.o linkgroupd.o libnetlink.a libutil.a
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ ${SMC_PNET_LFLAGS} -o $@
+smcd: smcd.o devd.o linkgroupd.o libnetlink.o util.o
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
 
-smcr: smcr.o devr.o linkgroupr.o libnetlink.a libutil.a
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} -L. -lnetlink -lutil $^ ${SMC_PNET_LFLAGS} -o $@
+smcr: smcr.o devr.o linkgroupr.o libnetlink.o util.o
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \
