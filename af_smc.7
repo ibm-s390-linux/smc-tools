@@ -1,0 +1,125 @@
+.\" af_smc.7
+.\"
+.\"
+.\" Copyright IBM Corp. 2017
+.\" Author(s):	Ursula Braun <ubraun@linux.vnet.ibm.com>
+.\"		Thomas Richter <tmricht@linux.vnet.ibm.com>
+.\" ----------------------------------------------------------------------
+.TH AF_SMC 7 "January 2017"  "smc-tools" "Linux Programmer's Manual"
+.SH NAME
+AF_SMC - Sockets for SMC communication
+.SH SYNOPSIS
+.B #include <sys/socket.h>
+.br
+.B "#define AF_SMC 43"
+.PP
+.I "tcp_socket = socket(AF_SMC, SOCK_STREAM, 0);"
+.SH DESCRIPTION
+.I Shared Memory Communication via RDMA
+(SMC) is a socket over the RDMA
+communication protocol that allows existing TCP socket applications
+to transparently benefit from RDMA when exchanging data
+over an
+.I RDMA over Converged Ethernet
+(RoCE) network. Those networks are not routable.
+SMC provides
+host-to-host direct memory access without traditional TCP/IP
+processing overhead.
+SMC offers preservation of existing IP topology and IP security, and
+introduces minimal administrative and operational changes.
+The exploitation of SMC is transparent to TCP sockets applications.
+.PP
+The new address family
+.B AF_SMC
+supports the SMC protocol on Linux.
+It keeps the address format of AF_INET sockets and supports streaming
+socket types only.
+.SS Usage modes
+Two usage modes are possible:
+.IP "AF_SMC native usage"
+exploits the socket domain AF_SMC instead of
+AF_INET.
+.IP "usage of AF_INET socket applications with SMC preload library"
+converts AF_INET sockets to AF_SMC sockets.
+The SMC preload library is part of the SMC tools package.
+.PP
+SMC capability of sockets is negotiated during connection setup. If
+one peer is not SMC capable, further socket processing falls
+back to TCP usage automatically.
+.SS Implementation details: Links and Link Groups
+To run RDMA traffic to a peer, a so-called
+.I link
+is established between
+a local RoCE card and a remote RoCE card. To enhance availability, you can
+configure alternate links with automatic fail over.
+Primary and backup links to a certain peer are combined in a so-called
+.I link group.
+To guarantee untroubled RDMA traffic, the number of connections
+per link group and the number of send requests in flight per link are limited.
+.SS Enabling SMC
+To enable SMC, smc-code must be active: If smc is not part of the
+kernel image, load the separate smc module (use "modprobe smc").
+.SS RoCE adapter mapping: Creation of a pnet table
+The SMC protocol requires grouping of multiple physical networks -
+standard Ethernet and RoCE networks. Such groups are called
+.I Physical Networks
+(PNets). For SMC, RoCE Adapter mapping is configured within a table called
+.BR "pnet table" .
+Any available Ethernet interface can be combined with available
+.I RDMA-capable network interface cards
+(RNICs),
+if they belong to the same Converged Ethernet fabric.
+To configure RoCE Adapter mapping, you must create a pnet table.
+Modify the table with the smc-tools command
+.I smcrpnet.
+.PP
+For details call "man smcrpnet".
+.SS Important sysctl settings
+SMC-R supports IPv4 only. Use this sysctl setting:
+.IR  net.ipv6.bindv6only=1
+.SS Displaying SMC socket state information
+SMC socket state information can be obtained with the smc-tools command
+.I smcss.
+For details call "man smcss".
+.SS Starting a TCP application to work over SMC
+To start an existing TCP application to work through SMC, use the SMC
+preload library.
+The SMC Tools package provides a script called "smc_run"
+to convert AF_INET socket calls to AF_SMC socket calls by means of the preload
+technique.
+.PP
+Example:
+.IP
+smc_run ftp
+.PP
+This command-line example starts an FTP client over SMC.
+.PP
+.SS MTU and Infiniband data transfer
+Infiniband traffic may use MTU values 256, 512, 1024, 2048, or 4096.
+SMC determines the configured MTU size of the RoCE Ethernet port,
+announces this MTU size to the peer during connection start, and chooses
+the minimum MTU size of both peers.
+
+.SH "AUTHOR"
+.nf
+Copyright IBM Corp. 2017
+
+Published under the terms and conditions of the EPL
+(eclipse public license).
+.fi
+
+.SH "SEE ALSO"
+.BR socket (2),
+.BR ip (7),
+.BR tcp (7),
+.BR socket (7)
+.BR smc_run (8)
+.BR smcss (8)
+.BR smcrpnet (8)
+.SH "HISTORY"
+.TP
+.B AF_SMC, version 1.0.0
+.RS 4
+.IP "\bu" 2
+Initial version.
+.RE

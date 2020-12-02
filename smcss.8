@@ -1,0 +1,224 @@
+.\" smcss.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2017
+.\" Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
+.\" ----------------------------------------------------------------------
+.\"
+
+.TH SMCSS 8 "January 2017" "smc-tools" "Linux Programmer's Manual"
+
+.SH NAME
+smcss \- print information about the AF_SMC sockets and link groups.
+
+.SH SYNOPSYS
+
+.B smcss
+.RB "[ {" \-\-all | -a "} ] [ {" \-\-extended | \-e "} ] [ {" \-\-linkgroup | \-L "} ]"
+.P
+.B smcss
+.RB { \-\-listening | \-l }
+.P
+.B smcss
+.RB { \-\-version | \-v }
+.P
+.B smcss
+.RB { \-\-help | \-h }
+
+.SH DESCRIPTION
+.B smcss
+prints information about the Linux AF_SMC sockets and link groups.
+The type of information printed is controlled by its arguments, as follows:
+.SS (none)
+By default,
+.B smcss
+displays a list of connecting, closing, or connected SMC sockets with basic
+information.
+.SS "\-a, \-\-all"
+shows all types of SMC sockets: listening, opening, closing, and connected.
+.SS "\-e, \-\-extend"
+displays additional information, such as shutdown state.
+.SS "\-L, \-\-linkgroup
+displays additional information about the linkgroup to which the socket is connected.
+.SS "\-l, \-\-listening"
+shows listening sockets only.
+(These are omitted by default.)
+.SS "\-v, \-\-version"
+displays smcss program version and copyright information.
+.SS "\-h, \-\-help"
+displays brief smcss option usage information.
+.SH OUTPUT
+.SS "State"
+The state of the socket.
+The state can be one of these values:
+.TP
+.I
+INIT
+The SMC socket is being initialized. It is not connected nor
+listening yet.
+.TP
+.I
+CLOSED
+The SMC socket is closed. It is not connected nor listening
+anymore.
+.TP
+.I
+LISTEN
+The SMC socket is a listening socket, waiting for incoming connection requests.
+.TP
+.I
+ACTIVE
+The SMC socket has an established connection.
+In this state, the TCP connection is fully established,
+rendezvous processing has been completed, and SMC peers
+can exchange data via RDMA.
+.TP
+.I
+PEERCLW1
+No further data will be sent to the peer.
+.TP
+.I
+PEERCLW2
+No further data will be sent to or received from the peer.
+.TP
+.I
+APPLCLW1
+No further data will be received from the peer.
+.TP
+.I
+APPLCLW2
+No further data will be received from or sent to the peer.
+.TP
+.I
+APPLFINCLW
+The peer has closed the socket.
+.TP
+.I
+PEERFINCLW
+The socket is closed locally.
+.TP
+.I
+PEERABORTW
+The socket was abnormally closed locally.
+.TP
+.I
+PROCESSABORT
+The peer has closed the socket abnormally.
+.SS "Inode"
+Inode attribute of the socket.
+.SS "UID"
+Unique ID of the SMC socket.
+.SS "Local Address"
+Address and port number of the local end of the SMC
+socket.
+.SS "Foreign Address"
+Address and port number of the remote end of the socket.
+Analogous to "Local Address".
+.SS "Intf"
+If socket is explicitly bound with setsockopt option SO_BINDTODEVICE,
+Intf shows the interface number of the Ethernet device to which the socket is bound.
+.SS "Mode"
+.TP
+.I
+RDMA
+The SMC socket uses RDMA for data exchange.
+.TP
+.I
+TCP
+The SMC socket uses the TCP protocol for data exchange.
+.SS "ShutD"
+.TP
+.I
+<->
+The SMC socket has not been shut down.
+.TP
+.I
+R->
+The SMC socket is shut down one-way and cannot receive data.
+.TP
+.I
+<-W
+The SMC socket is shut down one-way and cannot send data.
+.TP
+.I
+R-W
+The SMC socket is shut down in both ways and cannot receive or send data.
+.SS "Token"
+Unique ID of the SMC socket connection.
+.SS "Sndbuf"
+Size of the to-be-sent window of the SMC socket connection.
+.SS "Rcvbuf"
+Size of the receiving window of the SMC socket connection (filled by peer).
+.SS "Peerbuf"
+Size of the peer receiving window of the SMC socket connection (to fill
+during RDMA-transfer).
+.SS "rxprod-Cursor"
+Describes the current cursor location of the "Rcvbuf" for data to be received
+from the peer.
+.SS "rxcons-Cursor"
+Describes the current cursor location of the "Peerbuf" for data sent to peer
+and confirmed by the peer.
+.SS "rxFlags"
+SMC socket connection flags set by and received from the peer.
+.SS "txprod-Cursor"
+Describes the current cursor location of the "Peerbuf" for data sent to peer.
+.SS "txcons-Cursor"
+Describes the current cursor location of the "Rcvbuf" for data received from
+the peer and confirmed to the peer.
+.SS "txFlags"
+SMC socket connection flags set locally and sent to the peer.
+.SS "txprep-Cursor"
+Describes the current cursor location of the "Sndbuf" for data to be sent.
+The data is to be moved to the "Peerbuf" by using RDMA-write.
+.SS "txsent-Cursor"
+Describes the current cursor location of the "Sndbuf" for data sent.
+The data was moved to the "Peerbuf" by using RDMA-write.
+.SS "txfin-Cursor"
+Describes the current cursor location of the "Sndbuf" for data sent and
+send completion confirmed.
+The data was moved to the "Peerbuf" by using RDMA-write and completion was confirmed.
+.SS "Role"
+.TP
+.I
+CLNT
+The link group of the SMC socket is used for client connections.
+.TP
+.I
+SERV
+The link group of the SMC socket is used for server connections.
+.SS "IB-Device"
+Name of the RoCE device used by the link group to which the SMC socket belongs.
+.SS "Port"
+Port of the RoCE device used by the link group to which the SMC socket belongs.
+.SS "Linkid"
+Unique link ID of the link within the link group to which the SMC socket belongs.
+.SS "GID"
+Gid of the RoCE port used by the link group to which the SMC socket belongs.
+.SS "Peer-GID"
+Gid of the Foreign RoCE port used by the link group to which the SMC socket belongs.
+.SS "VLAN"
+tbd.
+.SH RETURN CODES
+Successful
+.IR smcss
+commands return 0 and display the
+requested socket state table or link group information.
+If an error occurs,
+.IR smcss
+writes a message to stderr and completes with a return code other than 0.
+.P
+.SH AUTHOR
+.nf
+This man page was written by
+Ursula Braun <ubraun@linux.vnet.ibm.com>
+
+Copyright (c) IBM Corp., 2017
+
+Published under the terms and conditions of the EPL
+(eclipse public license).
+.fi
+
+.SH SEE ALSO
+.BR af_smc (7),
+.BR smc_run (8)
+.BR smcrpnet (8)
