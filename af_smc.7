@@ -1,7 +1,7 @@
 .\" af_smc.7
 .\"
 .\"
-.\" Copyright IBM Corp. 2017
+.\" Copyright IBM Corp. 2016, 2017
 .\" Author(s):	Ursula Braun <ubraun@linux.vnet.ibm.com>
 .\"		Thomas Richter <tmricht@linux.vnet.ibm.com>
 .\" ----------------------------------------------------------------------
@@ -71,9 +71,9 @@ Any available Ethernet interface can be combined with available
 if they belong to the same Converged Ethernet fabric.
 To configure RoCE Adapter mapping, you must create a pnet table.
 Modify the table with the smc-tools command
-.I smcrpnet.
+.I smc_pnet.
 .PP
-For details call "man smcrpnet".
+For details call "man smc_pnet".
 .SS Important sysctl settings
 SMC-R supports IPv4 only. Use this sysctl setting:
 .IR  net.ipv6.bindv6only=1
@@ -102,10 +102,10 @@ the minimum MTU size of both peers.
 
 .SH "AUTHOR"
 .nf
-Copyright IBM Corp. 2017
+Copyright IBM Corp. 2016, 2017
 
 Published under the terms and conditions of the EPL
-(eclipse public license).
+(Eclipse Public License).
 .fi
 
 .SH "SEE ALSO"
@@ -115,10 +115,10 @@ Published under the terms and conditions of the EPL
 .BR socket (7)
 .BR smc_run (8)
 .BR smcss (8)
-.BR smcrpnet (8)
+.BR smc_pnet (8)
 .SH "HISTORY"
 .TP
-.B AF_SMC, version 1.0.0
+.B AF_SMC, version 1.0.1
 .RS 4
 .IP "\bu" 2
 Initial version.

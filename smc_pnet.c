@@ -35,8 +35,6 @@
 #include "smctools_common.h"
 #include "smc.h"
 
-#define VERSION RELEASE_STRING
-
 static char *progname;
 
 static struct pnetentry {
@@ -296,7 +294,8 @@ int main(int argc, char **argv)
 			break;
 		case 'v':
 		case 'V':
-			printf("smcss utitility, smc-tools-ss-%s\n", VERSION);
+			printf("smc_pnet utility, smc-tools-%s (%s)\n",
+			       RELEASE_STRING, RELEASE_LEVEL);
 			exit(0);
 		case 'h':
 			help();

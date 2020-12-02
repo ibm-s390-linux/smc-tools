@@ -29,23 +29,33 @@ smcss \- print information about the AF_SMC sockets and link groups.
 .B smcss
 prints information about the Linux AF_SMC sockets and link groups.
 The type of information printed is controlled by its arguments, as follows:
-.SS (none)
+
 By default,
 .B smcss
 displays a list of connecting, closing, or connected SMC sockets with basic
 information.
-.SS "\-a, \-\-all"
+.TP
+.BR "\-a, \-\-all"
 shows all types of SMC sockets: listening, opening, closing, and connected.
-.SS "\-e, \-\-extend"
+.TP
+.BR "\-e, \-\-extend"
 displays additional information, such as shutdown state.
-.SS "\-L, \-\-linkgroup
+.TP
+.BR "\-L, \-\-linkgroup
 displays additional information about the linkgroup to which the socket is connected.
-.SS "\-l, \-\-listening"
+.TP
+.BR "\-l, \-\-listening"
 shows listening sockets only.
 (These are omitted by default.)
-.SS "\-v, \-\-version"
+.TP
+.BR "\-K, \-\-kill"
+attempts to forcibly close sockets. This options displays sockets that are
+successfully closed and silently skips sockets that the kernel does not support closing.
+.TP
+.BR "\-v, \-\-version"
 displays smcss program version and copyright information.
-.SS "\-h, \-\-help"
+.TP
+.BR "\-h, \-\-help"
 displays brief smcss option usage information.
 .SH OUTPUT
 .SS "State"
@@ -215,10 +225,10 @@ Ursula Braun <ubraun@linux.vnet.ibm.com>
 Copyright (c) IBM Corp., 2017
 
 Published under the terms and conditions of the EPL
-(eclipse public license).
+(Eclipse Public License).
 .fi
 
 .SH SEE ALSO
 .BR af_smc (7),
 .BR smc_run (8)
-.BR smcrpnet (8)
+.BR smc_pnet (8)
