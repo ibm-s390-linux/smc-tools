@@ -169,6 +169,99 @@ The SMC socket uses SMC-R for data exchange.
 TCP
 The SMC socket uses the TCP protocol for data exchange, because an SMC connection 
 could not be established.
+.TP
+In case of an error during connection setup, respective error codes will be displayed in the format <local>/<remote>.
+.HP
+Linux error codes:
+.TP 13
+.I
+0x01010000
+Out of memory
+.TP 13
+.I
+0x02010000
+Timeout while waiting for confirm link message over RDMA device
+.TP
+.I
+0x02020000
+Timeout while waiting for RDMA device to be added
+.TP
+.I
+0x03000000
+Configuration error
+.TP
+.I
+0x03010000
+Peer does not support SMC
+.TP
+.I
+0x03020000
+Connection uses IPsec
+.TP
+.I
+0x03030000
+No SMC devices found (R and D)
+.TP
+.I
+0x03030001
+No ISM device for SMC-D found
+.TP
+.I
+0x03030002
+No RDMA device for SMC-R found
+.TP
+.I
+0x03030003
+Peer not reachable through ISM device
+.TP
+.I
+0x03040000
+SMC modes mismatch (R or D)
+.TP
+.I
+0x03050000
+Peer has eyecatcher in RMBE
+.TP
+.I
+0x03060000
+Fastopen sockopt not supported
+.TP
+.I
+0x03070000
+IP prefix / subnet mismatch
+.TP
+.I
+0x03080000
+Error retrieving VLAN ID of IP device
+.TP
+.I
+0x03090000
+Error while registering VLAN ID on ISM device
+.TP
+.I
+0x04000000
+Synchronization error
+.TP
+.I
+0x05000000
+Peer declined during handshake
+.TP
+.I
+0x09990000
+Internal error
+.TP
+.I
+0x09990001
+rtoken handling failed
+.TP
+.I
+0x09990002
+RDMA link failed
+.TP
+.I
+0x09990003
+RMB registration failed
+
 .SS "ShutD"
 .TP
 .I

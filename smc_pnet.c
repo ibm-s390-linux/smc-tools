@@ -33,7 +33,6 @@
 #include <netlink/genl/ctrl.h>
 
 #include "smctools_common.h"
-#include "smc.h"
 
 static char *progname;
 

@@ -30,7 +30,6 @@
 #include <arpa/inet.h>
 
 #include "smctools_common.h"
-#include "smc_diag.h"
 
 #define MAGIC_SEQ 123456
 #define ADDR_LEN_SHORT	23
@@ -253,8 +252,7 @@ static void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
 static void addr_format(char *buf, size_t buf_len, size_t short_len,
 			__be32 addr[4], int port)
 {
-	char *errmsg = "(inet_ntop error)"; /* very unlikely */
-	char addr_buf[64], port_buf[16];
+	char addr_buf[INET6_ADDRSTRLEN + 1], port_buf[16];
 	int addr_len, port_len;
 	int af;
 
@@ -272,22 +270,33 @@ static void addr_format(char *buf, size_t buf_len, size_t short_len,
 	else
 		af = AF_INET6;
 
+	if (buf_len < 20)
+		return; /* no space for errmsg */
+
 	if (!inet_ntop(af, addr, addr_buf, sizeof(addr_buf))) {
-		strcpy(buf, errmsg);
+		strcpy(buf, "(inet_ntop error)");
 		return;
 	}
 	sprintf(port_buf, "%d", port);
 	addr_len = strlen(addr_buf);
 	port_len = strlen(port_buf);
 	if (!show_wide && (addr_len + 1 + port_len > short_len)) {
+		if (buf_len < short_len + 1) {
+			strcpy(buf, "(buf to small)");
+			return;
+		}
 		/* truncate addr string */
 		addr_len = short_len - 1 - port_len - 2;
 		strncpy(buf, addr_buf, addr_len);
 		buf[addr_len] = '\0';
 		strcat(buf, ".."); /* indicate truncation */
 		strcat(buf, ":");
-		strncat(buf, port_buf, port_len);
+		strcat(buf, port_buf);
 	} else {
+		if (buf_len < addr_len + 1 + port_len + 1) {
+			strcpy(buf, "(buf to small)");
+			return;
+		}
 		snprintf(buf, buf_len, "%s:%s", addr_buf, port_buf);
 	}
 }

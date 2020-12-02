@@ -46,9 +46,25 @@ For enhancements, please describe the proposed change and its benefits.
 Release History:
 ================
 
+1.3.0 (2020-06-16)
+    Changes:
+    - smcss: Add description of Linux error codes to man page
+    - smc_rnics:
+         * Sort output by PCHID
+         * Replace spaces in output by underscores for easier parsing
+         * Add new option --IB-dev to display IB-specific attributes
+
+    Bug fixes:
+    - smc_rnics:
+         * FIDs can have up to 4 digits and are planned to be extended
+           to a total of 8 digits - adjusting output format accordingly
+         * Do not display port attribute for RoCE Express2 devices
+           unless we have an accurate value
+
 1.2.2 (2019-10-24)
     Changes:
     - Add bash autocompletion support
+    - Makefile: Drop 31 Bit install due to rpmbuild conflict
 
     Bug fixes:
     - smcss: Do not show connection mode for already closed sockets
@@ -105,8 +121,6 @@ smc_run			SMC preload library environment setup script
 smc_pnet.c		PNET Table handling source code
 smcss.c			SMC socket display source code
 smctools_common.h	common definitions for smctools
-smc.h			include file from kernel include/uapi/linux/smc.h
-smc_diag.h		include file from kernel include/uapi/linux/smc_diag.h
 af_smc.7		manpage for AF_SMC sockets
 smc_pnet.8		manpage for smc_pnet
 smcss.8			manpage for smcss

@@ -12,19 +12,138 @@ function usage() {
 	echo "   -d, --disable <FID>  disable the specified FID";
 	echo "   -e, --enable <FID>   enable the specified FID";
 	echo "   -h, --help           display this message";
+	echo "   -I, --IB-dev         display IB-dev instead of netdev attributes";
 	echo "   -r, --rawids         display 'type' as raw vendor/device IDs";
 	echo "   -v, --version        display version info";
 	echo;
 }
 
-function print_rnic() {
-	if [ $header -eq 0 ]; then
-		printf "FID  Power  PCI ID        PCHID  Type           Port  PNET ID           Interface\n";
-		echo '------------------------------------------------------------------------------------';
-		header=1;
+function print_header() {
+	if [ $IBdev -eq 0 ]; then
+		printf "     FID  Power  PCI_ID        PCHID  Type           PPrt  PNET_ID           Net-Dev\n";
+	else
+		printf "     FID  Power  PCI_ID        PCHID  Type           IPrt  PNET_ID           IB-Dev\n";
 	fi
-	printf "%3x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "$pnet" "$int";
+	echo '-----------------------------------------------------------------------------------------';
+}
+
+function get_pnet_from_port() {
+	local idx;
+	local end;
+	local lport=$port;
+
+	if [ "$lport" == "n/a" ] || [ "$dev_type" == "RoCE_Express2" ]; then
+		if [ $IBdev -eq 0 ]; then
+			lport=0;
+		else
+			lport=1;
+		fi
+	fi
+	[ $IBdev -ne 0 ] && let lport=$lport-1;
+	(( idx=16*$lport+1 ))
+	(( end=$idx+15 ))
+	echo "$pnetids" | cut -c $idx-$end;
+}
+
+function print_rnic() {
+	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
 	(( printed++ ));
+}
+
+function print_rnics() {
+	# iterate over slots, as powered-off devices won't show elsewhere
+	for fid in `ls -1 /sys/bus/pci/slots`; do
+		cd /sys/bus/pci/slots/$fid;
+		fid="$fid";
+		if [ "$target" != "" ] && [ "$fid" != "$target" ]; then
+			continue;
+		fi
+		power=`cat power`;
+		interfaces="";
+		port="n/a";
+		addr="";
+		int="";
+		if [ $power -eq 0 ]; then
+			# device not yet hotplugged
+			dev_type="";
+			pchid="";
+			pnet="";
+			print_rnic;
+			continue;
+		fi
+		# device is hotplugged - locate it
+		for dev in `ls -1 /sys/bus/pci/devices`; do
+			cd /sys/bus/pci/devices/$dev;
+			if [ "`cat function_id`" == "0x$fid" ]; then
+				addr=$dev;
+				break;
+			fi
+		done
+		if [ "$addr" == "" ]; then
+			echo "Error: No matching device found for FID $fid" >&2;
+			continue;
+		fi
+		cd /sys/bus/pci/devices/$addr;
+		id=`cat device`;
+		vend=`cat vendor`;
+		dev_type="${vend#0x}:${id#0x}";
+		if [ $rawIDs -eq 0 ]; then
+			case "$vend" in
+			"0x1014" ) # IBM
+				case "$id" in
+				"0x04ed") dev_type="ISM";
+					  int="n/a";;
+				"0x044b") continue;;		# zEDC
+				esac;;
+			"0x15b3" ) # Mellanox
+				case "$id" in
+				"0x1003" | \
+				"0x1004") dev_type="RoCE_Express";;
+				"0x1016") dev_type="RoCE_Express2";
+					  if [ -e port ]; then
+						port=`cat port`;
+						if [ $IBdev -eq 0 ]; then
+							let port=$port-1;
+						else
+							port=1;	
+						fi
+					  fi;;
+				esac;;
+			esac
+		fi
+		pchid="`cat pchid | sed 's/^0x//'`";
+		pnetids="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII`";
+		if [ $IBdev -eq 0 ]; then
+			if [ -d "net" ]; then
+				interfaces="`ls -1 net`";
+			else
+				int="n/a";
+				print_rnic;
+				continue;
+			fi
+			# one device can have multiple interfaces (one per port)
+			for int in $interfaces; do
+				cd /sys/bus/pci/devices/$addr/net/$int;
+				if [ "$dev_type" == "RoCE_Express" ] && [ -e dev_port ]; then
+					port=`cat dev_port`;
+				fi
+				print_rnic;
+			done
+		else
+			if [ -d "infiniband" ]; then
+				int="`ls -1 infiniband`";
+			else
+				int="n/a";
+				print_rnic;
+				continue;
+			fi
+			# only one IB interface per card
+			cd /sys/bus/pci/devices/$addr/infiniband/$int
+			for port in `ls -1 ports`; do
+				print_rnic;
+			done
+		fi
+	done
 }
 
 function format_fid() {
@@ -43,12 +162,13 @@ if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
 	exit 1;
 fi
 
-args=`getopt -u -o hrve:d: -l enable:,disable:,help,rawids,version -- $*`;
+args=`getopt -u -o hIrve:d: -l enable:,disable:,help,IB-dev,rawids,version -- $*`;
 [ $? -ne 0 ] && exit 2;
 set -- $args;
 action="print";
 rawIDs=0;
 target="";
+IBdev=0;
 printed=0;
 while [ $# -gt 0 ]; do
 	case $1 in
@@ -63,10 +183,12 @@ while [ $# -gt 0 ]; do
 	"-h" | "--help" )
 		usage;
 		exit 0;;
+	"-I" | "--IB-dev" )
+	        IBdev=1;;
 	"-r" | "--rawids" )
 		rawIDs=1;;
 	"-v" | "--version" )
-		echo "smc_rnics utility, smc-tools-1.2.2 (4335826)";
+		echo "smc_rnics utility, smc-tools-1.3.0 (eb56148)";
 		exit 0;;
 	"--" ) ;;
 	* )	format_fid "$1";
@@ -102,82 +224,8 @@ if [ "$action" != "print" ]; then
 	exit 0;
 fi
 
-header=0;
-# iterate over slots, as powered-off devices won't show elsewhere
-for fid in `ls -1 /sys/bus/pci/slots`; do
-	cd /sys/bus/pci/slots/$fid;
-	fid="$fid";
-	if [ "$target" != "" ] && [ "$fid" != "$target" ]; then
-		continue;
-	fi
-	power=`cat power`;
-	interfaces="";
-	port="";
-	addr="";
-	int="";
-	if [ $power -eq 0 ]; then
-		# device not yet hotplugged
-		dev_type="";
-		pchid="";
-		pnet="";
-		print_rnic;
-		continue;
-	fi
-	# device is hotplugged - locate it
-	for dev in `ls -1 /sys/bus/pci/devices`; do
-		cd /sys/bus/pci/devices/$dev;
-		if [ "`cat function_id`" == "0x$fid" ]; then
-			addr=$dev;
-			break;
-		fi
-	done
-	if [ "$addr" == "" ]; then
-		echo "Error: No matching device found for FID $fid" >&2;
-		continue;
-	fi
-	cd /sys/bus/pci/devices/$addr;
-	id=`cat device`;
-	vend=`cat vendor`;
-	dev_type="${vend#0x}:${id#0x}";
-	if [ $rawIDs -eq 0 ]; then
-		case "$vend" in
-		"0x1014" ) # IBM
-			case "$id" in
-			"0x04ed") dev_type="ISM";
-				  port="n/a";
-				  int="n/a";;
-			"0x044b") continue;;		# zEDC
-			esac;;
-		"0x15b3" ) # Mellanox
-			case "$id" in
-			"0x1003" | \
-			"0x1004") dev_type="RoCE Express";;
-			"0x1016") dev_type="RoCE Express2";;
-			esac;;
-		esac
-	fi
-	pchid="`cat pchid | sed 's/^0x//'`";
-	pnet="`cat util_string | tr -d '\000' | iconv -f IBM-1047 -t ASCII`";
-	if [ -d net ]; then
-		interfaces="`ls -1 net`";
-	fi
-	# one device can have multiple interfaces (one per port)
-	if [ "$interfaces" != "" ]; then
-		pnetids="$pnet";
-		for int in $interfaces; do
-			cd /sys/bus/pci/devices/$addr/net/$int;
-			if [ -e dev_port ]; then
-				port=`cat dev_port`;
-				(( idx=16*$port+1 ))
-				(( end=$idx+15 ))
-				pnet=`echo "$pnetids" | cut -c $idx-$end`;
-			fi
-			print_rnic;
-		done
-		continue;
-	fi
-	print_rnic;
-done
+print_header;
+print_rnics | sort -k 4;
 
 if [ "$target" != "" ] && [ $printed -eq 0 ]; then
 	exit 8;

@@ -10,7 +10,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE = 1.2.2
+SMC_TOOLS_RELEASE = 1.3.0
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
@@ -102,7 +102,7 @@ SMC_PNET_CFLAGS = -I /usr/include/libnl3
 SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
 endif
 
-smc_pnet: smc_pnet.c smc.h smctools_common.h
+smc_pnet: smc_pnet.c smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \
 		printf "**************************************************************\n" >&2; \
 		printf "* Missing build requirement for: %-45s\n" $@ >&2; \
@@ -115,7 +115,7 @@ smc_pnet: smc_pnet.c smc.h smctools_common.h
 	fi
 	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} ${LDFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
 
-smcss: smcss.c smc_diag.h smctools_common.h
+smcss: smcss.c smctools_common.h
 	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $< -o $@
 
 install: all
@@ -147,6 +147,22 @@ ifneq ($(BASH_AUTODIR),)
 	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_pnet
 endif
 
+check:
+	if which cppcheck >/dev/null; then \
+	    echo "Running cppcheck"; \
+	    cppcheck . 2>&1; \
+	else \
+	    echo "cppcheck not available"; \
+	fi
+	@echo;
+	if which valgrind >/dev/null; then \
+	    echo "Running valgrind"; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smcss 2>&1; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smc_pnet 2>&1; \
+	else \
+	    echo "valgrind not available"; \
+	fi
+	@echo;
 clean:
 	echo "  CLEAN"
 	rm -f *.o *.so smcss smc_pnet
