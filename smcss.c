@@ -530,7 +530,7 @@ static void _usage(FILE *dest)
 	fprintf(dest,
 "Usage: %s [ OPTIONS ]\n"
 "\t-h, --help          this message\n"
-"\t-V, --version       show version information\n"
+"\t-v, --version       show version information\n"
 "\t-a, --all           show all sockets\n"
 "\t-l, --listening     show listening sockets\n"
 "\t-d, --debug         show debug socket information\n"
@@ -562,7 +562,7 @@ int main(int argc, char *argv[])
 
 	progname = (slash = strrchr(argv[0], '/')) ? slash + 1 : argv[0];
 
-	while ((ch = getopt_long(argc, argv, "aldDRhvVW", long_opts, NULL)) != EOF) {
+	while ((ch = getopt_long(argc, argv, "aldDRhvW", long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'a':
 			all++;
@@ -580,9 +580,7 @@ int main(int argc, char *argv[])
 			show_smcr++;
 			break;
 		case 'v':
-		case 'V':
-			printf("smcss utility, smc-tools-%s (%s)\n", RELEASE_STRING,
-			       RELEASE_LEVEL);
+			printf("smcss utility, smc-tools-%s\n", RELEASE_STRING);
 			exit(0);
 		case 'W':
 			show_wide++;

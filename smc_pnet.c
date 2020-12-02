@@ -49,7 +49,7 @@ static void _usage(FILE *dest)
 	fprintf(dest,
 "Usage: %s [ OPTIONS ] [pnetid]\n"
 "\t-h, --help            this message\n"
-"\t-V, --version         show version information\n"
+"\t-v, --version         show version information\n"
 "\t-a, --add             add a pnetid entry, requires interface or ib/ism device\n"
 "\t-d, --delete          delete a pnetid entry\n"
 "\t-s, --show            show a pnetid entry\n"
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 	int rc, ch;
 
 	progname = (slash = strrchr(argv[0], '/')) ? slash + 1 : argv[0];
-	while ((ch = getopt_long(argc, argv, "I:D:P:fasdhvV", long_opts,
+	while ((ch = getopt_long(argc, argv, "I:D:P:fasdhv", long_opts,
 				 NULL )) != EOF) {
 		switch (ch) {
 		case 'f':
@@ -304,9 +304,8 @@ int main(int argc, char **argv)
 			pnetcmd.ibport = convert(optarg);
 			break;
 		case 'v':
-		case 'V':
-			printf("smc_pnet utility, smc-tools-%s (%s)\n",
-			       RELEASE_STRING, RELEASE_LEVEL);
+			printf("smc_pnet utility, smc-tools-%s\n",
+			       RELEASE_STRING);
 			exit(0);
 		case 'h':
 			help();
