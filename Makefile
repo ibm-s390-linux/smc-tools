@@ -1,3 +1,4 @@
+
 #
 # SMC Tools - Shared Memory Communication Tools
 #
@@ -9,7 +10,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE = 1.2.1
+SMC_TOOLS_RELEASE = 1.2.2
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
@@ -29,6 +30,7 @@ DESTDIR          ?=
 PREFIX            = /usr
 BINDIR		  = ${PREFIX}/bin
 MANDIR		  = ${PREFIX}/share/man
+BASH_AUTODIR	  = $(shell pkg-config --variable=completionsdir bash-completion 2>/dev/null)
 OWNER		  = $(shell id -un)
 GROUP		  = $(shell id -gn)
 INSTALL_FLAGS_BIN = -g $(GROUP) -o $(OWNER) -m755
@@ -107,6 +109,7 @@ smc_pnet: smc_pnet.c smc.h smctools_common.h
 		printf "* Install package..............: %-45s\n" "devel package for libnl3" >&2; \
 		printf "* Install package..............: %-45s\n" "devel package for libnl3-genl" >&2; \
 		printf "* NOTE: Package names might differ by platform\n" >&2; \
+		printf "*       On Ubuntu try libnl-3-dev and libnl-genl-3-dev\n" >&2; \
 		printf "**************************************************************\n" >&2; \
 		exit 1; \
 	fi
@@ -117,12 +120,13 @@ smcss: smcss.c smc_diag.h smctools_common.h
 
 install: all
 	echo "  INSTALL"
-	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 $(DESTDIR)$(MANDIR)/man8
+	install -d -m755 $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man7 \
+	                 $(DESTDIR)$(BASH_AUTODIR) $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_LIB) libsmc-preload.so $(DESTDIR)$(LIBDIR)
-ifeq ($(STUFF_32BIT),1)
-	install -d -m755 $(DESTDIR)$(LIBDIR32)
-	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
-endif
+#ifeq ($(STUFF_32BIT),1)
+#	install -d -m755 $(DESTDIR)$(LIBDIR32)
+#	install $(INSTALL_FLAGS_LIB) libsmc-preload32.so $(DESTDIR)$(LIBDIR32)/libsmc-preload.so
+#endif
 	install $(INSTALL_FLAGS_BIN) smc_run $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smcss $(DESTDIR)$(BINDIR)
 	install $(INSTALL_FLAGS_BIN) smc_pnet $(DESTDIR)$(BINDIR)
@@ -135,6 +139,13 @@ endif
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
+ifneq ($(BASH_AUTODIR),)
+	install $(INSTALL_FLAGS_MAN) smc-tools.autocomplete $(DESTDIR)$(BASH_AUTODIR)/smc-tools
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_rnics
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_dbg
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smcss
+	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_pnet
+endif
 
 clean:
 	echo "  CLEAN"

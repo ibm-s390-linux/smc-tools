@@ -36,7 +36,7 @@ while [ $# -gt 0 ]; do
         "-t" | "--tgz" )
                 tgz="on";;
         "-v" | "--version" )
-		echo "smc_dbg utility, smc-tools-1.2.1 (5ad3088)";
+		echo "smc_dbg utility, smc-tools-1.2.2 (4335826)";
 		exit 0;;
         * )
         esac

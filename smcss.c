@@ -331,6 +331,9 @@ static void show_one_smc_sock(struct nlmsghdr *nlh)
 		    r->id.idiag_dst, ntohs(r->id.idiag_dport));
 	printf("%-*s ", (int)MAX(ADDR_LEN_SHORT, strlen(txtbuf)), txtbuf);
 	printf("%04x ", r->id.idiag_if);
+	if (r->diag_state == 7)			/* CLOSED state */
+		goto newline;
+	
 	if (r->diag_mode == SMC_DIAG_MODE_FALLBACK_TCP) {
 		printf("TCP ");
 		/* when available print local and peer fallback reason code */

@@ -1,0 +1,38 @@
+function _smc_pnet_complete_() {
+    case "${COMP_WORDS[COMP_CWORD-1]}" in
+        --interface*|-I*)
+            COMPREPLY=($(compgen -W "$(ls -1 /sys/class/net/)" -- "${COMP_WORDS[COMP_CWORD]}"))
+            return;;
+        --ibdevice*|-D*)
+            which smc_rnics >/dev/null
+            if [ $?  -eq 0 ]; then
+                COMPREPLY=($(compgen -W "$(smc_rnics | tail -n +3 | awk '{print($3)}' | uniq)" -- "${COMP_WORDS[COMP_CWORD]}"))
+            else
+                COMPREPLY=($(compgen -W "$(ls -1 /sys/bus/pci/devices)" -- "${COMP_WORDS[COMP_CWORD]}"))
+            fi
+            return;;
+        --ibport*|-P*)
+            ;;
+    esac
+
+    COMPREPLY=($(compgen -W "--help --version --add --delete --show --flush --interface --ibdevice --ibport" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+function _smc_rnics_complete_() {
+    case "${COMP_WORDS[COMP_CWORD-1]}" in
+        --enable|-e)
+            COMPREPLY=($(compgen -W "$(smc_rnics | grep -e "^ [[:space:]0-9a-f]\{2\}  0" | awk '{print($1)}')" -- "${COMP_WORDS[COMP_CWORD]}"))
+            return;;
+        --disable|-d)
+            COMPREPLY=($(compgen -W "$(smc_rnics | grep -e "^ [[:space:]0-9a-f]\{2\}  1" | awk '{print($1)}')" -- "${COMP_WORDS[COMP_CWORD]}"))
+            return;;
+    esac
+
+    COMPREPLY=($(compgen -W "--help --version --disable --enable --rawids" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+complete -W "--help --tgz --version" smc_dbg
+complete -W "--help --version --all --listening --debug --wide --smcd --smcr" smcss
+complete -F _smc_pnet_complete_ smc_pnet
+complete -F _smc_rnics_complete_ smc_rnics
+
