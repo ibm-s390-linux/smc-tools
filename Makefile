@@ -9,7 +9,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-SMC_TOOLS_RELEASE = 1.2.0
+SMC_TOOLS_RELEASE = 1.2.1
 VER_MAJOR         = $(shell echo $(SMC_TOOLS_RELEASE) | cut -d '.' -f 1)
 
 ARCHTYPE = $(shell uname -m)
@@ -41,7 +41,7 @@ STUFF_32BIT	  = 0
 #
 ifeq ($(ARCH),64)
 ifeq ($(DISTRO),Ubuntu)
-LIBDIR		= ${PREFIX}/lib/s390x-linux-gnu
+LIBDIR		= ${PREFIX}/lib/${ARCHTYPE}-linux-gnu
 else
 LIBDIR		= ${PREFIX}/lib64
 endif
@@ -129,10 +129,10 @@ endif
 	install $(INSTALL_FLAGS_BIN) smc_dbg $(DESTDIR)$(BINDIR)
 ifeq ($(shell uname -m | cut -c1-4),s390)
 	install $(INSTALL_FLAGS_BIN) smc_rnics $(DESTDIR)$(BINDIR)
+	install $(INSTALL_FLAGS_MAN) smc_rnics.8 $(DESTDIR)$(MANDIR)/man8
 endif
 	install $(INSTALL_FLAGS_MAN) af_smc.7 $(DESTDIR)$(MANDIR)/man7
 	install $(INSTALL_FLAGS_MAN) smc_run.8 $(DESTDIR)$(MANDIR)/man8
-	install $(INSTALL_FLAGS_MAN) smc_rnics.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smc_pnet.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcss.8 $(DESTDIR)$(MANDIR)/man8
 

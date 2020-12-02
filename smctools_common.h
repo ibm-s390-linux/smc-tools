@@ -20,7 +20,7 @@
 #define STRINGIFY(x)		STRINGIFY_1(x)
 
 #define RELEASE_STRING	STRINGIFY (SMC_TOOLS_RELEASE)
-#define RELEASE_LEVEL   "8a2dae6"
+#define RELEASE_LEVEL   "5ad3088"
 
 #define PF_SMC 43
 

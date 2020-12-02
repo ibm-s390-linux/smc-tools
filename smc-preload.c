@@ -79,7 +79,8 @@ int socket(int domain, int type, int protocol)
 
 	/* check if socket is eligible for AF_SMC */
 	if ((domain == AF_INET || domain == AF_INET6) &&
-	    type == SOCK_STREAM &&
+	    // see kernel code, include/linux/net.h, SOCK_TYPE_MASK
+	    (type & 0xf) == SOCK_STREAM &&
 	    (protocol == IPPROTO_IP || protocol == IPPROTO_TCP)) {
 		dbg_msg(stderr, "libsmc-preload: map sock to AF_SMC\n");
 		if (domain == AF_INET)
