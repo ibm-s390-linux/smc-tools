@@ -78,9 +78,6 @@ else
 	MACHINE_OPT32="-m32"
 endif
 
-%: %.in
-	$(GEN) -e "s#x.x.x#$(SMC_TOOLS_RELEASE)#g" < $< > $@
-
 util.o: util.c  util.h
 	${CCC} ${CFLAGS} -c util.c
 

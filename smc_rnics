@@ -2,6 +2,8 @@
 
 # Copyright IBM Corp. 2018, 2020
 
+VERSION="1.4.0";
+
 
 function usage() {
 	echo;
@@ -166,11 +168,6 @@ function format_fid() {
 	res="`printf "%08x" $((16#$res))`";
 }
 
-if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
-	printf "Error: s390/s390x supported only\n" >&2;
-	exit 1;
-fi
-
 args=`getopt -u -o hIrvae:d: -l all,enable:,disable:,help,IB-dev,rawids,version -- $*`;
 [ $? -ne 0 ] && exit 2;
 set -- $args;
@@ -200,7 +197,7 @@ while [ $# -gt 0 ]; do
 	"-r" | "--rawids" )
 		rawIDs=1;;
 	"-v" | "--version" )
-		echo "smc_rnics utility, smc-tools-1.3.1 (3d7eead)";
+		echo "smc_rnics utility, smc-tools-$VERSION";
 		exit 0;;
 	"--" ) ;;
 	* )	format_fid "$1";
@@ -208,6 +205,11 @@ while [ $# -gt 0 ]; do
 	esac
 	shift;
 done
+
+if [ "`uname -m`" != "s390x" ] && [ "`uname -m`" != "s390" ]; then
+	printf "Error: s390/s390x supported only\n" >&2;
+	exit 1;
+fi
 
 if [ "$action" != "print" ]; then
 	if [ "$target" != "" ]; then

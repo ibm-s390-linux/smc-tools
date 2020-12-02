@@ -42,7 +42,7 @@ char *myname = "smc";
 static void version(void)
 {
 	fprintf(stderr,
-		"%s utility, smc-tools-%s (%s)\n", myname, RELEASE_STRING, RELEASE_LEVEL);
+		"%s utility, smc-tools-%s\n", myname, RELEASE_STRING);
 	exit(-1);
 }
 static void usage(void)
