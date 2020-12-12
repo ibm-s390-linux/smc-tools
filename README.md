@@ -42,6 +42,7 @@ Release History:
 
     Changes:
     - `smcd`/`smcr`: Add new command `info`
+    - `smc_rnics`: Use '`n/a`' to indicate missing PNET ID
 
     Bug fixes:
     - `smc_pnet.8`: Use correct spelling for 'PNET ID'

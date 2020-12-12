@@ -34,7 +34,12 @@ function get_pnet_from_port() {
 	local idx;
 	local end;
 	local lport=$port;
+	local res;
 
+	if [ "$lport" == "" ]; then
+		echo "";
+		return;
+	fi
 	if [ "$lport" == "n/a" ] || [ "$dev_type" == "RoCE_Express2" ]; then
 		if [ $IBdev -eq 0 ]; then
 			lport=0;
@@ -45,7 +50,11 @@ function get_pnet_from_port() {
 	[ $IBdev -ne 0 ] && let lport=$lport-1;
 	(( idx=16*$lport+1 ))
 	(( end=$idx+15 ))
-	echo "$pnetids" | cut -c $idx-$end;
+	res="`echo "$pnetids" | cut -c $idx-$end | sed 's/ //g'`";
+	if [ "$res" == "" ]; then
+		res="n/a";
+	fi
+	echo $res;
 }
 
 function print_rnic() {
