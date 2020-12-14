@@ -43,6 +43,8 @@ Release History:
     Changes:
     - `smcd`/`smcr`: Add new command `info`
     - `smc_rnics`: Use '`n/a`' to indicate missing PNET ID
+    - `smc_chk`: New tool to perform SMC eligilibilty checks, requires `man` and
+               `python3` to be installed
 
     Bug fixes:
     - `smc_pnet.8`: Use correct spelling for 'PNET ID'

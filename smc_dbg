@@ -17,15 +17,6 @@ function usage() {
 	echo;
 }
 
-function get_pnet_from_osa_port() {
-	local idx;
-	local end;
-
-	(( idx=16*$1+1 ))
-	(( end=$idx+15 ))
-	echo "$pnetids" | cut -c $idx-$end;
-}
-
 function redirect() {
 	if [ "$tgz" == "on" ]; then
 		exec &>$tmpdir/$1;
@@ -63,6 +54,7 @@ smcss -v
 smc_dbg -v
 smc_pnet -v
 smc_rnics -v
+smc_chk -v
 smcd -v
 smcr -v
 
@@ -74,12 +66,8 @@ if [ "$ARCH" == "s390" ]; then
 	for device in `ls -1 /sys/bus/ccwgroup/devices`; do
 		chpid=`cat /sys/bus/ccwgroup/devices/$device/chpid | tr [A-F] [a-f]`;
 		osaport=`cat /sys/bus/ccwgroup/devices/$device/portno`;
-		if [ -e /sys/devices/css0/chp0.$chpid/util_string ]; then
-			pnetids="`cat /sys/devices/css0/chp0.$chpid/util_string | sed 's/\x0/\x40/g' | iconv -f IBM-1047 -t ASCII 2>/dev/null`";
-		else
-			pnetids="";
-		fi
-		printf "  %8s  %4s   %-4s  %s\n" $device 0x$chpid $osaport `get_pnet_from_osa_port $osaport`;
+		iface=`cat /sys/bus/ccwgroup/devices/$device/if_name`;
+		printf "  %8s  %4s   %-4s  %s\n" $device 0x$chpid $osaport `smc_chk -i $iface`;
 	done
 	echo;
 
@@ -104,6 +92,9 @@ smcr -d linkgroup link-show;
 
 redirect smcd_lgs.txt;
 smcd -d linkgroup show;
+
+redirect smc_chk.txt;
+smc_chk;
 
 if [ "$tgz" == "on" ]; then
 	exec >&3 2>&4

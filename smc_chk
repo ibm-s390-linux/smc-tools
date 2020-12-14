@@ -1,0 +1,562 @@
+#!/bin/bash
+
+# Copyright IBM Corp. 2021
+
+VERSION="1.4.99";
+
+
+function usage() {
+   echo;
+   echo "Usage: smc_chk [OPTIONS] -C <IP>";
+   echo "       smc_chk [OPTIONS] -S";
+   echo "       smc_chk -i <iface>";
+   echo;
+   echo "Check SMC setup";
+   echo;
+   echo "   -C, --connect <IP>           connect to specified IP";
+   echo "   -d, --debug                  show debug messages";
+   echo "   -h, --help                   display this message";
+   echo "   -i, --pnetid <IFACE>         print PNET ID and exit";
+   echo "   -p, --port <PORT>            use the next free port starting";
+   echo "                                with PORT (default: $PRT_DFT)";
+   echo "   -S, --server                 start server only";
+   echo "   -v, --version                display version info";
+   echo "   -6, --ipv6                   IP address is IPv6";
+   echo;
+}
+
+function debug() {
+   if [ $dbg -gt 0 ]; then
+      echo "[DEBUG] $@";
+   fi
+}
+
+function get_free_port() {
+   local i;
+
+   for ((i=$1;; i=i+1)); do
+      ss -tan | awk '{print($4)}' | sed 's/.*://' | sort | uniq | grep -w $i >/dev/null
+      [ $? -ne 0 ] && break
+   done
+   echo $i;
+}
+
+# Params:
+#  $1   Port
+#  $2   Set to '-6' for IPv6
+function run_server() {
+   local i;
+
+   cmd="smc_run $srv -p $1 $2";
+   debug "Starting server: $cmd";
+   $cmd >/dev/null 2>&1 &
+   pidsrv=$!;
+   for (( i=0; i<100; i++ )); do	# wait 10s max
+      ss -tln | awk '{print($4)}' | sed 's/.*://' | grep -w $1 >/dev/null
+      [ $? -eq 0 ] && break;
+      sleep 0.1;
+   done
+}
+
+# Implicit params:
+#  $1   IP
+#  $2   Port
+#  $3   Set to '-6' for IPv6
+function run_client() {
+   local mode;
+   local i;
+
+   cmd="smc_run $clt $1 -p $2 $3";
+   debug "Running client: $cmd";
+   $cmd >/dev/null 2>&1 &
+   pidclt=$!;
+   for (( i=0; i<100; i++ )); do	# wait 10s max
+      res="`smcss | awk -v id="$1:$2" '$5 == id {print($7" "$8)}'`";
+      [ "$res" != "" ] && break;
+      sleep 0.1;
+   done
+   kill -INT $pidclt >/dev/null 2>&1;
+   debug "Client result: $res";
+   if [ "$res" == "" ]; then
+      echo "     Failed, no connection"
+   else
+      mode=`echo $res | awk '{print($1)}'`;
+      err_clt="`echo $res | awk '{print($2)}' | sed 's#/.*##'`";
+      if [ `echo $res | awk '{print($2)}' | grep / | wc -l` -eq 1 ]; then
+         err_srv="`echo $res | awk '{print($2)}' | sed 's#.*/##'`";
+      else
+         err_srv="";
+      fi
+      if [ "$mode" == "TCP" ]; then
+         echo "     Failed  (TCP fallback), reasons:"
+         res="`man smcss | grep $err_clt`";
+         if [ "$res" == "" ]; then
+            res="$err_srv (Unkown error code)";
+         fi
+         echo "          Client: $res";
+         if [ "$err_srv" != "" ]; then
+            res="`man smcss | grep $err_srv`";
+            if [ "$res" == "" ]; then
+               res="       $err_srv   (Unknown error code or non-Linux OS)";
+            fi
+            echo "          Server: $res";
+         fi
+      else
+         echo "     Success, using ${mode:0:3}-${mode:3:1}";
+      fi
+   fi
+}
+
+function is_python3_available() {
+   if ! which python3 >/dev/null; then
+      echo "Error: python3 is not available";
+      signal_handler;
+   fi
+}
+
+function init_server() {
+   if [ $init_srv -ne 0 ]; then
+      return;
+   fi
+   init_srv=1;
+   is_python3_available;
+   port=`get_free_port $port`;
+   port6=`get_free_port $(expr $port + 1)`;
+   srv=`mktemp /tmp/echo-srv.XXXXXX`;
+   cat <<-EOF > $srv
+#!/usr/bin/env python3
+
+import argparse
+import signal
+import socket
+import sys
+
+def receiveSignal(signalNumber, frame):
+   if conn:
+      conn.close()
+   s.close()
+   sys.exit(0)
+
+signal.signal(signal.SIGINT, receiveSignal)
+conn = None
+parser = argparse.ArgumentParser(description='Echo server implemented in python3')
+parser.add_argument('-p', '--port', required=True, dest='port', action='store', help='listen port')
+parser.add_argument('-6', '--ipv6', dest='ipv6', action='store_true', help='IPv6 mode')
+args = parser.parse_args()
+
+host = ''        # Symbolic name meaning all available interfaces
+if args.ipv6:
+   s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+else:
+   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((host, int(args.port)))
+s.listen(1)
+while True:
+   conn, addr = s.accept()
+   print('Connected from', addr)
+   while True:
+      data = conn.recv(1024)
+      if not data:
+         break
+   conn.close()
+EOF
+   chmod +x $srv;
+}
+
+function init_client() {
+   if [ $init_clt -ne 0 ]; then
+      return;
+   fi
+   init_clt=1;
+   is_python3_available;
+   clt=`mktemp /tmp/echo-clt.XXXXXX`;
+   cat <<-EOF > $clt
+#!/usr/bin/env python3
+
+import argparse
+import socket
+import signal
+import sys
+import time
+
+def receiveSignal(signalNumber, frame):
+   s.close()
+   sys.exit(0)
+
+signal.signal(signal.SIGINT, receiveSignal)
+parser = argparse.ArgumentParser(description='Echo client implemented in python3')
+parser.add_argument('-p', '--port', required=True, dest='port', action='store', help='target port')
+parser.add_argument(dest='dest', action='store', help='destination address')
+parser.add_argument('-6', '--ipv6', dest='ipv6', action='store_true', help='IPv6 mode')
+args = parser.parse_args()
+
+if args.ipv6:
+   s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+else:
+   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((args.dest, int(args.port)))
+time.sleep(10)
+EOF
+      chmod +x $clt;
+}
+
+function test_init() {
+   init_client;
+   init_server;
+}
+
+function test_deinit() {
+   debug "Cleaning up PIDs: $pidsrv $pidclt";
+   kill -INT $pidsrv 2>/dev/null
+   kill -INT $pidclt 2>/dev/null
+   [ "$clt" != "" ] && [ -e $clt ] && rm $clt;
+   [ "$srv" != "" ] && [ -e $srv ] && rm $srv;
+}
+
+function signal_handler() {
+   test_deinit;
+   exit 1;
+}
+
+function test_iface() {
+   local i;
+
+   echo "  Live test (SMC-D and SMC-R, EXPERIMENTAL)";
+   if [ "$1" != "" ]; then
+      debug "Determine IP for interface $1";
+      ip="`get_netmasks $1 | head -1 | sed 's#/.*##'`";
+      if [ "$ip" == "" ]; then
+         echo "     No usable IP address configured, skipping";
+         echo;
+         return;
+      fi
+   fi
+   if [[ $ip == *:* ]]; then
+      run_client $ip $port6 "-6";
+   else
+      run_client $ip $port;
+   fi
+   echo;
+}
+
+function get_netmasks() {
+   # filter out link-locals
+   ip addr show $1 | grep -we "inet[6]\?" | grep -v "scope link" | awk '{print($2)}';
+}
+
+function set_pnetid() {
+   debug "Determine PNET ID for $1";
+   smc_rnics | grep -e "$1\$" >/dev/null;
+   if [ $? -eq 0 ]; then
+      # PCI device - use smc_rnics for easy PNET_ID access
+      debug "PCI device, retrieve PNET ID via smc_rnics";
+      pnetid="`smc_rnics | grep -e "$1\$" | awk '{print($7)}'`";
+      [ "$pnetid" != "" ] && return;
+   fi
+   if [ -e /sys/class/net/$1/device/portno ] && [ -e /sys/class/net/$1/device/chpid ]; then
+      # CCW device
+      debug "CCW device, retrieve PNET ID via sysfs";
+      portno=`cat /sys/class/net/$1/device/portno`;
+      chpid=`cat /sys/class/net/$1/device/chpid`;
+      chpid=${chpid,,};
+      pnetids="`cat /sys/devices/css0/chp0.$chpid/util_string | sed 's/\x0/\x40/g' | iconv -f IBM-1047 -t ASCII 2>/dev/null`";
+      (( idx=16*$portno+1 ))
+      (( end=$idx+15 ))
+      pnetid="`echo "$pnetids" | cut -c $idx-$end | sed 's/ //g'`";
+      [ "$pnetid" != "" ] && return;
+   fi
+   # Check for a software-defined PNET ID
+   debug "No luck so far - try the SW PNET table";
+   pnetid="`smc_pnet | awk -v id="$1" '$2 == id {print($1)}'`";
+   debug "PNET ID is '$pnetid'";
+}
+
+function is_smcd_available() {
+   # Verify version availability via new 'smcd info' command
+   smcd info | grep -e "^SMC-D Features:" | grep -w "$1" >/dev/null
+
+   return $?;
+}
+
+# Returns ISM device with PNET ID == $1
+function set_ism() {
+   is_smcd_available "v1";
+   [ $? -ne 0 ] && return;
+   ism="`smc_rnics | awk -v pn="$1" '$5 == "ISM" && $7 == pn {print($1)}' | sed 's/ $//'`";
+}
+
+# Returns all ISMv2-eligible devices (PNET ID not set or same as *some* NIC)
+function set_ismv2() {
+   local pnet;
+   local i;
+
+   is_smcd_available "v2";
+   [ $? -ne 0 ] && return;
+   debug "Determine all PNET IDs in use";
+   all_pnets="`smc_pnet | awk '{print($1)}'`";
+   for i in `get_iface_realname`; do
+      set_pnetid $i;
+      all_pnets="$all_pnets"$'\n'"$pnetid";
+   done
+   all_pnets="`echo "$all_pnets" | sort | uniq`";
+   debug "All pnets found: `echo $all_pnets | tr '\n' ' '`";
+   ismv2="";
+   while read line; do
+      [ "$line" == "" ] && return;
+      pnet=`echo $line | awk '{print($2)}'`;
+      if [ "$pnet" != "n/a" ]; then
+         echo "$all_pnets" | grep -w $pnet >/dev/null;
+         [ $? -ne 0 ] && continue;
+      fi
+      ismv2="$ismv2 `echo $line | awk '{print($1)}'`";
+   done <<< $(smc_rnics | awk '$5 == "ISM" {print($1" "$7)}')
+   ismv2="`echo $ismv2`";    # strip leading blank
+}
+
+function get_mode_param() {
+   case $1 in
+   $MODE_STATIC)   echo "'-s/--static-analysis'";;
+   $MODE_LIVE)     echo "'-l/--live-test'";;
+   $MODE_PPNETID)  echo "'-i/--pnetid'";;
+   $MODE_CONNECT)  echo "'-C/--connect'";;
+   $MODE_SERVER)   echo "'-S/--server'";;
+   esac
+}
+
+function set_mode() {
+   if [ $mode -eq $1 ]; then
+      return;
+   fi
+   if [ $mode -eq $MODE_LIVE ] && [ $1 -eq $MODE_STATIC ]; then
+      mode=$MODE_ALL;
+      return;
+   fi
+   if [ $mode -lt 0 ]; then
+      mode=$1;
+   else
+      echo "Error: Cannot combine options `get_mode_param $mode` and `get_mode_param $1`";
+      exit 1;
+   fi
+}
+
+function analyze_iface() {
+   local smcd_configured=0;
+   local tab=0;
+   local i;
+   local TAB1=25;
+   local TAB2=25;
+
+   echo "  Static Analysis (SMC-D only, EXPERIMENTAL)";
+   set_pnetid $1;
+   set_ism $pnetid;
+
+   # SMC version
+   echo -n "     Configuration:      ";
+   if [ "$ism" != "" ]; then
+      smcd_configured=1;
+      tab=$TAB1;
+      echo "SMC-Dv1 (ISMv1 FID(s): $ism)";
+   fi
+   if [ "$ismv2" != "" ]; then
+      smcd_configured=2;
+      printf "%*sSMC-Dv2 (ISMv2 FID(s): %s\n" $tab "" "$ismv2)";
+   fi
+   if [ $smcd_configured -eq 0 ]; then
+      echo "SMC-D not configured";
+      echo;
+      return;
+   fi
+
+   # PNET ID
+   echo "     PNET ID:            $pnetid";
+
+   # (S) EID in use
+   tab=0;
+   smcd seid show >/dev/null 2>&1;
+   if [ $? -eq 0 ]; then
+      seid="`smcd seid show | awk '$2 == "[enabled]" {print($1)}'`";
+      if [ "$seid" != "" ]; then
+         echo "     Advertising SEID:   $seid";
+      fi
+      for i in `smcd eid show`; do
+         [ $tab -eq 0 ] && echo -n "     Advertising EIDs:  ";
+         printf "%*s%s\n" $tab " " $i;
+         tab=$TAB2;
+      done
+   fi
+
+   # Reachable IP subnets
+   echo -n "     Reachable subnets:  ";
+   tab=0;
+   case $smcd_configured in
+      0) echo "None";;	# Shouldn't happen, but...
+      1) for i in `get_netmasks $1`; do
+            printf "%*s%s\n" $tab "" $i;
+            tab=$TAB1;
+         done;;
+      2) echo "Any";;
+   esac
+
+   echo;
+}
+
+# Returns the real name of interface $1 (in case $1 is an altname)
+# Call with $1 == "" for a list of all interfaces
+# Call with $1 == "up" for a list of all active interfaces
+function get_iface_realname() {
+   ip link show $1 | grep -e "^[0-9]\+:" | awk '{print($2)}' | sed s'/:$//';
+}
+
+
+trap signal_handler SIGINT;
+pid="";
+pidclt="";
+pidsrv="";
+MODE_ALL=0;
+MODE_STATIC=1;
+MODE_LIVE=2;
+MODE_PPNETID=3;
+MODE_CONNECT=4;
+MODE_SERVER=5;
+MODE_DFT=$MODE_LIVE;
+PRT_DFT=37373
+port=$PRT_DFT;
+ipv6="";
+fb=$(tput bold 2>/dev/null)   # bold font
+fn=$(tput sgr0 2>/dev/null)   # normal font
+init_clt=0;
+init_srv=0;
+args=`getopt -u -o C:dhi:lp:sSv6 -l connect:,debug,help,port:,pnetid:,server,static-analysis,live-test,version,ipv6 -- $*`;
+[ $? -ne 0 ] && exit 2;
+set -- $args;
+tgt="";
+mode=-1;
+dbg=0;
+rc=0;
+while [ $# -gt 0 ]; do
+   case $1 in
+   "-C" | "--connect" )
+      set_mode $MODE_CONNECT;
+      ip="`getent ahosts $2 | awk '{print($1)}' | head -1`";
+      if [ "$ip" == "" ]; then
+         echo "Error: Unknown destination '$2'";
+         exit 1;
+      fi
+      ifaces="`ip route get $ip 2>/dev/null | grep -oP '(?<=dev )\w+'`";
+      if [ "$ifaces" == "" ]; then
+         echo "Error: No route to host: $2";
+         exit 1;
+      fi
+      shift;;
+   "-d" | "--debug" )
+      let dbg++;;
+   "-h" | "--help" )
+      usage;
+      exit 0;;
+   "-i" | "--pnetid" )
+      set_mode $MODE_PPNETID;
+      tgt="$2";
+      shift;;
+   "-l" | "--live-test" )
+      set_mode $MODE_LIVE;;
+   "-p" | "--port" )
+      port="$2";
+      shift;;
+   "-s" | "--static-analysis" )
+      set_mode $MODE_STATIC;;
+   "-S" | "--server" )
+      set_mode $MODE_SERVER;
+      ifaces="`ip link show up | head -1 | awk '{print($2)}' | sed s'/:$//'`";;
+   "-v" | "--version" )
+      echo "smc_chk utility, smc-tools-$VERSION";
+      exit 0;;
+   "-6" | "--ipv6" )
+      ipv6="-6";;
+   "--" ) ;;
+   * )
+      if [ $mode == $MODE_PPNETID ]; then
+         echo "Error: Option -P/--print-PNETID takes no extra targets";
+         exit 1;
+      fi
+      if [ "$tgt" == "" ]; then
+         tgt="$1";
+      else
+         tgt="$tgt $1";
+      fi
+   esac
+   shift
+done
+
+if [ $mode -lt 0 ]; then
+   usage;
+   exit 0;
+fi
+
+if [ $mode -le $MODE_PPNETID ]; then
+   if [ "$tgt" != "" ]; then
+      ipv6="";     # we got an interface - if '-6' was specified, it is moot
+      up="up";
+      for i in $tgt; do
+         ip link show $i >/dev/null 2>&1;
+         if [ $? -ne 0 ]; then
+            echo "Error: Interface $i does not exist";
+            exit 1;
+         fi
+         if [ $mode -ne $MODE_PPNETID ]; then
+            if [ `ip link show up $i | wc -l` -eq 0 ]; then
+               echo "Error: $i is not an active interface";
+               exit 2;
+            fi
+         fi
+      done
+      ifaces="$tgt";
+   else
+      ifaces="`get_iface_realname "up"`";
+   fi
+fi
+debug "Interfaces to check: $ifaces";
+
+if [ $mode -eq $MODE_ALL ] || [ $mode -eq $MODE_LIVE ]; then
+   test_init;
+   run_server $port;          # We cannot know whether we need to check an interface with IPv6,
+   run_server $port6 "-6";    # so we start servers for both to be on the safe side
+fi
+
+for i in $ifaces; do
+   i=`get_iface_realname $i`;
+   case $mode in
+   $MODE_ALL )
+      echo "Checking active link:    ${fb}$i${fn}";
+      analyze_iface $i;
+      test_iface $i;;
+   $MODE_STATIC )
+      echo "Checking active link:    ${fb}$i${fn}";
+      set_ismv2;
+      analyze_iface $i;;
+   $MODE_LIVE )
+      echo "Checking active link:    ${fb}$i${fn}";
+      test_iface $i;;
+   $MODE_PPNETID )
+      set_pnetid $i;
+      [ "$pnetid" != "" ] && echo $pnetid;;
+   $MODE_CONNECT )
+      echo "Test with target IP $ip and port $port";
+      port6=$port;
+      init_client;
+      test_iface;;
+   $MODE_SERVER )
+      init_server $port;
+      if [ "$ipv6" != "" ]; then
+         run_server $port;
+         p=$port;
+      else
+         run_server $port6 "-6";
+         p=$port6;
+      fi
+      echo "Server started on port $p";
+      wait $pidsrv;;
+   esac
+done
+test_deinit;
+
+exit 0;

@@ -103,10 +103,23 @@ function _smc_rnics_complete_() {
     COMPREPLY=($(compgen -W "--help --version --disable --enable --rawids" -- "${COMP_WORDS[COMP_CWORD]}"))
 }
 
+function _smc_chk_complete_() {
+    case "${COMP_WORDS[COMP_CWORD-1]}" in
+        --pnetid|-i)
+            COMPREPLY=($(compgen -W "$(ip link show | grep -e "^[0-9]\+:" | awk '{print($2)}' | sed s'/:$//') $(ip link show up | grep -e "^\s*altname" | awk '{print($2)}')" -- "${COMP_WORDS[COMP_CWORD]}"))
+            return;;
+        --connect|-C|--port|-p)
+            COMPREPLY=()
+            return;;
+    esac
+
+    COMPREPLY=($(compgen -W "$(ip link show up | grep -e "^[0-9]\+:" | awk '{print($2)}' | sed s'/:$//') $(ip link show up | grep -e "^\s*altname" | awk '{print($2)}') --connect --help --version --debug --pnetid --port --server --static-analysis --live-test --ipv6" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
 complete -W "--help --tgz --version" smc_dbg
 complete -W "--help --version --all --listening --debug --wide --smcd --smcr" smcss
 complete -F _smc smcd
 complete -F _smc smcr
 complete -F _smc_pnet_complete_ smc_pnet
 complete -F _smc_rnics_complete_ smc_rnics
-
+complete -F _smc_chk_complete_ smc_chk

@@ -54,7 +54,7 @@ fi
 
 # Run programs to verify actual output
 echo "Checking output...";
-for i in smc_dbg smc_pnet smc_rnics smcd smcr smcss; do
+for i in smc_dbg smc_pnet smc_rnics smcd smcr smcss smc_chk; do
 	if [ `./$i -v 2>&1 | grep "$VERSION" | wc -l` -ne 1 ]; then
 		echo "  Error: './$i -v' has wrong version info: `./$i -v`";
 		let rc=rc+1;
