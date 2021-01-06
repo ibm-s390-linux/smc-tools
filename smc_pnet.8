@@ -53,8 +53,8 @@ combined with an available RDMA-capable network interface card (RNIC) or a
 DMA-capable ISM device, if they
 belong to the same Converged Ethernet fabric. To configure mapping of a RoCE Adapter
 port or an ISM device to a standard Ethernet interface, both devices need to have
-the same pnetid; either hardware-defined or user-defined using the pnet table.
-Hardware-defined pnetids cannot be overwritten.
+the same PNET ID; either hardware-defined or user-defined using the pnet table.
+Hardware-defined PNET IDs cannot be overwritten.
 .P
 The
 .B smc_pnet
@@ -67,25 +67,26 @@ shows all entries of the pnet table.
 .TP
 .IR <pnetid>
 defines a name for a grouping of Ethernet interface and RNICs or ISM devices.
-A pnetid name consists of up to 16 alphanumeric uppercase characters without blanks.
+A PNET ID consists of up to 16 alphanumeric uppercase characters without blanks.
 .TP
 .BR "\-a, \-\-add"
-creates a new pnetid definition to the pnet table (if it does not already exist).
-Only one pnetid can be defined for a certain
+creates a new PNET ID definition to the pnet table (if it does not already exist).
+Only one PNET ID can be defined for a certain
 Ethernet interface, a certain InfiniBand device port or a certain ISM device.
-Adding more than one pnetid fails. Hardware defined pnetids cannot be overwritten.
+Adding more than one PNET ID fails. Hardware defined PNET IDs cannot be overwritten.
 .TP
 .BR "\-s, \-\-show"
-shows a certain pnetid definition in the pnet table.
+shows a certain PNET ID definition in the pnet table.
 .TP
 .BR "\-d, \-\-delete"
-deletes an existing pnetid definition from the pnet table.
+deletes an existing PNET ID definition from the pnet table.
 .TP
 .BR "\-f, \-\-flush"
-removes all pnetid definitions from the pnet table.
+removes all PNET ID definitions from the pnet table.
 .TP
 .BR "\-I, \-\-interface <ethernet-interface>"
-specifies the name of the Ethernet interface to be added for a certain pnetid
+specifies the name of the Ethernet interface to be added for a certain PNET
+ID
 definition.
 .TP
 .BR "\-D, \-\-ibdevice <infiniband-or-ISM-device>"
@@ -103,8 +104,8 @@ displays smc_pnet program version.
 displays a brief smc_pnet usage information.
 
 .SH EXAMPLES
-.B Define pnetid ABC for the ethernet device names encf500 and bond0, and define
-.B pnetid ABC for the InfiniBand device ID 0001:00:00.0 (port 2) and the ISM
+.B Define PNET ID ABC for the ethernet device names encf500 and bond0, and define
+.B PNET ID ABC for the InfiniBand device ID 0001:00:00.0 (port 2) and the ISM
 .B device ID 0004:00:00.0:
 .RS 4
 .PP
@@ -128,7 +129,7 @@ ABC n/a 0004:00:00.0 1
 .RE
 .PP
 .
-.B Define pnetid XYZ for the ethernet interface name vlan0201 and the InfiniBand
+.B Define PNET ID XYZ for the ethernet interface name vlan0201 and the InfiniBand
 .B device ID 0001:00:00.0 (port 1):
 .RS 4
 .PP
@@ -136,7 +137,7 @@ $ smc_pnet \-a XYZ \-I vlan0201 \-D 0001:00:00.0 \-P 1
 .RE
 .PP
 .
-.B Show all entries for pnetid XYZ:
+.B Show all entries for PNET ID XYZ:
 .RS 4
 .PP
 .nf
@@ -146,7 +147,7 @@ XYZ n/a 0001:00:00.0 1
 .RE
 .PP
 .
-.B Delete all pnet table entries with pnetid named ABC:
+.B Delete all pnet table entries with PNET ID named ABC:
 .RS 4
 .PP
 $ smc_pnet \-d ABC

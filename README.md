@@ -43,6 +43,7 @@ Release History:
     Changes:
 
     Bug fixes:
+    - `smc_pnet.8`: Use correct spelling for 'PNET ID'
 
 * __v1.4.0 (2020-11-03)__
 
