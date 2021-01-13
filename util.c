@@ -20,12 +20,12 @@
 
 void print_unsup_msg(void)
 {
-	printf("Kernel doesn't support this parameter ! \n");
+	fprintf(stderr, "Error: Kernel does not support this parameter !\n");
 	exit(-1);
 }
 
 void print_type_error(void) {
-	printf("You entered an invalid type. Possible values are smcd and smcr !\n");
+	fprintf(stderr, "Error: You entered an invalid type. Possible values are smcd and smcr !\n");
 	exit(-1);
 }
 

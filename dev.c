@@ -202,7 +202,7 @@ static int fill_dev_port_smcr_struct(struct smc_diag_dev_info *dev, struct nlatt
 	if (nla_parse_nested(port_attrs, SMC_NLA_DEV_PORT_MAX,
 			     attrs[SMC_NLA_DEV_PORT + idx],
 			     smc_gen_dev_port_smcd_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_dev_port_smcd_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_dev_port_smcd_sock_policy\n");
 		return NL_STOP;
 	}
 	if (port_attrs[SMC_NLA_DEV_PORT_PNETID])
@@ -230,7 +230,7 @@ static int fill_dev_smcr_struct(struct smc_diag_dev_info *dev, struct nlattr **a
 	if (nla_parse_nested(dev_attrs, SMC_NLA_DEV_MAX,
 			     attrs[SMC_GEN_DEV_SMCR],
 			     smc_gen_dev_smcd_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
+		fprintf(stderr, "Error: failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
 		return NL_STOP;
 	}
 	if (dev_attrs[SMC_NLA_DEV_IS_CRIT])
@@ -281,7 +281,7 @@ static int fill_dev_port_smcd_struct(struct smc_diag_dev_info *dev, struct nlatt
 	if (nla_parse_nested(port_attrs, SMC_NLA_DEV_PORT_MAX,
 			     attrs[SMC_NLA_DEV_PORT],
 			     smc_gen_dev_port_smcd_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_dev_port_smcd_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_dev_port_smcd_sock_policy\n");
 		return NL_STOP;
 	}
 	if (port_attrs[SMC_NLA_DEV_PORT_PNETID])
@@ -300,7 +300,7 @@ static int fill_dev_smcd_struct(struct smc_diag_dev_info *dev, struct nlattr **a
 	if (nla_parse_nested(dev_attrs, SMC_NLA_DEV_MAX,
 			     attrs[SMC_GEN_DEV_SMCD],
 			     smc_gen_dev_smcd_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
 		return NL_STOP;
 	}
 	if (dev_attrs[SMC_NLA_DEV_USE_CNT])
@@ -367,7 +367,7 @@ static int handle_gen_dev_reply(struct nl_msg *msg, void *arg)
 
 	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
 			  (struct nla_policy *)smc_gen_net_policy) < 0) {
-		fprintf(stderr, "invalid data returned: smc_gen_net_policy\n");
+		fprintf(stderr, "Error: Invalid data returned: smc_gen_net_policy\n");
 		nl_msg_dump(msg, stderr);
 		return NL_STOP;
 	}

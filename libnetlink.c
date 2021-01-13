@@ -51,17 +51,17 @@ int rtnl_open(struct rtnl_handle *rth)
 	rth->fd = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC,
 			 NETLINK_SOCK_DIAG);
 	if (rth->fd < 0) {
-		perror("Cannot open netlink socket");
+		perror("Error: Cannot open netlink socket");
 		return EXIT_FAILURE;
 	}
 	if (setsockopt(rth->fd, SOL_SOCKET, SO_SNDBUF, &sndbuf,
 		       sizeof(sndbuf)) < 0) {
-		perror("SO_SNDBUF");
+		perror("Error: SO_SNDBUF");
 		return EXIT_FAILURE;
 	}
 	if (setsockopt(rth->fd, SOL_SOCKET, SO_RCVBUF, &rcvbuf,
 		       sizeof(rcvbuf)) < 0) {
-		perror("SO_RCVBUF");
+		perror("Error: SO_RCVBUF");
 		return EXIT_FAILURE;
 	}
 	memset(&rth->local, 0, sizeof(rth->local));
@@ -69,21 +69,21 @@ int rtnl_open(struct rtnl_handle *rth)
 	rth->local.nl_groups = 0;
 	if (bind(rth->fd, (struct sockaddr*)&rth->local,
 		 sizeof(rth->local)) < 0) {
-		perror("Cannot bind netlink socket");
+		perror("Error: Cannot bind netlink socket");
 		return EXIT_FAILURE;
 	}
 	addr_len = sizeof(rth->local);
 	if (getsockname(rth->fd, (struct sockaddr*)&rth->local,
 			&addr_len) < 0) {
-		perror("Cannot getsockname");
+		perror("Error: getsockname");
 		return EXIT_FAILURE;
 	}
 	if (addr_len != sizeof(rth->local)) {
-		fprintf(stderr, "Wrong address length %d\n", addr_len);
+		fprintf(stderr, "Error: Wrong address length %d\n", addr_len);
 		return EXIT_FAILURE;
 	}
 	if (rth->local.nl_family != AF_NETLINK) {
-		fprintf(stderr, "Wrong address family %d\n",
+		fprintf(stderr, "Error: Wrong address family %d\n",
 			rth->local.nl_family);
 		return EXIT_FAILURE;
 	}
@@ -122,25 +122,25 @@ again:
 	if (msglen < 0) {
 		if (errno == EINTR || errno == EAGAIN)
 			goto again;
-		fprintf(stderr, "netlink receive error %s (%d)\n",
+		fprintf(stderr, "Error: Netlink receive error %s (%d)\n",
 			strerror(errno), errno);
 		return EXIT_FAILURE;
 	}
 	if (msglen == 0) {
-		fprintf(stderr, "EOF on netlink\n");
+		fprintf(stderr, "Error: Unexpected EOF on netlink\n");
 		return EXIT_FAILURE;
 	}
 
 	while(NLMSG_OK(h, msglen)) {
 		if (h->nlmsg_flags & NLM_F_DUMP_INTR)
-			fprintf(stderr, "Dump interrupted\n");
+			fprintf(stderr, "Error: Dump interrupted\n");
 		if (h->nlmsg_type == NLMSG_DONE) {
 			found_done = 1;
 			break;
 		}
 		if (h->nlmsg_type == NLMSG_ERROR) {
 			if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-				fprintf(stderr, "ERROR truncated\n");
+				fprintf(stderr, "Error: Incomplete message\n");
 			} else {
 				perror("RTNETLINK answers");
 			}
@@ -150,7 +150,7 @@ again:
 		h = NLMSG_NEXT(h, msglen);
 	}
 	if (msg.msg_flags & MSG_TRUNC) {
-		fprintf(stderr, "Message truncated\n");
+		fprintf(stderr, "Error: Message truncated\n");
 		goto again;
 	}
 	if (!found_done) {
@@ -173,7 +173,7 @@ void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
 		rta = RTA_NEXT(rta,len);
 	}
 	if (len)
-		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n", len, rta->rta_len);
+		fprintf(stderr, "Error: Deficit %d, rta_len=%d\n", len, rta->rta_len);
 }
 
 int sockdiag_send(int fd, int cmd)

@@ -213,7 +213,7 @@ static int fill_link_struct(struct smc_diag_linkinfo_v2 *link, struct nlattr **a
 	if (nla_parse_nested(link_attrs, SMC_NLA_LINK_MAX,
 			     attrs[SMC_GEN_LINK_SMCR],
 			     smc_gen_link_smcr_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_link_smcr_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_link_smcr_sock_policy\n");
 		return NL_STOP;
 	}
 	if (link_attrs[SMC_NLA_LINK_STATE])
@@ -251,7 +251,7 @@ static int fill_lgr_struct(struct smc_diag_lgr *lgr, struct nlattr **attrs)
 	if (nla_parse_nested(lgr_attrs, SMC_NLA_LGR_R_MAX,
 			     attrs[SMC_GEN_LGR_SMCR],
 			     smc_gen_lgr_smcr_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_lgr_smcr_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_lgr_smcr_sock_policy\n");
 		return NL_STOP;
 	}
 	if (lgr_attrs[SMC_NLA_LGR_R_ID])
@@ -277,7 +277,7 @@ static int fill_lgr_smcd_struct(struct smcd_diag_dmbinfo_v2 *lgr, struct nlattr 
 	if (nla_parse_nested(lgr_attrs, SMC_NLA_LGR_D_MAX,
 			     attrs[SMC_GEN_LGR_SMCD],
 			     smc_gen_lgr_smcd_sock_policy)) {
-		fprintf(stderr, "failed to parse nested attributes: smc_gen_lgr_smcd_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_lgr_smcd_sock_policy\n");
 		return NL_STOP;
 	}
 	if (lgr_attrs[SMC_NLA_LGR_D_ID])
@@ -377,7 +377,7 @@ static int handle_gen_lgr_reply(struct nl_msg *msg, void *arg)
 
 	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
 			  (struct nla_policy *)smc_gen_net_policy) < 0) {
-		fprintf(stderr, "invalid data returned: smc_gen_net_policy\n");
+		fprintf(stderr, "Error: Invalid data returned: smc_gen_net_policy\n");
 		nl_msg_dump(msg, stderr);
 		return NL_STOP;
 	}

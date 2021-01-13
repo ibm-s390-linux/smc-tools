@@ -83,7 +83,7 @@ static int run_cmd(const char *argv0, int argc, char **argv)
 			return -(c->func(argc-1, argv+1, detail_level));
 	}
 
-	fprintf(stderr, "Object \"%s\" is unknown, try \"%s help\".\n", argv0, myname);
+	fprintf(stderr, "Error: Object \"%s\" is unknown, try \"%s help\".\n", argv0, myname);
 	return EXIT_FAILURE;
 }
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 			usage();
 		} else {
 			fprintf(stderr,
-				"Option \"%s\" is unknown, try \"%s help\".\n",
+				"Error: Option \"%s\" is unknown, try \"%s help\".\n",
 				opt, myname);
 			exit(-1);
 		}
