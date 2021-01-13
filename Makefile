@@ -137,8 +137,10 @@ smc_pnet: smc_pnet.c smctools_common.h
 	fi
 	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} ${LDFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
 
-smcss: smcss.c smctools_common.h
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $< -o $@
+smcss: smcss.o libnetlink.o
+	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
+#smcss: smcss.c smctools_common.h libnetlink.h
+#	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $< -o $@
 
 install: all
 	echo "  INSTALL"

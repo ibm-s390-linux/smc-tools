@@ -23,27 +23,10 @@
 #include <time.h>
 #include <sys/param.h>
 
-#include <linux/tcp.h>
-#include <linux/sock_diag.h>
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
-#include <arpa/inet.h>
-
 #include "smctools_common.h"
+#include "libnetlink.h"
 
-#define MAGIC_SEQ 123456
 #define ADDR_LEN_SHORT	23
-
-struct rtnl_handle {
-	int			fd;
-	struct sockaddr_nl	local;
-	struct sockaddr_nl	peer;
-	__u32			seq;
-	__u32			dump;
-	int			proto;
-	FILE			*dump_fp;
-	int			flags;
-};
 
 static char *progname;
 int show_debug;
@@ -52,117 +35,6 @@ int show_smcd;
 int show_wide;
 int listening = 0;
 int all = 0;
-
-static int rtnl_open(struct rtnl_handle *rth)
-{
-	socklen_t addr_len;
-	int rcvbuf = 1024 * 1024;
-	int sndbuf = 32768;
-
-	rth->fd = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC,
-			 NETLINK_SOCK_DIAG);
-	if (rth->fd < 0) {
-		perror("Cannot open netlink socket");
-		return EXIT_FAILURE;
-	}
-	if (setsockopt(rth->fd, SOL_SOCKET, SO_SNDBUF, &sndbuf,
-		       sizeof(sndbuf)) < 0) {
-		perror("SO_SNDBUF");
-		return EXIT_FAILURE;
-	}
-	if (setsockopt(rth->fd, SOL_SOCKET, SO_RCVBUF, &rcvbuf,
-		       sizeof(rcvbuf)) < 0) {
-		perror("SO_RCVBUF");
-		return EXIT_FAILURE;
-	}
-	memset(&rth->local, 0, sizeof(rth->local));
-	rth->local.nl_family = AF_NETLINK;
-	rth->local.nl_groups = 0;
-	if (bind(rth->fd, (struct sockaddr*)&rth->local,
-		 sizeof(rth->local)) < 0) {
-		perror("Cannot bind netlink socket");
-		return EXIT_FAILURE;
-	}
-	addr_len = sizeof(rth->local);
-	if (getsockname(rth->fd, (struct sockaddr*)&rth->local,
-			&addr_len) < 0) {
-		perror("Cannot getsockname");
-		return EXIT_FAILURE;
-	}
-	if (addr_len != sizeof(rth->local)) {
-		fprintf(stderr, "Wrong address length %d\n", addr_len);
-		return EXIT_FAILURE;
-	}
-	if (rth->local.nl_family != AF_NETLINK) {
-		fprintf(stderr, "Wrong address family %d\n",
-			rth->local.nl_family);
-		return EXIT_FAILURE;
-	}
-
-	rth->seq = time(NULL);
-	return 0;
-}
-
-void rtnl_close(struct rtnl_handle *rth)
-{
-	if (rth->fd >= 0) {
-		close(rth->fd);
-		rth->fd = -1;
-	}
-}
-
-#define DIAG_REQUEST(_req, _r)						    \
-	struct {							    \
-		struct nlmsghdr nlh;					    \
-		_r;							    \
-	} _req = {							    \
-		.nlh = {						    \
-			.nlmsg_type = SOCK_DIAG_BY_FAMILY,		    \
-			.nlmsg_flags = NLM_F_ROOT|NLM_F_REQUEST,	    \
-			.nlmsg_seq = MAGIC_SEQ,				    \
-			.nlmsg_len = sizeof(_req),			    \
-		},                                                          \
-	}
-
-static int sockdiag_send(int fd)
-{
-	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
-	DIAG_REQUEST(req, struct smc_diag_req r);
-	struct msghdr msg;
-	struct iovec iov[1];
-	int iovlen = 1;
-
-	memset(&req.r, 0, sizeof(req.r));
-	req.r.diag_family = PF_SMC;
-
-	iov[0] = (struct iovec) {
-		.iov_base = &req,
-		.iov_len = sizeof(req)
-	};
-
-	msg = (struct msghdr) {
-		.msg_name = (void *)&nladdr,
-		.msg_namelen = sizeof(nladdr),
-		.msg_iov = iov,
-		.msg_iovlen = iovlen,
-	};
-
-	if (show_debug)
-		req.r.diag_ext |= (1<<(SMC_DIAG_CONNINFO-1));
-
-	if (show_smcr)
-		req.r.diag_ext |= (1<<(SMC_DIAG_LGRINFO-1));
-
-	if (show_smcd)
-		req.r.diag_ext |= (1<<(SMC_DIAG_DMBINFO-1));
-
-	if (sendmsg(fd, &msg, 0) < 0) {
-		close(fd);
-		return EXIT_FAILURE;
-	}
-
-	return 0;
-}
 
 static void print_header(void)
 {
@@ -230,22 +102,6 @@ static const char *smc_state(unsigned char x)
 	case 27:	return "PROCESSABORT";
 	default:	sprintf(buf, "%#x?", x); return buf;
 	}
-}
-
-static void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
-			int len)
-{
-	unsigned short type;
-
-	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
-	while (RTA_OK(rta, len)) {
-		type = rta->rta_type;
-		if ((type <= max) && (!tb[type]))
-			tb[type] = rta;
-		rta = RTA_NEXT(rta,len);
-	}
-	if (len)
-		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n", len, rta->rta_len);
 }
 
 /* format one sockaddr / port */
@@ -431,69 +287,10 @@ newline:
 	printf("\n");
 }
 
-static int rtnl_dump(struct rtnl_handle *rth)
-{
-	int msglen, found_done = 0;
-	struct sockaddr_nl nladdr;
-	struct iovec iov;
-	struct msghdr msg = {
-		.msg_name = &nladdr,
-		.msg_namelen = sizeof(nladdr),
-		.msg_iov = &iov,
-		.msg_iovlen = 1,
-	};
-	char buf[32768];
-	struct nlmsghdr *h = (struct nlmsghdr *)buf;
-
-	memset(buf, 0, sizeof(buf));
-	iov.iov_base = buf;
-	iov.iov_len = sizeof(buf);
-again:
-	msglen = recvmsg(rth->fd, &msg, 0);
-	if (msglen < 0) {
-		if (errno == EINTR || errno == EAGAIN)
-			goto again;
-		fprintf(stderr, "netlink receive error %s (%d)\n",
-			strerror(errno), errno);
-		return EXIT_FAILURE;
-	}
-	if (msglen == 0) {
-		fprintf(stderr, "EOF on netlink\n");
-		return EXIT_FAILURE;
-	}
-
-	while(NLMSG_OK(h, msglen)) {
-		if (h->nlmsg_flags & NLM_F_DUMP_INTR)
-			fprintf(stderr, "Dump interrupted\n");
-		if (h->nlmsg_type == NLMSG_DONE) {
-			found_done = 1;
-			break;
-		}
-		if (h->nlmsg_type == NLMSG_ERROR) {
-			if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-				fprintf(stderr, "ERROR truncated\n");
-			} else {
-				perror("RTNETLINK answers");
-			}
-			return EXIT_FAILURE;
-		}
-		show_one_smc_sock(h);
-		h = NLMSG_NEXT(h, msglen);
-	}
-	if (msg.msg_flags & MSG_TRUNC) {
-		fprintf(stderr, "Message truncated\n");
-		goto again;
-	}
-	if (!found_done) {
-		h = (struct nlmsghdr *)buf;
-		goto again;
-	}
-	return EXIT_SUCCESS;
-}
-
 static int smc_show_netlink()
 {
 	struct rtnl_handle rth;
+	unsigned char cmd = 0;
 	int rc = 0;
 
 	if ((rc = rtnl_open(&rth)))
@@ -501,12 +298,21 @@ static int smc_show_netlink()
 
 	rth.dump = MAGIC_SEQ;
 
-	if ((rc = sockdiag_send(rth.fd)))
+	if (show_debug)
+		cmd |= (1<<(SMC_DIAG_CONNINFO-1));
+
+	if (show_smcr)
+		cmd |= (1<<(SMC_DIAG_LGRINFO-1));
+
+	if (show_smcd)
+		cmd |= (1<<(SMC_DIAG_DMBINFO-1));
+
+	if ((rc = sockdiag_send(rth.fd, cmd)))
 		goto exit;
 
 	print_header();
 
-	rc = rtnl_dump(&rth);
+	rc = rtnl_dump(&rth, show_one_smc_sock);
 
 exit:
 	rtnl_close(&rth);

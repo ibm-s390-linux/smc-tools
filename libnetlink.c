@@ -31,6 +31,8 @@
 #include "smctools_common.h"
 #include "libnetlink.h"
 
+#define MAGIC_SEQ 123456
+
 static int local_ext, smc_id = 0;
 static struct nl_sock *sk;
 static char progname[16];
@@ -176,10 +178,10 @@ void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta,
 		fprintf(stderr, "Error: Deficit %d, rta_len=%d\n", len, rta->rta_len);
 }
 
-int sockdiag_send(int fd, int cmd)
+int sockdiag_send(int fd, unsigned char cmd)
 {
 	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
-	DIAG_REQUEST(req, struct smc_diag_req_v2 r, MAGIC_SEQ_V2);
+	DIAG_REQUEST(req, struct smc_diag_req r, MAGIC_SEQ);
 	struct msghdr msg;
 	struct iovec iov[1];
 	int iovlen = 1;
@@ -199,9 +201,7 @@ int sockdiag_send(int fd, int cmd)
 		.msg_iovlen = iovlen,
 	};
 
-	req.r.cmd = cmd;
-	req.r.diag_ext = (char)local_ext;
-	req.r.cmd_ext = local_ext;
+	req.r.diag_ext = cmd;
 
 	if (sendmsg(fd, &msg, 0) < 0) {
 		close(fd);

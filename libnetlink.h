@@ -14,6 +14,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
+#ifndef SMC_LIBNETLINK_H_
+#define SMC_LIBNETLINK_H_
 #include <linux/sock_diag.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -55,7 +57,8 @@ int rtnl_open(struct rtnl_handle *rth);
 void rtnl_close(struct rtnl_handle *rth);
 int rtnl_dump(struct rtnl_handle *rth, void (*handler)(struct nlmsghdr *nlh));
 void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
-int sockdiag_send(int fd, int cmd);
+int sockdiag_send(int fd, unsigned char cmd);
 void set_extension(int ext);
 int gen_nl_open();
 int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg));
+#endif /* SMC_LIBNETLINK_H_ */
