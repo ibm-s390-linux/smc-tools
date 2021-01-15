@@ -1,0 +1,90 @@
+.\" smcd-ueid.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2021
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMCD-UEID 8 "January 2021" "smc-tools" "Linux Programmer's Manual"
+
+
+.SH NAME
+smcd-ueid \- Manage user defined EIDs
+
+smcr-ueid \- Manage user defined EIDs
+
+
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B smcd
+.RI "[ " OPTIONS " ]"
+.B ueid
+.RI " { " 
+.BR show " | "
+.BR add " | "
+.BR del " | "
+.BR flush " | "
+.BR help " }"
+.sp
+
+.ti -8
+.B smcr
+.RI "[ " OPTIONS " ]"
+.B ueid
+.RI " { " 
+.BR show " | "
+.BR add " | "
+.BR del " | "
+.BR flush " | "
+.BR help " }"
+.sp
+
+
+.SH "DESCRIPTION"
+Use the
+.B smcd ueid
+and
+.B smcr ueid
+commands to manage user defined enterprise IDs (EIDs).
+
+.SS smcd,smcr ueid show
+show all user defined EID entries
+
+.SS smcd,smcr ueid add [ueid]
+add an entry with the specified EID
+
+For [ueid], specify up to 32 uppercase alphabetic characters (A-Z), numerals (0-9), hyphens (-), and dots (.).
+The first character must be alphanumeric, and dots must not be consecutive. An invalid [ueid] is rejected.
+
+.SS smcd,smcr ueid del [ueid]
+delete the specified user defined EID
+
+.SS smcd,smcr ueid flush
+delete all user defined EIDs
+ 
+
+.SH "EXAMPLES"
+
+.HP 2
+1. Add a user defined EID
+.br
+\fB# smcd ueid add LOCATION-WEST\fP
+.br
+
+.HP 2
+2. Show the user defined EIDs
+.br
+\fB# smcd ueid show\fP
+.br
+\fBLOCATION-WEST\fP
+.br
+\fBLOCAL-WEST\fP
+.br
+
+
+.SH SEE ALSO
+.br
+.BR smcd (8),
+.BR smcr (8)

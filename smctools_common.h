@@ -25,18 +25,18 @@
 
 #include <net/if.h>
 
-#define SMC_MAX_PNETID_LEN 16 /* Max. length of PNET id */
-#define SMC_LGR_ID_SIZE 4
-#define SMC_MAX_PORTS 2 /* Max # of ports per ib device */
-#define SMC_PCI_ID_STR_LEN 16
-#define SMC_MAX_HOSTNAME_LEN 32
-#define SMC_MAX_EID_LEN 32
-#define SMC_MAX_EID 8
-#define SMC_MAX_IBNAME 8
-
 /***********************************************************
  * Mimic definitions in kernel/include/uapi/linux/smc.h
  ***********************************************************/
+
+#define SMC_MAX_PNETID_LEN	16 /* Max. length of PNET id */
+#define SMC_LGR_ID_SIZE		4
+#define SMC_MAX_IBNAME		8
+#define SMC_MAX_HOSTNAME_LEN	32 /* Max length of hostname */
+#define SMC_MAX_EID_LEN		32 /* Max length of eid */
+#define SMC_MAX_UEID		8  /* Max number of eids */
+#define SMC_MAX_PORTS		2  /* Max # of ports per ib device */
+#define SMC_PCI_ID_STR_LEN	16 /* Max length of pci id string */
 
 /* Netlink SMC_PNETID attributes */
 enum {
@@ -63,12 +63,6 @@ enum {				/* SMC PNET Table commands */
 #define SMC_GENL_FAMILY_NAME	"SMC_GEN_NETLINK"
 #define SMC_GENL_FAMILY_VERSION	1
 
-#define SMC_MAX_HOSTNAME_LEN		32 /* Max length of hostname */
-#define SMC_MAX_EID_LEN			32 /* Max length of eid */
-#define SMC_MAX_EID			8 /* Max number of eids */
-#define SMC_MAX_PORTS			2 /* Max # of ports per ib device */
-#define SMC_PCI_ID_STR_LEN		16 /* Max length of pci id string */
-
 /* SMC_GENL_FAMILY commands */
 enum {
 	SMC_NETLINK_GET_SYS_INFO = 1,
@@ -79,6 +73,13 @@ enum {
 	SMC_NETLINK_GET_DEV_SMCR,
 	SMC_NETLINK_GET_STATS,
 	SMC_NETLINK_GET_FBACK_STATS,
+	SMC_NETLINK_DUMP_UEID,
+	SMC_NETLINK_ADD_UEID,
+	SMC_NETLINK_REMOVE_UEID,
+	SMC_NETLINK_FLUSH_UEID,
+	SMC_NETLINK_DUMP_SEID,
+	SMC_NETLINK_ENABLE_SEID,
+	SMC_NETLINK_DISABLE_SEID,
 };
 
 /* SMC_GENL_FAMILY top level attributes */
@@ -273,6 +274,23 @@ enum {
 	SMC_NLA_FBACK_STATS_MAX = __SMC_NLA_FBACK_STATS_MAX - 1
 };
 
+/* SMC_NETLINK_UEID attributes */
+enum {
+	SMC_NLA_EID_TABLE_UNSPEC,
+	SMC_NLA_EID_TABLE_ENTRY,	/* string */
+	__SMC_NLA_EID_TABLE_MAX,
+	SMC_NLA_EID_TABLE_MAX = __SMC_NLA_EID_TABLE_MAX - 1
+};
+
+/* SMC_NETLINK_SEID attributes */
+enum {
+	SMC_NLA_SEID_UNSPEC,
+	SMC_NLA_SEID_ENTRY,	/* string */
+	SMC_NLA_SEID_ENABLED,	/* u8 */
+	__SMC_NLA_SEID_TABLE_MAX,
+	SMC_NLA_SEID_TABLE_MAX = __SMC_NLA_SEID_TABLE_MAX - 1
+};
+
 /***********************************************************
  * Mimic definitions in kernel/include/uapi/linux/smc_diag.h
  ***********************************************************/
@@ -415,7 +433,7 @@ struct smc_system_info {
 	__u32		reserved;
 	__u8		local_hostname[SMC_MAX_HOSTNAME_LEN];
 	__u8		seid[SMC_MAX_EID_LEN];
-	__u8		ueid[SMC_MAX_EID][SMC_MAX_EID_LEN];
+	__u8		ueid[SMC_MAX_UEID][SMC_MAX_EID_LEN];
 };
 
 /* SMC_DIAG_LINKINFO */

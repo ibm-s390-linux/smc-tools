@@ -1,0 +1,59 @@
+.\" smcd-seid.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2021
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMCD-SEID 8 "January 2021" "smc-tools" "Linux Programmer's Manual"
+
+
+.SH NAME
+smcd-seid \- Control the system EID
+
+
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B smcd
+.RI "[ " OPTIONS " ]"
+.B seid
+.RI " { " 
+.BR show " | "
+.BR enable " | "
+.BR disable " | "
+.BR help " }"
+.sp
+
+
+.SH "DESCRIPTION"
+Use the
+.B smcd seid
+command to control the system enterprise ID (EID).
+You can disable the system EID while at least one user defined EID entry exists.
+A disabled system EID is automatically enabled when the last user defined EID entry is deleted.
+
+.SS smcd seid show
+show the system EID
+
+.SS smcd seid enable
+enable the system EID
+
+.SS smcd seid disable
+disable the system EID
+
+
+.SH "EXAMPLES"
+
+.HP 2
+1. Disable the system EID
+.br
+\fB# smcd seid disable\fP
+.br
+
+
+.SH SEE ALSO
+.br
+.BR smcd (8),
+.BR smcr (8)

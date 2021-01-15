@@ -17,7 +17,7 @@ smcd \- Print information about SMC-D linkgroups and devices
 .sp
 
 .IR OBJECT " := { "
-.BR info " | " linkgroup " | " device " | " stats " }"
+.BR info " | " linkgroup " | " device " | " stats " | " ueid " | " seid " }"
 .sp
 
 .IR OPTIONS " := { "
@@ -62,6 +62,14 @@ Linkgroup(s) used by SMC-D.
 .TP
 .B stats
 SMC-D statistics.
+
+.TP
+.B ueid
+Work with User defined Enterprise IDs (UEID).
+
+.TP
+.B seid
+Maintain the System defined Enterprise ID (SEID).
 
 .PP
 The names of all objects can be abbreviated down to
@@ -110,5 +118,7 @@ tool or the smc kernel module is not loaded.
 .BR smcr (8),
 .BR smcd-device (8),
 .BR smcd-info (8),
-.BR smcd-linkgroup (8)
-.BR smcd-stats (8)
+.BR smcd-linkgroup (8),
+.BR smcd-stats (8),
+.BR smcd-ueid (8),
+.BR smcd-seid (8)

@@ -115,13 +115,13 @@ endif
 %.o: %.c
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
-smc: smc.o dev.o linkgroup.o libnetlink.o util.o
+smc: smc.o info.o ueid.o seid.o dev.o linkgroup.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} ${ALL_LDFLAGS} $^ -o $@
 
-smcd: smcd.o infod.o devd.o linkgroupd.o statsd.o libnetlink.o util.o
+smcd: smcd.o infod.o ueidd.o seidd.o devd.o linkgroupd.o statsd.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
-smcr: smcr.o infor.o devr.o linkgroupr.o statsr.o libnetlink.o util.o
+smcr: smcr.o infor.o ueidr.o seidr.o devr.o linkgroupr.o statsr.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
@@ -171,10 +171,13 @@ endif
 	install $(INSTALL_FLAGS_MAN) smcd-device.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcd-info.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcd-stats.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd-ueid.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd-seid.8 $(DESTDIR)$(MANDIR)/man8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8/smcr-linkgroup.8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-device.8 $(DESTDIR)$(MANDIR)/man8/smcr-device.8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-info.8 $(DESTDIR)$(MANDIR)/man8/smcr-info.8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-stats.8 $(DESTDIR)$(MANDIR)/man8/smcr-stats.8
+	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-ueid.8 $(DESTDIR)$(MANDIR)/man8/smcr-ueid.8
 ifneq ($(BASH_AUTODIR),)
 	install $(INSTALL_FLAGS_MAN) smc-tools.autocomplete $(DESTDIR)$(BASH_AUTODIR)/smc-tools
 	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_rnics

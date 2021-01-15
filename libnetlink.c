@@ -33,15 +33,10 @@
 
 #define MAGIC_SEQ 123456
 
-static int local_ext, smc_id = 0;
-static struct nl_sock *sk = NULL;
+int smc_id = 0;
+struct nl_sock *sk;
 
 /* Operations on sock_diag netlink socket */
-
-void set_extension(int ext)
-{
-	local_ext |= (1<<(ext-1));
-};
 
 int rtnl_open(struct rtnl_handle *rth)
 {

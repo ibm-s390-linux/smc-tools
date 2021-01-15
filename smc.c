@@ -28,6 +28,8 @@
 #include "util.h"
 #include "linkgroup.h"
 #include "dev.h"
+#include "ueid.h"
+#include "seid.h"
 #include "info.h"
 #include "stats.h"
 
@@ -50,10 +52,11 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: %s  [ OPTIONS ] OBJECT {COMMAND | help}\n"
-		"where  OBJECT := {info | linkgroup | device | stats}\n"
 #if defined(SMCD)
+		"where  OBJECT := {info | linkgroup | device | stats | ueid | seid}\n"
 		"       OPTIONS := {-v[ersion] | -d[etails] | -a[bsolute]}\n", myname);
 #else
+		"where  OBJECT := {info | linkgroup | device | stats | ueid}\n"
 		"       OPTIONS := {-v[ersion] | -d[etails] | -dd[etails] | -a[bsolute]}\n", myname);
 #endif
 }
@@ -72,6 +75,10 @@ static const struct cmd {
 	{ "linkgroup",	invoke_lgs },
 	{ "info",	invoke_info },
 	{ "stats",	invoke_stats },
+	{ "ueid",	invoke_ueid },
+#if defined(SMCD)
+	{ "seid",	invoke_seid },
+#endif
 	{ "help",	invoke_help },
 	{ 0 }
 };
@@ -84,6 +91,16 @@ static int run_cmd(const char *argv0, int argc, char **argv)
 		if (contains(argv0, c->cmd) == 0)
 			return -(c->func(argc-1, argv+1, option_detail));
 	}
+
+#if defined(SMCR)
+	/* Special warning for those who mixed up smcd and smcr */
+	if (contains(argv0, "seid") == 0) {
+		fprintf(stderr,
+			"Error: Object \"%s\" is valid for SMC-D only, try \"%s help\".\n",
+			argv0, myname);
+		return EXIT_FAILURE;
+	}
+#endif			
 
 	fprintf(stderr, "Error: Object \"%s\" is unknown, try \"%s help\".\n", argv0, myname);
 	return EXIT_FAILURE;

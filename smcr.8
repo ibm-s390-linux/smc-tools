@@ -18,7 +18,7 @@ smcr \- Print information about SMC-R linkgroups, links, devices
 .sp
 
 .IR OBJECT " := { "
-.BR info " | " linkgroup " | " device " | " stats " }"
+.BR info " | " linkgroup " | " device " | " stats " | " ueid " }"
 .sp
 
 .IR OPTIONS " := { "
@@ -67,6 +67,10 @@ Linkgroup(s) or link(s) used by SMC-R.
 .TP
 .B stats
 SMC-R statistics.
+
+.TP
+.B ueid
+Work with User defined Enterprise IDs (UEID).
 
 .PP
 The names of all objects can be abbreviated down to
@@ -118,4 +122,5 @@ tool or the smc kernel module is not loaded.
 .BR smcr-device (8),
 .BR smcr-info (8),
 .BR smcr-linkgroup (8)
-.BR smcr-stats (8)
+.BR smcr-stats (8),
+.BR smcr-ueid (8)

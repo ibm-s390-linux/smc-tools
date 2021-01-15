@@ -4,12 +4,14 @@ _smc()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="device linkgroup info stats -a -d -dd -v"
-    opts_smcd="device linkgroup info stats -a -d -v"
+    opts="device linkgroup info stats ueid -a -d -dd -v"
+    opts_smcd="device linkgroup info stats ueid seid -a -d -v"
     opts_short="device linkgroup"
     opts_show="show link-show"
     opts_show_smcd="show"
     opts_stats="show reset"
+    opts_ueid="show add del flush"
+    opts_seid="show enable disable"
     opts_type="smcd smcr"
     opts_final="all netdev ibdev"
     opts_final_smcd="all"
@@ -68,6 +70,14 @@ _smc()
             ;;
         stats)
             COMPREPLY=( $(compgen -W "${opts_stats}" -- ${cur}) )
+            return 0
+            ;;
+        ueid)
+            COMPREPLY=( $(compgen -W "${opts_ueid}" -- ${cur}) )
+            return 0
+            ;;
+        seid)
+            COMPREPLY=( $(compgen -W "${opts_seid}" -- ${cur}) )
             return 0
             ;;
         *)
