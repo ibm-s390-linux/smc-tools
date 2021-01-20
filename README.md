@@ -45,6 +45,7 @@ Release History:
 
     Bug fixes:
     - `smc_pnet.8`: Use correct spelling for 'PNET ID'
+    - `smc_rnics`: Suppress output of port attribute for offline devices
 
 * __v1.4.0 (2020-11-03)__
 
