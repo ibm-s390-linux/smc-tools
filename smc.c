@@ -28,6 +28,7 @@
 #include "util.h"
 #include "linkgroup.h"
 #include "dev.h"
+#include "info.h"
 
 struct rtnl_handle rth = { .fd = -1 };
 static int detail_level = 0;
@@ -49,7 +50,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: %s  [ OPTIONS ] OBJECT {COMMAND | help}\n"
-		"where  OBJECT := {linkgroup | device}\n"
+		"where  OBJECT := {info | linkgroup | device}\n"
 #if defined(SMCD)
 		"       OPTIONS := {-v[ersion]}\n", myname);
 #else
@@ -70,6 +71,7 @@ static const struct cmd {
 } cmds[] = {
 	{ "device",	invoke_devs },
 	{ "linkgroup",	invoke_lgs },
+	{ "info",	invoke_info },
 	{ "help",	invoke_help },
 	{ 0 }
 };

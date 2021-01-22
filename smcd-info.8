@@ -1,0 +1,71 @@
+.\" smcd-info.8
+.\"
+.\"
+.\" Copyright IBM Corp. 2021
+.\" ----------------------------------------------------------------------
+.\"
+.TH SMCD-INFO 8 "January 2021" "smc-tools" "Linux Programmer's Manual"
+
+
+.SH NAME
+smcd-info \- Print generic information about SMC
+
+smcr-info \- Print generic information about SMC
+
+
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B smcd
+.RI "[ " OPTIONS " ]"
+.B info
+.RI " { " 
+.BR show " | "
+.BR help " }"
+.sp
+
+.ti -8
+.B smcr
+.RI "[ " OPTIONS " ]"
+.B info
+.RI " { " 
+.BR show " | "
+.BR help " } "
+.sp
+
+
+.SH "DESCRIPTION"
+The
+.B smcd info
+and
+.B smcr info
+commands display generic SMC information from the kernel and the hardware.
+
+.SS smcd,smcr info show  
+show the information output
+.TP
+.SS Kernel Capabilities
+Shows the Linux kernel's SMC capabilities independent of any hardware
+prerequisites
+.TP
+.SS Hardware Capabilities
+Shows the hardware's capabilities independent of support in Linux
+
+
+.SH "EXAMPLES"
+
+.HP 2
+1. Show the SMC information
+.br
+\fB# smcd info\fP
+.br
+\fB# smcr info\fP
+.br
+
+
+.SH SEE ALSO
+.br
+.BR smcd (8),
+.BR smcr (8)

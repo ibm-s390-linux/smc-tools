@@ -118,10 +118,10 @@ endif
 smc: smc.o dev.o linkgroup.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
 
-smcd: smcd.o devd.o linkgroupd.o libnetlink.o util.o
+smcd: smcd.o infod.o devd.o linkgroupd.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
 
-smcr: smcr.o devr.o linkgroupr.o libnetlink.o util.o
+smcr: smcr.o infor.o devr.o linkgroupr.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
@@ -169,8 +169,10 @@ endif
 	install $(INSTALL_FLAGS_MAN) smcr.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcd-device.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd-info.8 $(DESTDIR)$(MANDIR)/man8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8/smcr-linkgroup.8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-device.8 $(DESTDIR)$(MANDIR)/man8/smcr-device.8
+	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-info.8 $(DESTDIR)$(MANDIR)/man8/smcr-info.8
 ifneq ($(BASH_AUTODIR),)
 	install $(INSTALL_FLAGS_MAN) smc-tools.autocomplete $(DESTDIR)$(BASH_AUTODIR)/smc-tools
 	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_rnics

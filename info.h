@@ -1,9 +1,7 @@
 /*
  * SMC Tools - Shared Memory Communication Tools
  *
- * Copyright IBM Corp. 2020
- *
- * Author(s): Guvenc Gulce <guvenc@linux.ibm.com>
+ * Copyright IBM Corp. 2021
  *
  * Userspace program for SMC Information display
  *
@@ -13,13 +11,11 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-#ifndef DEV_H_
-#define DEV_H_
+#ifndef INFO_H_
+#define INFO_H_
 
 extern struct rtnl_handle rth;
 
-int invoke_devs(int argc, char **argv, int detail_level);
-int dev_count_ism_devices(int *ism_count);
-int dev_count_roce_devices(int *rocev1_count, int *rocev2_count);
+int invoke_info(int argc, char **argv, int detail_level);
 
-#endif /* DEV_H_ */
+#endif /* INFO_H_ */

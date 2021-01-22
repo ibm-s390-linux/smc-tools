@@ -18,13 +18,13 @@ smcr \- Print information about SMC-R linkgroups, links, devices
 .sp
 
 .IR OBJECT " := { "
-.BR linkgroup " | " device " }"
+.BR info " | " linkgroup " | " device " }"
 .sp
 
 .IR OPTIONS " := { "
 \fB\-v\fR[\fIersion\fR] |
 \fB\-d\fR[\fIetails\fR] |
-\fB\-dd\fR[\fIetails\fR]}
+\fB\-dd\fR[\fIetails\fR] }
 
 .SH OPTIONS
 
@@ -46,6 +46,10 @@ Print more detailed information.
 
 .SS
 .I OBJECT
+
+.TP
+.B info
+Generic SMC information.
 
 .TP
 .B linkgroup
@@ -103,5 +107,7 @@ tool or the smc kernel module is not loaded.
 .BR smcd (8),
 .BR smcd-device (8),
 .BR smcr-device (8),
+.BR smcd-info (8),
+.BR smcr-info (8),
 .BR smcd-linkgroup (8),
 .BR smcr-linkgroup (8)

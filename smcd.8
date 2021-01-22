@@ -17,11 +17,11 @@ smcd \- Print information about SMC-D linkgroups and devices
 .sp
 
 .IR OBJECT " := { "
-.BR linkgroup " | " device " }"
+.BR info " | " linkgroup " | " device " }"
 .sp
 
 .IR OPTIONS " := { "
-\fB\-v\fR[\fIersion\fR]}
+\fB\-v\fR[\fIersion\fR] }
 
 .SH OPTIONS
 
@@ -35,6 +35,10 @@ utility and exit.
 
 .SS
 .I OBJECT
+
+.TP
+.B info
+Generic SMC information.
 
 .TP
 .B linkgroup
@@ -91,5 +95,7 @@ tool or the smc kernel module is not loaded.
 .BR smcr (8),
 .BR smcd-device (8),
 .BR smcr-device (8),
+.BR smcd-info (8),
+.BR smcr-info (8),
 .BR smcd-linkgroup (8),
 .BR smcr-linkgroup (8)

@@ -250,8 +250,8 @@ err1:
 int gen_nl_handle(int cmd, int nlmsg_flags,
 		  int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg)
 {
-	int rc = EXIT_FAILURE;
 	struct nl_msg *msg;
+	int rc;
 
 	nl_socket_modify_cb(sk, NL_CB_VALID, NL_CB_CUSTOM, cb_handler, arg);
 
@@ -259,41 +259,34 @@ int gen_nl_handle(int cmd, int nlmsg_flags,
 	msg = nlmsg_alloc();
 	if (!msg) {
 		nl_perror(NLE_NOMEM, "Error");
-		rc = EXIT_FAILURE;
-		goto err;
+		return EXIT_FAILURE;
 	}
 
 	if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, smc_id, 0, nlmsg_flags,
 			 cmd, SMC_GENL_FAMILY_VERSION)) {
-		nl_perror(rc, "Error");
-		rc = EXIT_FAILURE;
-		goto err;
+		nl_perror(NLE_NOMEM, "Error");
+		return EXIT_FAILURE;
 	}
 
 	/* Send message */
 	rc = nl_send_auto(sk, msg);
 	if (rc < 0) {
 		nl_perror(rc, "Error");
-		rc = EXIT_FAILURE;
-		goto err;
+		return EXIT_FAILURE;
 	}
 
 	/* Receive reply message, returns number of cb invocations. */
 	rc = nl_recvmsgs_default(sk);
-
 	if (rc < 0) {
 		if (rc == -NLE_OPNOTSUPP) {
-			fprintf(stderr, "Error: operation not supported by kernel\n");
+			fprintf(stderr, "Error: Operation not supported by kernel\n");
 		} else {
 			nl_perror(rc, "Error");
 		}
-		rc = EXIT_FAILURE;
-		goto err;
+		return EXIT_FAILURE;
 	}
 
 	return EXIT_SUCCESS;
-err:
-	return rc;
 }
 
 int gen_nl_handle_dump(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg)

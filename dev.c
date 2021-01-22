@@ -230,7 +230,7 @@ static int fill_dev_smcr_struct(struct smc_diag_dev_info *dev, struct nlattr **a
 	if (nla_parse_nested(dev_attrs, SMC_NLA_DEV_MAX,
 			     attrs[SMC_GEN_DEV_SMCR],
 			     smc_gen_dev_smcd_sock_policy)) {
-		fprintf(stderr, "Error: failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
+		fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
 		return NL_STOP;
 	}
 	if (dev_attrs[SMC_NLA_DEV_IS_CRIT])
@@ -446,4 +446,88 @@ int invoke_devs(int argc, char **argv, int detail_level)
 		rc = gen_nl_handle_dump(SMC_NETLINK_GET_DEV_SMCR, handle_gen_dev_reply, NULL);
 
 	return rc;
+}
+
+/* arg is an (int *) */
+static int count_ism_devices_reply(struct nl_msg *msg, void *arg)
+{
+	struct nlattr *attrs[SMC_GEN_MAX + 1];
+	struct nlmsghdr *hdr = nlmsg_hdr(msg);
+	int *ism_count = (int *)arg;
+
+	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
+			  (struct nla_policy *)smc_gen_net_policy) < 0) {
+		fprintf(stderr, "Error: Invalid data returned: smc_gen_net_policy\n");
+		nl_msg_dump(msg, stderr);
+		return NL_STOP;
+	}
+
+	if (!attrs[SMC_GEN_DEV_SMCD])
+		return NL_STOP;
+
+	(*ism_count)++;
+
+	return NL_OK;
+}
+
+int dev_count_ism_devices(int *ism_count)
+{
+	*ism_count = 0;
+	return gen_nl_handle_dump(SMC_NETLINK_GET_DEV_SMCD, count_ism_devices_reply, ism_count);
+}
+
+struct count_roce_args {
+	int *rocev1_count;
+	int *rocev2_count;
+};
+
+/* arg is an (struct count_roce_args *) */
+static int count_roce_devices_reply(struct nl_msg *msg, void *arg)
+{
+	struct count_roce_args *args = (struct count_roce_args *)arg;
+	struct nlattr *attrs[SMC_GEN_MAX + 1];
+	struct nlmsghdr *hdr = nlmsg_hdr(msg);
+
+	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
+			  (struct nla_policy *)smc_gen_net_policy) < 0) {
+		fprintf(stderr, "Error: Invalid data returned: smc_gen_net_policy\n");
+		nl_msg_dump(msg, stderr);
+		return NL_STOP;
+	}
+
+	if (!attrs[SMC_GEN_DEV_SMCR])
+		return NL_STOP;
+
+	/* Determine PCI device type */
+	{
+		struct nlattr *dev_attrs[SMC_NLA_DEV_MAX + 1];
+		short i = 0;
+
+		if (nla_parse_nested(dev_attrs, SMC_NLA_DEV_MAX,
+				     attrs[SMC_GEN_DEV_SMCR],
+				     smc_gen_dev_smcd_sock_policy)) {
+			fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_dev_smcd_sock_policy\n");
+			return NL_STOP;
+		}
+		if (dev_attrs[SMC_NLA_DEV_PCI_DEVICE])
+			i = nla_get_u16(dev_attrs[SMC_NLA_DEV_PCI_DEVICE]);
+		if (i == 0x1004)
+			(*args->rocev1_count)++;
+		if (i == 0x1016)
+			(*args->rocev2_count)++;
+	}
+
+	return NL_OK;
+}
+
+int dev_count_roce_devices(int *rocev1_count, int *rocev2_count)
+{
+	struct count_roce_args args = {
+			.rocev1_count = rocev1_count,
+			.rocev2_count = rocev2_count
+	};
+
+	*rocev1_count = 0;
+	*rocev2_count = 0;
+	return gen_nl_handle_dump(SMC_NETLINK_GET_DEV_SMCR, count_roce_devices_reply, &args);
 }

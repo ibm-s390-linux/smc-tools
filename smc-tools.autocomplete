@@ -4,8 +4,8 @@ _smc()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="device linkgroup -d -dd -v"
-    opts_smcd="device linkgroup -v"
+    opts="device linkgroup info -d -dd -v"
+    opts_smcd="device linkgroup info -v" 
     opts_short="device linkgroup"
     opts_show="show link-show"
     opts_show_smcd="show"
@@ -41,6 +41,10 @@ _smc()
             fi
             return 0
             ;;
+        info)
+            COMPREPLY=( $(compgen -W "${opts_show_smcd}" -- ${cur}) )
+            return 0
+            ;; 
         show)
             if [ $1 = "smcr" ]; then
                 COMPREPLY=( $(compgen -W "${opts_final}" -- ${cur}) )
