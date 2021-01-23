@@ -60,5 +60,7 @@ void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 int sockdiag_send(int fd, unsigned char cmd);
 void set_extension(int ext);
 int gen_nl_open();
-int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg));
+int gen_nl_handle(int cmd, int nlmsg_flags,
+		  int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg);
+int gen_nl_handle_dump(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg);
 #endif /* SMC_LIBNETLINK_H_ */

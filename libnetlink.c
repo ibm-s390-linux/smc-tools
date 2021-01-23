@@ -247,12 +247,13 @@ err1:
 
 }
 
-int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg))
+int gen_nl_handle(int cmd, int nlmsg_flags,
+		  int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg)
 {
-	int rc = EXIT_FAILURE, nlmsg_flags = 0;
+	int rc = EXIT_FAILURE;
 	struct nl_msg *msg;
 
-	nl_socket_modify_cb(sk, NL_CB_VALID, NL_CB_CUSTOM, cb_handler, NULL);
+	nl_socket_modify_cb(sk, NL_CB_VALID, NL_CB_CUSTOM, cb_handler, arg);
 
 	/* Allocate a netlink message and set header information. */
 	msg = nlmsg_alloc();
@@ -261,8 +262,6 @@ int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg))
 		rc = EXIT_FAILURE;
 		goto err;
 	}
-
-	nlmsg_flags = NLM_F_DUMP;
 
 	if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, smc_id, 0, nlmsg_flags,
 			 cmd, SMC_GENL_FAMILY_VERSION)) {
@@ -295,4 +294,9 @@ int gen_nl_handle(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg))
 	return EXIT_SUCCESS;
 err:
 	return rc;
+}
+
+int gen_nl_handle_dump(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg)
+{
+	return gen_nl_handle(cmd, NLM_F_DUMP, cb_handler, arg);
 }

@@ -441,9 +441,9 @@ int invoke_devs(int argc, char **argv, int detail_level)
 	d_level = detail_level;
 	handle_cmd_params(argc, argv);
 	if (dev_smcd)
-		rc = gen_nl_handle(SMC_NETLINK_GET_DEV_SMCD, handle_gen_dev_reply);
+		rc = gen_nl_handle_dump(SMC_NETLINK_GET_DEV_SMCD, handle_gen_dev_reply, NULL);
 	else
-		rc = gen_nl_handle(SMC_NETLINK_GET_DEV_SMCR, handle_gen_dev_reply);
+		rc = gen_nl_handle_dump(SMC_NETLINK_GET_DEV_SMCR, handle_gen_dev_reply, NULL);
 
 	return rc;
 }
