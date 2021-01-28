@@ -4,7 +4,7 @@
 
 
 .SH NAME
-smc_chk \- SMC support diagnostics.
+smc_chk \- SMC support diagnostics
 
 
 .SH SYNOPSIS
@@ -14,31 +14,41 @@ smc_chk \- SMC support diagnostics.
 .BI "smc_chk -i "INTERFACE
 
 .SH DESCRIPTION
-Use option
+Use
 .B -C/--connect
-for diagnostics on SMC support of a service running at
-.IR IP .
-In absence of a particular service to test with, use option
+to obtain diagnostic information about the SMC support of a service that runs at a
+given
+.IR IP
+address.
+Otherwise, you can use
 .B -S/--server
-to start a server and
-.B -C/--connect
-for manual live tests.
-Or use option
-.B -i
-to print the PNET ID of the specified
+to start a server before connecting with
+.IR -C .
+Use
+.B -i/--pnetid
+to print the PNET ID of a specified
 .IR INTERFACE .
 
 
 .SH OPTIONS
 .TP
 .BI "\-C, \-\-connect " IP
-Test SMC-D and/or SMC-R connectivity to
+Test SMC-D and SMC-R connectivity to
 .IR IP .
 Use option
 .B -p/--port
 to specify a
 .IR PORT .
-Can be used with any (remote) service.
+.I IP
+can specify any service, including remote services.
+By default,
+.I IP
+is assumed be in IPv4 format.
+Specify
+.B -6/--IPv6
+if
+.I IP
+is an address in IPv6 format.
 .TP
 .BR "\-d, \-\-debug "
 Show debug messages.
@@ -49,7 +59,7 @@ Display a brief
 usage information.
 .TP
 .BI "\-i, \-\-pnetid " INTERFACE
-Print PNET ID of interface
+Print the PNET ID of interface
 .I INTERFACE
 and exit.
 .TP
@@ -58,19 +68,19 @@ Use port
 .I PORT
 for any live tests. If
 .I PORT
-is already in use, the next free port will be used.
+is already in use, the next free port is used.
 .TP
 .BR "\-S, \-\-server"
 Start a server for manual tests. Use option
 .B -p/--port
-to specify a
-.IR PORT .
+to specify a port.
 .TP
 .BR "\-v, \-\-version"
 Display version information.
 .TP
 .BR "\-6, \-\-ipv6"
-IP address provided in IPv6 format.
+.I IP
+address provided is in IPv6 format.
 
 
 .SH Examples
@@ -99,4 +109,4 @@ If an error occurs, a return code other than 0 is returned.
 .BR smc_run (8),
 .BR smcd (8),
 .BR smcr (8),
-.BR smcss (8),
+.BR smcss (8)

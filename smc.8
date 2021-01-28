@@ -17,7 +17,7 @@ smc \- Print information about SMC linkgroups, links, devices
 .sp
 
 .IR OBJECT " := { "
-.BR linkgroup " | " device " }"
+.BR linkgroup " | " device " | " info " }"
 .sp
 
 .IR OPTIONS " := { "
@@ -46,12 +46,16 @@ Print more detailed information.
 .SS
 .I OBJECT
 
-.B linkgroup
-Linkgroup(s) or link(s) of the SMC.
-
-.TP
 .B device
 Device(s) of the SMC.
+
+.TP
+.B info
+Generic SMC information.
+
+.TP
+.B linkgroup
+Linkgroup(s) or link(s) of the SMC.
 
 .PP
 The names of all objects can be abbreviated down to
@@ -93,4 +97,5 @@ writes a message to stderr and completes with a return code other than 0.
 .SH SEE ALSO
 .BR af_smc (7),
 .BR smc-device (8),
+.BR smc-info (8),
 .BR smc-linkgroup (8)
