@@ -43,12 +43,13 @@ Release History:
     Changes:
 
     Bug fixes:
+    - `smc_chk`: Remove 'EXPERIMENTAL' flag
 
 * __v1.5.0 (2021-01-29)__
 
     Changes:
     - `smcd`/`smcr`: Add new command `info`
-    - `smc_rnics`: Use '`n/a`' to indicate missing PNET ID
+    - `smc_rnics`: Use `n/a` to indicate missing PNET ID
     - `smc_chk`: New tool to perform SMC eligilibilty checks, requires `man` and
                `python3` to be installed
     - `man` pages: Consistency improvements

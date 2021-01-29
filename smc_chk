@@ -221,7 +221,11 @@ function signal_handler() {
 function test_iface() {
    local i;
 
-   echo "  Live test (SMC-D and SMC-R, EXPERIMENTAL)";
+   if [ $mode -eq $MODE_CONNECT ]; then
+      echo "  Live test (SMC-D and SMC-R)";
+   else
+      echo "  Live test (SMC-D and SMC-R, EXPERIMENTAL)";
+   fi
    if [ "$1" != "" ]; then
       debug "Determine IP for interface $1";
       ip="`get_netmasks $1 | head -1 | sed 's#/.*##'`";
