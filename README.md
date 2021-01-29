@@ -41,10 +41,10 @@ Release History:
 * __v1.4.99 (tbd)__
 
     Changes:
+    - `smcd`/`smcr`: Add new command `info`
 
     Bug fixes:
     - `smc_pnet.8`: Use correct spelling for 'PNET ID'
-    - `smcd`/`smcr`: Add new command `info`
 
 * __v1.4.0 (2020-11-03)__
 
