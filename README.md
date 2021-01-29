@@ -38,7 +38,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.4.99 (tbd)__
+* __v1.5.0 (2021-01-29)__
 
     Changes:
     - `smcd`/`smcr`: Add new command `info`
