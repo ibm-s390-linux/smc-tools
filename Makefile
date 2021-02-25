@@ -118,10 +118,10 @@ endif
 smc: smc.o dev.o linkgroup.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} ${ALL_LDFLAGS} $^ -o $@
 
-smcd: smcd.o infod.o devd.o linkgroupd.o libnetlink.o util.o
+smcd: smcd.o infod.o devd.o linkgroupd.o statsd.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
-smcr: smcr.o infor.o devr.o linkgroupr.o libnetlink.o util.o
+smcr: smcr.o infor.o devr.o linkgroupr.o statsr.o libnetlink.o util.o
 	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h

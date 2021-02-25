@@ -29,6 +29,7 @@
 #include "linkgroup.h"
 #include "dev.h"
 #include "info.h"
+#include "stats.h"
 
 static int detail_level = 0;
 #if defined(SMCD)
@@ -70,6 +71,7 @@ static const struct cmd {
 	{ "device",	invoke_devs },
 	{ "linkgroup",	invoke_lgs },
 	{ "info",	invoke_info },
+	{ "stats",	invoke_stats },
 	{ "help",	invoke_help },
 	{ 0 }
 };
