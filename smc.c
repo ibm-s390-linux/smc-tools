@@ -30,7 +30,6 @@
 #include "dev.h"
 #include "info.h"
 
-struct rtnl_handle rth = { .fd = -1 };
 static int detail_level = 0;
 #if defined(SMCD)
 char *myname = "smcd";
@@ -56,7 +55,6 @@ static void usage(void)
 #else
 		"       OPTIONS := {-v[ersion] | -d[etails] | -dd[details]}\n", myname);
 #endif
-	exit(-1);
 }
 
 static int invoke_help(int argc, char **argv, int k)
@@ -91,6 +89,7 @@ static int run_cmd(const char *argv0, int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	int rc = 0;
 
 	while (argc > 1) {
 		char *opt = argv[1];
@@ -111,6 +110,7 @@ int main(int argc, char **argv)
 			detail_level = SMC_DETAIL_LEVEL_VV;
 		} else if (contains(opt, "-help") == 0) {
 			usage();
+			goto out;
 		} else {
 			fprintf(stderr,
 				"Error: Option \"%s\" is unknown, try \"%s help\".\n",
@@ -120,12 +120,14 @@ int main(int argc, char **argv)
 		argc--;	argv++;
 	}
 
-	if (gen_nl_open(myname) < 0)
+	if (gen_nl_open(myname))
 		exit(1);
-
-	if (argc > 1)
-		return run_cmd(argv[1], argc-1, argv+1);
-
-	rtnl_close(&rth);
+	if (argc > 1) {
+		rc = run_cmd(argv[1], argc-1, argv+1);
+		goto out;
+	}
 	usage();
+out:
+	gen_nl_close();
+	return rc;
 }

@@ -34,7 +34,7 @@
 #define MAGIC_SEQ 123456
 
 static int local_ext, smc_id = 0;
-static struct nl_sock *sk;
+static struct nl_sock *sk = NULL;
 
 /* Operations on sock_diag netlink socket */
 
@@ -259,20 +259,20 @@ int gen_nl_handle(int cmd, int nlmsg_flags,
 	msg = nlmsg_alloc();
 	if (!msg) {
 		nl_perror(NLE_NOMEM, "Error");
-		return EXIT_FAILURE;
+		goto errout;
 	}
 
 	if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, smc_id, 0, nlmsg_flags,
 			 cmd, SMC_GENL_FAMILY_VERSION)) {
 		nl_perror(NLE_NOMEM, "Error");
-		return EXIT_FAILURE;
+		goto errout;
 	}
 
 	/* Send message */
 	rc = nl_send_auto(sk, msg);
 	if (rc < 0) {
 		nl_perror(rc, "Error");
-		return EXIT_FAILURE;
+		goto errout;
 	}
 
 	/* Receive reply message, returns number of cb invocations. */
@@ -283,13 +283,27 @@ int gen_nl_handle(int cmd, int nlmsg_flags,
 		} else {
 			nl_perror(rc, "Error");
 		}
-		return EXIT_FAILURE;
+		goto errout;
 	}
 
+	nlmsg_free(msg);
 	return EXIT_SUCCESS;
+
+errout:
+	nlmsg_free(msg);
+	return EXIT_FAILURE;
 }
 
 int gen_nl_handle_dump(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg)
 {
 	return gen_nl_handle(cmd, NLM_F_DUMP, cb_handler, arg);
+}
+
+void gen_nl_close()
+{
+	if (sk) {
+		nl_close(sk);
+		nl_socket_free(sk);
+		sk = NULL;
+	}
 }
