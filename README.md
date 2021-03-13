@@ -45,6 +45,7 @@ Release History:
     Bug fixes:
     - `smc_chk`: Remove 'EXPERIMENTAL' flag
     - `smc_chk`: Improve cleanup
+    - `smc_chk`: Start server with intended port
     - `Makefile`: Install `smc_chk.8` on s390 only
 
 * __v1.5.0 (2021-01-29)__

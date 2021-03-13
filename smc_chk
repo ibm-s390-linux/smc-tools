@@ -553,7 +553,7 @@ for i in $ifaces; do
       test_iface;;
    $MODE_SERVER )
       init_server $port;
-      if [ "$ipv6" != "" ]; then
+      if [ "$ipv6" == "" ]; then
          run_server $port;
          p=$port;
       else
