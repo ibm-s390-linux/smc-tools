@@ -206,8 +206,9 @@ function test_init() {
 }
 
 function test_deinit() {
-   debug "Cleaning up PIDs: $pidsrv $pidclt";
+   debug "Cleaning up PIDs: $pidsrv $pidsrv6 $pidclt";
    kill -INT $pidsrv 2>/dev/null
+   [ "$pidsrv6" != "" ] && kill -INT $pidsrv6 2>/dev/null
    kill -INT $pidclt 2>/dev/null
    [ "$clt" != "" ] && [ -e $clt ] && rm $clt;
    [ "$srv" != "" ] && [ -e $srv ] && rm $srv;
@@ -412,10 +413,11 @@ function get_iface_realname() {
 }
 
 
-trap signal_handler SIGINT;
+trap signal_handler SIGINT SIGTERM;
 pid="";
 pidclt="";
 pidsrv="";
+pidsrv6="";
 MODE_ALL=0;
 MODE_STATIC=1;
 MODE_LIVE=2;
@@ -522,8 +524,9 @@ debug "Interfaces to check: $ifaces";
 
 if [ $mode -eq $MODE_ALL ] || [ $mode -eq $MODE_LIVE ]; then
    test_init;
-   run_server $port;          # We cannot know whether we need to check an interface with IPv6,
-   run_server $port6 "-6";    # so we start servers for both to be on the safe side
+   run_server $port6 "-6";    # We cannot know whether we need to check an interface with IPv6,
+   pidsrv6=$pidsrv;           # so we start servers for both to be on the safe side
+   run_server $port;
 fi
 
 for i in $ifaces; do
