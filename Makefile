@@ -61,16 +61,16 @@ endif
 all: libsmc-preload.so libsmc-preload32.so smcd smcr smcss smc_pnet
 
 CFLAGS ?= -Wall -O3 -g
-ALL_CFLAGS = -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) $(CFLAGS)
-
 ifneq ($(shell sh -c 'command -v pkg-config'),)
-SMC_PNET_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
-SMC_PNET_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
+LIBNL_CFLAGS = $(shell pkg-config --silence-errors --cflags libnl-genl-3.0)
+LIBNL_LFLAGS = $(shell pkg-config --silence-errors --libs libnl-genl-3.0)
 else
-SMC_PNET_CFLAGS = -I /usr/include/libnl3
-SMC_PNET_LFLAGS = -lnl-genl-3 -lnl-3
+LIBNL_CFLAGS = -I /usr/include/libnl3
+LIBNL_LFLAGS = -lnl-genl-3 -lnl-3
 endif
-CFLAGS += ${SMC_PNET_CFLAGS}
+ALL_CFLAGS += ${CFLAGS} -DSMC_TOOLS_RELEASE=$(SMC_TOOLS_RELEASE) \
+              ${LIBNL_CFLAGS} ${OPTFLAGS}
+ALL_LDFLAGS += ${LDFLAGS} ${LIBNL_LFLAGS}
 
 ifeq ($(ARCHTYPE),s390x)
 	MACHINE_OPT32="-m31"
@@ -79,23 +79,23 @@ else
 endif
 
 util.o: util.c  util.h
-	${CCC} ${CFLAGS} -c util.c
+	${CCC} ${ALL_CFLAGS} -c util.c
 
 libnetlink.o: libnetlink.c  libnetlink.h
-	${CCC} ${CFLAGS} ${LDFLAGS} -c libnetlink.c
+	${CCC} ${ALL_CFLAGS} ${ALL_LDFLAGS} -c libnetlink.c
 
 smc-preload.o: smc-preload.c
-	${CCC} ${CFLAGS} -fPIC -c smc-preload.c
+	${CCC} ${ALL_CFLAGS} -fPIC -c smc-preload.c
 
 libsmc-preload.so: smc-preload.o
-	${LINK} ${LDFLAGS} -shared smc-preload.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
+	${LINK} ${ALL_LDFLAGS} -shared smc-preload.o -ldl -Wl,-z,defs,-soname,$@.$(VER_MAJOR) -o $@
 	chmod u+s $@
 
 libsmc-preload32.so: smc-preload.c
 ifeq ($(ARCH),64)
 ifeq ($(STUFF_32BIT),1)
-	${CCC} ${CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o smc-preload32.o
-	${LINK} ${LDFLAGS} -shared smc-preload32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
+	${CCC} ${ALL_CFLAGS} -fPIC -c ${MACHINE_OPT32} $< -o smc-preload32.o
+	${LINK} ${ALL_LDFLAGS} -shared smc-preload32.o ${MACHINE_OPT32} -ldl -Wl,-soname,$@.$(VER_MAJOR) -o $@
 	chmod u+s $@
 else
 	$(warning "Warning: Skipping 31/32-bit library build because 31/32-bit build tools")
@@ -116,13 +116,13 @@ endif
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
 smc: smc.o dev.o linkgroup.o libnetlink.o util.o
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
+	${CCC} ${ALL_CFLAGS} ${ALL_LDFLAGS} $^ -o $@
 
 smcd: smcd.o infod.o devd.o linkgroupd.o libnetlink.o util.o
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
+	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
 smcr: smcr.o infor.o devr.o linkgroupr.o libnetlink.o util.o
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
+	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
 	@if [ ! -e /usr/include/libnl3/netlink/netlink.h ]; then \
@@ -135,12 +135,10 @@ smc_pnet: smc_pnet.c smctools_common.h
 		printf "**************************************************************\n" >&2; \
 		exit 1; \
 	fi
-	${CCC} ${ALL_CFLAGS} ${SMC_PNET_CFLAGS} ${LDFLAGS} -o $@ $< ${SMC_PNET_LFLAGS}
+	${CCC} ${ALL_CFLAGS} $< ${ALL_LDFLAGS} -o $@
 
 smcss: smcss.o libnetlink.o
-	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $^ ${SMC_PNET_LFLAGS} -o $@
-#smcss: smcss.c smctools_common.h libnetlink.h
-#	${CCC} ${ALL_CFLAGS} ${LDFLAGS} $< -o $@
+	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
 install: all
 	echo "  INSTALL"
