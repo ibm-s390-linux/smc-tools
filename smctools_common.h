@@ -78,6 +78,7 @@ enum {
 	SMC_NETLINK_GET_DEV_SMCD,
 	SMC_NETLINK_GET_DEV_SMCR,
 	SMC_NETLINK_GET_STATS,
+	SMC_NETLINK_GET_FBACK_STATS,
 };
 
 /* SMC_GENL_FAMILY top level attributes */
@@ -90,6 +91,7 @@ enum {
 	SMC_GEN_DEV_SMCD,		/* nest */
 	SMC_GEN_DEV_SMCR,		/* nest */
 	SMC_GEN_STATS,			/* nest */
+	SMC_GEN_FBACK_STATS,		/* nest */
 	__SMC_GEN_MAX,
 	SMC_GEN_MAX = __SMC_GEN_MAX - 1
 };
@@ -257,6 +259,18 @@ enum {
 	SMC_NLA_STATS_SRV_HS_ERR_CNT,	/* u64 */
 	__SMC_NLA_STATS_MAX,
 	SMC_NLA_STATS_MAX = __SMC_NLA_STATS_MAX - 1
+};
+
+/* SMC_GEN_FBACK_STATS attributes */
+enum {
+	SMC_NLA_FBACK_STATS_PAD,
+	SMC_NLA_FBACK_STATS_TYPE,	/* u8 */
+	SMC_NLA_FBACK_STATS_SRV_CNT,	/* u64 */
+	SMC_NLA_FBACK_STATS_CLNT_CNT,	/* u64 */
+	SMC_NLA_FBACK_STATS_RSN_CODE,	/* u32 */
+	SMC_NLA_FBACK_STATS_RSN_CNT,	/* u16 */
+	__SMC_NLA_FBACK_STATS_MAX,
+	SMC_NLA_FBACK_STATS_MAX = __SMC_NLA_FBACK_STATS_MAX - 1
 };
 
 /***********************************************************

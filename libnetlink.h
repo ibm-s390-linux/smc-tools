@@ -26,8 +26,8 @@
 
 static const struct nla_policy smc_gen_net_policy[SMC_GEN_MAX + 1] = {
 	[SMC_GEN_UNSPEC]	= { .type = NLA_UNSPEC, },
-	[SMC_GEN_SYS_INFO]	= { .type = NLA_NESTED, },
 	[SMC_GEN_STATS]		= { .type = NLA_NESTED, },
+	[SMC_GEN_FBACK_STATS]	= { .type = NLA_NESTED, },
 };
 
 struct rtnl_handle {

@@ -48,6 +48,15 @@ static struct nla_policy smc_gen_stats_policy[SMC_NLA_STATS_MAX + 1] = {
 	[SMC_NLA_STATS_SRV_HS_ERR_CNT]	= { .type = NLA_U64 },
 };
 
+static struct nla_policy smc_gen_stats_fback_policy[SMC_NLA_FBACK_STATS_MAX + 1] = {
+	[SMC_NLA_FBACK_STATS_PAD]	= { .type = NLA_UNSPEC },
+	[SMC_NLA_FBACK_STATS_TYPE]	= { .type = NLA_U8 },
+	[SMC_NLA_FBACK_STATS_SRV_CNT]	= { .type = NLA_U64 },
+	[SMC_NLA_FBACK_STATS_CLNT_CNT]	= { .type = NLA_U64 },
+	[SMC_NLA_FBACK_STATS_RSN_CODE]	= { .type = NLA_U32 },
+	[SMC_NLA_FBACK_STATS_RSN_CNT]	= { .type = NLA_U16 },
+};
+
 static struct nla_policy smc_gen_stats_tech_policy[SMC_NLA_STATS_T_MAX + 1] = {
 	[SMC_NLA_STATS_T_PAD]		= { .type = NLA_UNSPEC },
 	[SMC_NLA_STATS_T_TX_RMB_SIZE]	= { .type = NLA_NESTED },
@@ -351,10 +360,63 @@ static int handle_gen_stats_reply(struct nl_msg *msg, void *arg)
 		test = nla_get_u64(stats_attrs[SMC_NLA_STATS_SRV_HS_ERR_CNT]);
 		printf("Handshake srv err count: %lu\n", test);
 	}
+
 	if (stats_attrs[SMC_NLA_STATS_SMCR_TECH] && !is_smcd)
 		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCR_TECH);
 	if (stats_attrs[SMC_NLA_STATS_SMCD_TECH] && is_smcd)
 		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCD_TECH);
+	return rc;
+}
+
+static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
+{
+	struct nlattr *stats_fback_attrs[SMC_NLA_FBACK_STATS_MAX + 1];
+	struct nlattr *attrs[SMC_GEN_MAX + 1];
+	struct nlmsghdr *hdr = nlmsg_hdr(msg);
+	unsigned short type = 0;
+	int trgt = 0, trgt2 = 0;
+	uint64_t trgt64 = 0;
+	int rc = NL_OK;
+
+	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
+			  (struct nla_policy *)smc_gen_net_policy) < 0) {
+		fprintf(stderr, "%s: invalid data returned\n", "smc");
+		nl_msg_dump(msg, stderr);
+		return NL_STOP;
+	}
+	if (!attrs[SMC_GEN_FBACK_STATS])
+		return NL_STOP;
+
+	if (nla_parse_nested(stats_fback_attrs, SMC_NLA_FBACK_STATS_MAX,
+			     attrs[SMC_GEN_FBACK_STATS],
+			     smc_gen_stats_fback_policy)) {
+		fprintf(stderr, "failed to parse nested attributes!\n");
+		return NL_STOP;
+	}
+
+	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_SRV_CNT]) {
+		trgt64 = nla_get_u64(stats_fback_attrs[SMC_NLA_FBACK_STATS_SRV_CNT]);
+		printf("Fallback server count: %lu \n", trgt64);
+	}
+	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_SRV_CNT]) {
+		trgt64 = nla_get_u64(stats_fback_attrs[SMC_NLA_FBACK_STATS_CLNT_CNT]);
+		printf("Fallback client count: %lu \n", trgt64);
+	}
+	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_TYPE]) {
+		type = nla_get_u8(stats_fback_attrs[SMC_NLA_FBACK_STATS_TYPE]);
+		if (type)
+			printf("Server ");
+		else
+			printf("Client ");
+	}
+
+	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CODE])
+		trgt = nla_get_u32(stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CODE]);
+
+	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CNT]) {
+		trgt2 = nla_get_u16(stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CNT]);
+		printf("Fallback error code %x count: %d\n", trgt, trgt2);
+	}
 	return rc;
 }
 
@@ -401,6 +463,8 @@ int invoke_stats(int argc, char **argv, int detail_level)
 	d_level = detail_level;
 
 	handle_cmd_params(argc, argv);
+	if (gen_nl_handle_dump(SMC_NETLINK_GET_FBACK_STATS, handle_gen_fback_stats_reply, NULL))
+		return 0;
 	gen_nl_handle_dump(SMC_NETLINK_GET_STATS, handle_gen_stats_reply, NULL);
 
 	return 0;
