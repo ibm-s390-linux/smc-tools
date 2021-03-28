@@ -93,9 +93,6 @@ smcr -d linkgroup link-show;
 redirect smcd_lgs.txt;
 smcd -d linkgroup show;
 
-redirect smc_chk.txt;
-smc_chk;
-
 if [ "$tgz" == "on" ]; then
 	exec >&3 2>&4
 	cd /tmp;
