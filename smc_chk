@@ -82,7 +82,7 @@ function run_client() {
    else
       mode=`echo $res | awk '{print($1)}'`;
       err_clt="`echo $res | awk '{print($2)}' | sed 's#/.*##'`";
-      if [ `echo $res | awk '{print($2)}' | grep / | wc -l` -eq 1 ]; then
+      if [ `echo $res | awk '{print($2)}' | grep -c /` -eq 1 ]; then
          err_srv="`echo $res | awk '{print($2)}' | sed 's#.*/##'`";
       else
          err_srv="";
