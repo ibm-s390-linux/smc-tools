@@ -29,16 +29,11 @@ static int is_smcd = 1;
 #else
 static int is_smcd = 0;
 #endif
-static int netdev_entered = 0;
-static int ibdev_entered = 0;
-static int type_entered = 0;
-static int dev_smcr = 1;
-static int dev_smcd = 0;
 static int d_level = 0;
 
-static char target_ibdev[IB_DEVICE_NAME_MAX] = {0};
-static char target_type[SMC_TYPE_STR_MAX] = {0};
-static char target_ndev[IFNAMSIZ] = {0};
+static int show_cmd = 0;
+struct smc_stats smc_stat;
+struct smc_stats_rsn smc_rsn;
 
 static struct nla_policy smc_gen_stats_policy[SMC_NLA_STATS_MAX + 1] = {
 	[SMC_NLA_STATS_PAD]		= { .type = NLA_UNSPEC },
@@ -105,32 +100,151 @@ static struct nla_policy smc_gen_stats_pload_policy[SMC_NLA_STATS_PLOAD_MAX + 1]
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: smc device [show] [all] [type {smcd | smcr}]\n"
-		"                               [ibdev <dev>]\n"
-		"                               [netdev <dev>]\n");
+#if defined(SMCD)
+		"Usage: smcd stat [show]\n"
+#elif defined(SMCR)
+		"Usage: smcr stat [show]\n"
+#else
+		"Usage: smc stat [show]\n"
+#endif
+	);
 	exit(-1);
+}
+
+static void fillbuffer(struct smc_stats_memsize *mem, char buf[][7])
+{
+	get_abbreviated(mem->buf[SMC_BUF_8K], 6, buf[SMC_BUF_8K]);
+	get_abbreviated(mem->buf[SMC_BUF_16K], 6, buf[SMC_BUF_16K]);
+	get_abbreviated(mem->buf[SMC_BUF_32K], 6, buf[SMC_BUF_32K]);
+	get_abbreviated(mem->buf[SMC_BUF_64K], 6, buf[SMC_BUF_64K]);
+	get_abbreviated(mem->buf[SMC_BUF_128K], 6, buf[SMC_BUF_128K]);
+	get_abbreviated(mem->buf[SMC_BUF_256K], 6, buf[SMC_BUF_256K]);
+	get_abbreviated(mem->buf[SMC_BUF_512K], 6, buf[SMC_BUF_512K]);
+	get_abbreviated(mem->buf[SMC_BUF_G_1024K] + mem->buf[SMC_BUF_1024K], 6,
+			buf[SMC_BUF_1024K]);
+}
+
+static void print_to_console()
+{
+	__u64 smc_conn_cnt = 0, special_calls = 0, total_req_cn = 0;
+	__u64 total_conn = 0, fback_count = 0, hshake_err_cnt = 0;
+	float buf_small = 0, buf_small_r = 0, buf_rx_full = 0;
+	float buf_full = 0, buf_full_r = 0;
+	struct smc_stats_tech *tech;
+	float avg_req_p_conn = 0;
+	char buf[SMC_BUF_MAX][7];
+	char temp_str[7];
+	int tech_type;
+
+	if (is_smcd) {
+		printf("SMC-D Connections Summary\n");
+		tech_type = SMC_TYPE_D;
+	} else {
+		printf("SMC-R Connections Summary\n");
+		tech_type = SMC_TYPE_R;
+	}
+	tech = &smc_stat.smc[tech_type];
+
+	smc_conn_cnt += tech->clnt_v1_succ_cnt;
+	smc_conn_cnt += tech->clnt_v2_succ_cnt;
+	smc_conn_cnt += tech->srv_v1_succ_cnt;
+	smc_conn_cnt += tech->srv_v2_succ_cnt;
+	total_conn += smc_conn_cnt;
+	hshake_err_cnt += smc_stat.clnt_hshake_err_cnt;
+	hshake_err_cnt += smc_stat.srv_hshake_err_cnt;
+	total_conn += hshake_err_cnt;
+	fback_count += smc_rsn.clnt_fback_cnt;
+	fback_count += smc_rsn.srv_fback_cnt;
+	total_conn += fback_count;
+	total_req_cn = tech->rx_cnt + tech->tx_cnt;
+	if (smc_conn_cnt)
+		avg_req_p_conn = total_req_cn / (double)smc_conn_cnt;
+
+	special_calls += tech->cork_cnt;
+	special_calls += tech->ndly_cnt;
+	special_calls += tech->sendpage_cnt;
+	special_calls += tech->splice_cnt;
+	special_calls += tech->urg_data_cnt;
+	if (tech->tx_cnt) {
+		buf_full = tech->rmb_tx.buf_full_cnt / (double)tech->tx_cnt * 100;
+		buf_full_r = tech->rmb_tx.buf_full_peer_cnt / (double)tech->tx_cnt * 100;
+		buf_small = tech->rmb_tx.buf_size_small_cnt / (double)tech->tx_cnt * 100;
+		buf_small_r = tech->rmb_tx.buf_size_small_peer_cnt / (double)tech->tx_cnt * 100;
+	}
+	if (tech->rx_cnt)
+		buf_rx_full = tech->rmb_rx.buf_full_cnt / (double)tech->rx_cnt * 100;
+
+	printf("  Total connections handled  %12llu\n", total_conn);
+	printf("  SMC connections            %12llu\n", smc_conn_cnt);
+	printf("  Handshake errors           %12llu\n", hshake_err_cnt);
+	printf("  TCP fallback               %12llu\n", fback_count);
+	printf("  Avg requests per SMC conn  %14.1f\n", avg_req_p_conn);
+	printf("\n");
+	printf("RX Stats\n");
+	get_abbreviated(smc_stat.smc[tech_type].rx_bytes, 6, temp_str);
+	printf("  Data transmitted (Bytes) %14llu (%s)\n",
+		smc_stat.smc[tech_type].rx_bytes, temp_str);
+	printf("  Total requests             %12llu\n", tech->rx_cnt);
+	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_rx.buf_full_cnt,
+			buf_rx_full);
+	fillbuffer(&tech->rx_rmbsize, buf);
+	printf("            8KB    16KB    32KB    64KB   128KB   256KB   512KB  >512KB\n");
+	printf("  Bufs   %6s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n",
+		buf[SMC_BUF_8K], buf[SMC_BUF_16K], buf[SMC_BUF_32K], buf[SMC_BUF_64K],
+		buf[SMC_BUF_128K], buf[SMC_BUF_256K], buf[SMC_BUF_512K], buf[SMC_BUF_1024K]);
+	fillbuffer(&tech->rx_pd, buf);
+	printf("  Reqs   %6s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n",
+		buf[SMC_BUF_8K], buf[SMC_BUF_16K], buf[SMC_BUF_32K], buf[SMC_BUF_64K],
+		buf[SMC_BUF_128K], buf[SMC_BUF_256K], buf[SMC_BUF_512K], buf[SMC_BUF_1024K]);
+	printf("\n");
+	printf("TX Stats\n");
+	get_abbreviated(smc_stat.smc[tech_type].tx_bytes, 6, temp_str);
+	printf("  Data transmitted (Bytes) %14llu (%s)\n",
+		smc_stat.smc[tech_type].tx_bytes, temp_str);
+	printf("  Total requests             %12llu\n", tech->tx_cnt);
+	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_cnt,
+			buf_full);
+	printf("  Buffer full(remote)        %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_peer_cnt,
+			buf_full_r);
+	printf("  Buffer too small           %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_cnt,
+			buf_small);
+	printf("  Buffer too small(remote)   %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_peer_cnt,
+			buf_small_r);
+	fillbuffer(&tech->tx_rmbsize, buf);
+	printf("            8KB    16KB    32KB    64KB   128KB   256KB   512KB  >512KB\n");
+	printf("  Bufs   %6s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n",
+		buf[SMC_BUF_8K], buf[SMC_BUF_16K], buf[SMC_BUF_32K], buf[SMC_BUF_64K],
+		buf[SMC_BUF_128K], buf[SMC_BUF_256K], buf[SMC_BUF_512K], buf[SMC_BUF_1024K]);
+	fillbuffer(&tech->tx_pd, buf);
+	printf("  Reqs   %6s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n",
+		buf[SMC_BUF_8K], buf[SMC_BUF_16K], buf[SMC_BUF_32K], buf[SMC_BUF_64K],
+		buf[SMC_BUF_128K], buf[SMC_BUF_256K], buf[SMC_BUF_512K], buf[SMC_BUF_1024K]);
+	printf("\n");
+	printf("Extras\n");
+	printf("  Special socket calls       %12llu\n", special_calls);
 }
 
 static int show_tech_pload_info(struct nlattr **attr, int type, int direction)
 {
 	struct nlattr *tech_pload_attrs[SMC_NLA_STATS_PLOAD_MAX + 1];
-	char *str_type, *str_dir;
+	struct smc_stats_memsize *tmp_memsize;
 	uint64_t trgt = 0;
 	int rc = NL_OK;
+	int tech_type;
 
 	if (type == SMC_NLA_STATS_SMCD_TECH)
-		str_type = "smcd";
+		tech_type = SMC_TYPE_D;
 	else
-		str_type = "smcr";
+		tech_type = SMC_TYPE_R;
 
 	if (direction == SMC_NLA_STATS_T_TXPLOAD_SIZE)
-		str_dir = "Reqs Tx";
+		tmp_memsize = &smc_stat.smc[tech_type].tx_pd;
 	else if (direction == SMC_NLA_STATS_T_RXPLOAD_SIZE)
-		str_dir = "Reqs Rx";
-	else if (direction == SMC_NLA_STATS_T_TX_RMB_STATS)
-		str_dir = "Bufs Tx";
-	else if (direction == SMC_NLA_STATS_T_RX_RMB_STATS)
-		str_dir = "Bufs Rx";
+		tmp_memsize = &smc_stat.smc[tech_type].rx_pd;
+	else if (direction == SMC_NLA_STATS_T_TX_RMB_SIZE)
+		tmp_memsize = &smc_stat.smc[tech_type].tx_rmbsize;
+	else if (direction == SMC_NLA_STATS_T_RX_RMB_SIZE)
+		tmp_memsize = &smc_stat.smc[tech_type].rx_rmbsize;
 	else
 		return NL_STOP;
 
@@ -143,39 +257,39 @@ static int show_tech_pload_info(struct nlattr **attr, int type, int direction)
 
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_8K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_8K]);
-		printf("  %s %s  8K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_8K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_16K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_16K]);
-		printf("  %s %s  16K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_16K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_32K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_32K]);
-		printf("  %s %s  32K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_32K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_64K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_64K]);
-		printf("  %s %s  64K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_64K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_128K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_128K]);
-		printf("  %s %s  128K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_128K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_256K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_256K]);
-		printf("  %s %s  256K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_256K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_512K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_512K]);
-		printf("  %s %s  512K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_512K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_1024K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_1024K]);
-		printf("  %s %s  1024K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_1024K] = trgt;
 	}
 	if (tech_pload_attrs[SMC_NLA_STATS_PLOAD_G_1024K]) {
 		trgt = nla_get_u64(tech_pload_attrs[SMC_NLA_STATS_PLOAD_G_1024K]);
-		printf("  %s %s  >1024K count: %lu\n", str_type, str_dir, trgt);
+		tmp_memsize->buf[SMC_BUF_G_1024K] = trgt;
 	}
 	return rc;
 }
@@ -183,19 +297,20 @@ static int show_tech_pload_info(struct nlattr **attr, int type, int direction)
 static int show_tech_rmb_info(struct nlattr **attr, int type, int direction)
 {
 	struct nlattr *tech_rmb_attrs[SMC_NLA_STATS_RMB_MAX + 1];
-	char *str_type, *str_dir;
+	struct smc_stats_rmbcnt *tmp_rmb_stats;
 	uint64_t trgt = 0;
 	int rc = NL_OK;
+	int tech_type;
 
 	if (type == SMC_NLA_STATS_SMCD_TECH)
-		str_type = "smcd";
+		tech_type = SMC_TYPE_D;
 	else
-		str_type = "smcr";
+		tech_type = SMC_TYPE_R;
 
 	if (direction == SMC_NLA_STATS_T_TX_RMB_STATS)
-		str_dir = "Tx";
+		tmp_rmb_stats = &smc_stat.smc[tech_type].rmb_tx;
 	else
-		str_dir = "Rx";
+		tmp_rmb_stats = &smc_stat.smc[tech_type].rmb_rx;
 
 	if (nla_parse_nested(tech_rmb_attrs, SMC_NLA_STATS_RMB_MAX,
 			     attr[direction],
@@ -206,31 +321,31 @@ static int show_tech_rmb_info(struct nlattr **attr, int type, int direction)
 
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_REUSE_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_REUSE_CNT]);
-		printf("  %s %s rmb reuse count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->reuse_cnt = trgt;
 	}
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_ALLOC_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_ALLOC_CNT]);
-		printf("  %s %s rmb alloc count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->alloc_cnt = trgt;
 	}
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_SIZE_SM_PEER_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_SIZE_SM_PEER_CNT]);
-		printf("  %s %s peer buffer too small count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->buf_size_small_peer_cnt = trgt;
 	}
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_SIZE_SM_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_SIZE_SM_CNT]);
-		printf("  %s %s buffer too small count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->buf_size_small_cnt = trgt;
 	}
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_FULL_PEER_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_FULL_PEER_CNT]);
-		printf("  %s %s peer buffer full count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->buf_full_peer_cnt = trgt;
 	}
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_FULL_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_FULL_CNT]);
-		printf("  %s %s buffer full count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->buf_full_cnt = trgt;
 	}
 	if (tech_rmb_attrs[SMC_NLA_STATS_RMB_DGRADE_CNT]) {
 		trgt = nla_get_u64(tech_rmb_attrs[SMC_NLA_STATS_RMB_DGRADE_CNT]);
-		printf("  %s %s rmb downgrade count: %lu\n", str_type, str_dir, trgt);
+		tmp_rmb_stats->dgrade_cnt = trgt;
 	}
 
 	return rc;
@@ -240,16 +355,12 @@ static int show_tech_info(struct nlattr **attr, int type)
 {
 	struct nlattr *tech_attrs[SMC_NLA_STATS_T_MAX + 1];
 	uint64_t trgt = 0;
-	char *str_type;
-	int rc = NL_OK;
+	int tech_type;
 
-	if (type == SMC_NLA_STATS_SMCD_TECH) {
-		printf("SMCD \n");
-		str_type = "smcd";
-	} else {
-		printf("SMCR \n");
-		str_type = "smcr";
-	}
+	if (type == SMC_NLA_STATS_SMCD_TECH)
+		tech_type = SMC_TYPE_D;
+	else
+		tech_type = SMC_TYPE_R;
 
 	if (nla_parse_nested(tech_attrs, SMC_NLA_STATS_T_MAX,
 			     attr[type],
@@ -260,55 +371,55 @@ static int show_tech_info(struct nlattr **attr, int type)
 
 	if (tech_attrs[SMC_NLA_STATS_T_SRV_V1_SUCC]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_SRV_V1_SUCC]);
-		printf("  %s srv v1 success count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].srv_v1_succ_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_SRV_V2_SUCC]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_SRV_V2_SUCC]);
-		printf("  %s srv v1 success count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].srv_v2_succ_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_CLNT_V1_SUCC]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_CLNT_V1_SUCC]);
-		printf("  %s clnt v1 success count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].clnt_v1_succ_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_CLNT_V2_SUCC]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_CLNT_V2_SUCC]);
-		printf("  %s clnt v1 success count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].clnt_v2_succ_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_RX_BYTES]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_RX_BYTES]);
-		printf("  %s Rx bytes: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].rx_bytes = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_TX_BYTES]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_TX_BYTES]);
-		printf("  %s Tx bytes: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].tx_bytes = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_RX_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_RX_CNT]);
-		printf("  %s Rx count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].rx_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_TX_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_TX_CNT]);
-		printf("  %s Tx count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].tx_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_SENDPAGE_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_SENDPAGE_CNT]);
-		printf("  %s sendpage count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].sendpage_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_SPLICE_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_SPLICE_CNT]);
-		printf("  %s splice count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].splice_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_CORK_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_CORK_CNT]);
-		printf("  %s cork count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].cork_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_NDLY_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_NDLY_CNT]);
-		printf("  %s no delay count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].ndly_cnt = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_URG_DATA_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_URG_DATA_CNT]);
-		printf("  %s urgent data count: %lu\n", str_type, trgt);
+		smc_stat.smc[tech_type].urg_data_cnt = trgt;
 	}
 
 	if (show_tech_rmb_info(tech_attrs, type, SMC_NLA_STATS_T_TX_RMB_STATS) != NL_OK)
@@ -319,13 +430,14 @@ static int show_tech_info(struct nlattr **attr, int type)
 		goto errout;
 	if (show_tech_pload_info(tech_attrs, type, SMC_NLA_STATS_T_RXPLOAD_SIZE) != NL_OK)
 		goto errout;
-	if (show_tech_pload_info(tech_attrs, type, SMC_NLA_STATS_T_TX_RMB_STATS) != NL_OK)
+	if (show_tech_pload_info(tech_attrs, type, SMC_NLA_STATS_T_TX_RMB_SIZE) != NL_OK)
 		goto errout;
-	if (show_tech_pload_info(tech_attrs, type, SMC_NLA_STATS_T_RX_RMB_STATS) != NL_OK)
+	if (show_tech_pload_info(tech_attrs, type, SMC_NLA_STATS_T_RX_RMB_SIZE) != NL_OK)
 		goto errout;
 
+	return NL_OK;
 errout:
-	return rc;
+	return NL_STOP;
 }
 
 static int handle_gen_stats_reply(struct nl_msg *msg, void *arg)
@@ -333,7 +445,7 @@ static int handle_gen_stats_reply(struct nl_msg *msg, void *arg)
 	struct nlattr *stats_attrs[SMC_NLA_STATS_MAX + 1];
 	struct nlattr *attrs[SMC_GEN_MAX + 1];
 	struct nlmsghdr *hdr = nlmsg_hdr(msg);
-	uint64_t test = 0;
+	uint64_t trgt = 0;
 	int rc = NL_OK;
 
 	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
@@ -351,21 +463,34 @@ static int handle_gen_stats_reply(struct nl_msg *msg, void *arg)
 		fprintf(stderr, "failed to parse nested attributes!\n");
 		return NL_STOP;
 	}
+	memset(&smc_stat, 0, sizeof(smc_stat));
 	if (stats_attrs[SMC_NLA_STATS_CLNT_HS_ERR_CNT]) {
-		test = nla_get_u64(stats_attrs[SMC_NLA_STATS_CLNT_HS_ERR_CNT]);
-		printf("Handshake clnt err count: %lu\n", test);
+		trgt = nla_get_u64(stats_attrs[SMC_NLA_STATS_CLNT_HS_ERR_CNT]);
+		smc_stat.clnt_hshake_err_cnt = trgt;
 	}
 
 	if (stats_attrs[SMC_NLA_STATS_SRV_HS_ERR_CNT]) {
-		test = nla_get_u64(stats_attrs[SMC_NLA_STATS_SRV_HS_ERR_CNT]);
-		printf("Handshake srv err count: %lu\n", test);
+		trgt = nla_get_u64(stats_attrs[SMC_NLA_STATS_SRV_HS_ERR_CNT]);
+		smc_stat.srv_hshake_err_cnt = trgt;
 	}
 
 	if (stats_attrs[SMC_NLA_STATS_SMCR_TECH] && !is_smcd)
 		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCR_TECH);
 	if (stats_attrs[SMC_NLA_STATS_SMCD_TECH] && is_smcd)
 		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCD_TECH);
+	print_to_console();
 	return rc;
+}
+
+static int fback_array_last_pos(struct	smc_stats_fback *fback)
+{
+	int k;
+
+	for (k = 0; k < SMC_MAX_FBACK_RSN_CNT; k++)
+		if (fback[k].fback_code == 0)
+			return k;
+
+	return SMC_MAX_FBACK_RSN_CNT - 1;
 }
 
 static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
@@ -373,10 +498,11 @@ static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
 	struct nlattr *stats_fback_attrs[SMC_NLA_FBACK_STATS_MAX + 1];
 	struct nlattr *attrs[SMC_GEN_MAX + 1];
 	struct nlmsghdr *hdr = nlmsg_hdr(msg);
-	unsigned short type = 0;
-	int trgt = 0, trgt2 = 0;
+	struct	smc_stats_fback *smc_fback;
+	unsigned short type = 0, last_pos;
 	uint64_t trgt64 = 0;
 	int rc = NL_OK;
+	int trgt = 0;
 
 	if (genlmsg_parse(hdr, 0, attrs, SMC_GEN_MAX,
 			  (struct nla_policy *)smc_gen_net_policy) < 0) {
@@ -387,6 +513,7 @@ static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
 	if (!attrs[SMC_GEN_FBACK_STATS])
 		return NL_STOP;
 
+	memset(&smc_rsn, 0, sizeof(smc_rsn));
 	if (nla_parse_nested(stats_fback_attrs, SMC_NLA_FBACK_STATS_MAX,
 			     attrs[SMC_GEN_FBACK_STATS],
 			     smc_gen_stats_fback_policy)) {
@@ -396,62 +523,53 @@ static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
 
 	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_SRV_CNT]) {
 		trgt64 = nla_get_u64(stats_fback_attrs[SMC_NLA_FBACK_STATS_SRV_CNT]);
-		printf("Fallback server count: %lu \n", trgt64);
+		smc_rsn.srv_fback_cnt = trgt64;
 	}
 	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_SRV_CNT]) {
 		trgt64 = nla_get_u64(stats_fback_attrs[SMC_NLA_FBACK_STATS_CLNT_CNT]);
-		printf("Fallback client count: %lu \n", trgt64);
+		smc_rsn.clnt_fback_cnt = trgt64;
 	}
 	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_TYPE]) {
 		type = nla_get_u8(stats_fback_attrs[SMC_NLA_FBACK_STATS_TYPE]);
 		if (type)
-			printf("Server ");
+			smc_fback = smc_rsn.srv;
 		else
-			printf("Client ");
+			smc_fback = smc_rsn.clnt;
+
+		last_pos = fback_array_last_pos(smc_fback);
+		if (stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CODE]) {
+			trgt = nla_get_u32(stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CODE]);
+			smc_fback[last_pos].fback_code = trgt;
+		}
+
+		if (stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CNT]) {
+			trgt = nla_get_u16(stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CNT]);
+			smc_fback[last_pos].count = trgt;
+		}
 	}
 
-	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CODE])
-		trgt = nla_get_u32(stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CODE]);
-
-	if (stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CNT]) {
-		trgt2 = nla_get_u16(stats_fback_attrs[SMC_NLA_FBACK_STATS_RSN_CNT]);
-		printf("Fallback error code %x count: %d\n", trgt, trgt2);
-	}
 	return rc;
 }
 
 static void handle_cmd_params(int argc, char **argv)
 {
-	if (((argc == 1) && (contains(argv[0], "help") == 0)) || (argc > 4))
-		usage();
+	if (argc == 0) {
+		show_cmd = 1; /* no object given, so use the default "show" */
+		return;
+	}
 
-	if ((argc > 0) && (contains(argv[0], "show") != 0))
-		PREV_ARG(); /* no object given, so use the default "show" */
-
-	while (NEXT_ARG_OK()) {
-		NEXT_ARG();
-		if (ibdev_entered) {
-			snprintf(target_ibdev, sizeof(target_ibdev), "%s", argv[0]);
-			ibdev_entered = 0;
-			break;
-		} else if (netdev_entered) {
-			snprintf(target_ndev, sizeof(target_ndev), "%s", argv[0]);
-			netdev_entered = 0;
-			break;
-		} else if (type_entered) {
-			snprintf(target_type, sizeof(target_type), "%s", argv[0]);
-			if (strncmp(target_type, "smcd", SMC_TYPE_STR_MAX) == 0) {
-				dev_smcd = 1;
-				dev_smcr = 0;
-			} else if ((strnlen(target_type, sizeof(target_type)) < 4) ||
-				   (strncmp(target_type, "smcr", SMC_TYPE_STR_MAX) != 0)) {
-				print_type_error();
-			}
-			type_entered = 0;
+	while (1) {
+		if (contains(argv[0], "help") == 0) {
+			usage();
+		} else if (contains(argv[0], "show") == 0) {
+			show_cmd = 1;
 			break;
 		} else {
 			usage();
 		}
+		if (!NEXT_ARG_OK())
+			break;
+		NEXT_ARG();
 	}
 	/* Too many parameters or wrong sequence of parameters */
 	if (NEXT_ARG_OK())

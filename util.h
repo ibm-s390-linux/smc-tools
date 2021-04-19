@@ -15,6 +15,7 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 #include <stdlib.h>
+#include <stdint.h>
 #define SMC_DETAIL_LEVEL_V 1
 #define SMC_DETAIL_LEVEL_VV 2
 #define SMC_TYPE_STR_MAX 5
@@ -27,6 +28,7 @@
 void print_unsup_msg(void);
 void print_type_error(void);
 char* trim_space(char *str);
+int get_abbreviated(uint64_t num, int max_digs, char *res);
 int contains(const char *prfx, const char *str);
 
 inline int is_str_empty(char *str)
