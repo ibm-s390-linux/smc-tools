@@ -16,6 +16,37 @@
 #ifndef SMC_SYSTEM_H_
 #define SMC_SYSTEM_H_
 
+#define SMC_CLC_DECL_MEM	0x01010000  /* insufficient memory resources  */
+#define SMC_CLC_DECL_TIMEOUT_CL	0x02010000  /* timeout w4 QP confirm link     */
+#define SMC_CLC_DECL_TIMEOUT_AL	0x02020000  /* timeout w4 QP add link	      */
+#define SMC_CLC_DECL_CNFERR	0x03000000  /* configuration error            */
+#define SMC_CLC_DECL_PEERNOSMC	0x03010000  /* peer did not indicate SMC      */
+#define SMC_CLC_DECL_IPSEC	0x03020000  /* IPsec usage		      */
+#define SMC_CLC_DECL_NOSMCDEV	0x03030000  /* no SMC device found (R or D)   */
+#define SMC_CLC_DECL_NOSMCDDEV	0x03030001  /* no SMC-D device found	      */
+#define SMC_CLC_DECL_NOSMCRDEV	0x03030002  /* no SMC-R device found	      */
+#define SMC_CLC_DECL_NOISM2SUPP	0x03030003  /* hardware has no ISMv2 support  */
+#define SMC_CLC_DECL_NOV2EXT	0x03030004  /* peer sent no clc v2 extension  */
+#define SMC_CLC_DECL_NOV2DEXT	0x03030005  /* peer sent no clc SMC-Dv2 ext.  */
+#define SMC_CLC_DECL_NOSEID	0x03030006  /* peer sent no SEID	      */
+#define SMC_CLC_DECL_NOSMCD2DEV	0x03030007  /* no SMC-Dv2 device found	      */
+#define SMC_CLC_DECL_MODEUNSUPP	0x03040000  /* smc modes do not match (R or D)*/
+#define SMC_CLC_DECL_RMBE_EC	0x03050000  /* peer has eyecatcher in RMBE    */
+#define SMC_CLC_DECL_OPTUNSUPP	0x03060000  /* fastopen sockopt not supported */
+#define SMC_CLC_DECL_DIFFPREFIX	0x03070000  /* IP prefix / subnet mismatch    */
+#define SMC_CLC_DECL_GETVLANERR	0x03080000  /* err to get vlan id of ip device*/
+#define SMC_CLC_DECL_ISMVLANERR	0x03090000  /* err to reg vlan id on ism dev  */
+#define SMC_CLC_DECL_NOACTLINK	0x030a0000  /* no active smc-r link in lgr    */
+#define SMC_CLC_DECL_NOSRVLINK	0x030b0000  /* SMC-R link from srv not found  */
+#define SMC_CLC_DECL_VERSMISMAT	0x030c0000  /* SMC version mismatch	      */
+#define SMC_CLC_DECL_MAX_DMB	0x030d0000  /* SMC-D DMB limit exceeded       */
+#define SMC_CLC_DECL_SYNCERR	0x04000000  /* synchronization error          */
+#define SMC_CLC_DECL_PEERDECL	0x05000000  /* peer declined during handshake */
+#define SMC_CLC_DECL_INTERR	0x09990000  /* internal error		      */
+#define SMC_CLC_DECL_ERR_RTOK	0x09990001  /*	 rtoken handling failed       */
+#define SMC_CLC_DECL_ERR_RDYLNK	0x09990002  /*	 ib ready link failed	      */
+#define SMC_CLC_DECL_ERR_REGRMB	0x09990003  /*	 reg rmb failed		      */
+
 #define SMC_TYPE_R	0
 #define SMC_TYPE_D	1
 #define SMC_SERVER	1

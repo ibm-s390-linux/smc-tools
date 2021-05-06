@@ -111,6 +111,148 @@ static void usage(void)
 	exit(-1);
 }
 
+static char* get_fbackstr(int code)
+{
+	char* str;
+
+	switch (code) {
+		case SMC_CLC_DECL_PEERNOSMC:
+			str = "PEER_NO_SMC";
+			break;
+		case SMC_CLC_DECL_MEM:
+			str = "MEMORY";
+			break;
+		case SMC_CLC_DECL_TIMEOUT_CL:
+			str = "TIMEOUT_CL";
+			break;
+		case SMC_CLC_DECL_TIMEOUT_AL:
+			str = "TIMEOUT_AL";
+			break;
+		case SMC_CLC_DECL_CNFERR:
+			str = "CNF_ERR";
+			break;
+		case SMC_CLC_DECL_IPSEC:
+			str = "IPSEC";
+			break;
+		case SMC_CLC_DECL_NOSMCDEV:
+			str = "NOSMCDEV";
+			break;
+		case SMC_CLC_DECL_NOSMCDDEV:
+			str = "NOSMCDDEV";
+			break;
+		case SMC_CLC_DECL_NOSMCRDEV:
+			str = "NOSMCRDEV";
+			break;
+		case SMC_CLC_DECL_NOISM2SUPP:
+			str = "NOISM2SUPP";
+			break;
+		case SMC_CLC_DECL_NOV2EXT:
+			str = "NOV2EXT";
+			break;
+		case SMC_CLC_DECL_PEERDECL:
+			str = "PEERDECL";
+			break;
+		case SMC_CLC_DECL_SYNCERR:
+			str = "SYNCERR";
+			break;
+		case SMC_CLC_DECL_MAX_DMB:
+			str = "MAX_DMB";
+			break;
+		case SMC_CLC_DECL_VERSMISMAT:
+			str = "VERSMISMAT";
+			break;
+		case SMC_CLC_DECL_NOSRVLINK:
+			str = "NOSRVLINK";
+			break;
+		case SMC_CLC_DECL_NOSEID:
+			str = "NOSEID";
+			break;
+		case SMC_CLC_DECL_NOSMCD2DEV:
+			str = "NOSMCD2DEV";
+			break;
+		case SMC_CLC_DECL_MODEUNSUPP:
+			str = "MODEUNSUPP";
+			break;
+		case SMC_CLC_DECL_RMBE_EC:
+			str = "RMBE_EC";
+			break;
+		case SMC_CLC_DECL_OPTUNSUPP:
+			str = "OPTUNSUPP";
+			break;
+		case SMC_CLC_DECL_DIFFPREFIX:
+			str = "DIFFPREFIX";
+			break;
+		case SMC_CLC_DECL_GETVLANERR:
+			str = "GETVLANERR";
+			break;
+		case SMC_CLC_DECL_ISMVLANERR:
+			str = "ISMVLANERR";
+			break;
+		case SMC_CLC_DECL_NOACTLINK:
+			str = "NOACTLINK";
+			break;
+		case SMC_CLC_DECL_NOV2DEXT:
+			str = "NOV2DEXT";
+			break;
+		default:
+			str = "[unknown]";
+			break;
+	}
+	return str;
+}
+
+static void bubble_sort(struct smc_stats_fback *fback)
+{
+	struct smc_stats_fback temp;
+	int i, j;
+
+	for (i = 0; i < SMC_MAX_FBACK_RSN_CNT; i++) {
+		for (j = 0; j < SMC_MAX_FBACK_RSN_CNT - 1; j++) {
+			if (fback[j + 1].count > fback[j].count) {
+				temp = fback[j];
+				fback[j] = fback[j + 1];
+				fback[j + 1] = temp;
+			}
+		}
+	}
+}
+
+static void print_fback_details(struct smc_stats_fback *fback, int is_srv)
+{
+	int caption_printed = 0;
+	char *fback_str = NULL;
+	int i, count = 0;
+
+	bubble_sort(fback);
+	for (i = 0; i < SMC_MAX_FBACK_RSN_CNT; i++) {
+		if (fback[i].fback_code != 0) {
+			if (!caption_printed) {
+				caption_printed = 1;
+				if (is_srv)
+					printf("    Server\n");
+				else
+					printf("    Client\n");
+			}
+			fback_str = get_fbackstr(fback[i].fback_code);
+			printf("     %-12s            %12d\n", fback_str, fback[i].count);
+			count++;
+			if (count == 3)
+				break;
+		}
+	}
+}
+
+static void print_fbackstr()
+{
+	struct	smc_stats_fback *server, *client;
+
+	server = smc_rsn.srv;
+	client = smc_rsn.clnt;
+
+	print_fback_details(server, 1);
+	print_fback_details(client, 0);
+}
+
 static void fillbuffer(struct smc_stats_memsize *mem, char buf[][7])
 {
 	get_abbreviated(mem->buf[SMC_BUF_8K], 6, buf[SMC_BUF_8K]);
@@ -129,6 +271,7 @@ static void print_to_console()
 	__u64 smc_conn_cnt = 0, special_calls = 0, total_req_cn = 0;
 	__u64 total_conn = 0, fback_count = 0, hshake_err_cnt = 0;
 	float buf_small = 0, buf_small_r = 0, buf_rx_full = 0;
+	__u64 smc_c_cnt_v1 = 0, smc_c_cnt_v2 = 0;
 	float buf_full = 0, buf_full_r = 0;
 	struct smc_stats_tech *tech;
 	float avg_req_p_conn = 0;
@@ -145,6 +288,8 @@ static void print_to_console()
 	}
 	tech = &smc_stat.smc[tech_type];
 
+	smc_c_cnt_v1 = tech->clnt_v1_succ_cnt + tech->srv_v1_succ_cnt;
+	smc_c_cnt_v2 = tech->clnt_v2_succ_cnt + tech->srv_v2_succ_cnt;
 	smc_conn_cnt += tech->clnt_v1_succ_cnt;
 	smc_conn_cnt += tech->clnt_v2_succ_cnt;
 	smc_conn_cnt += tech->srv_v1_succ_cnt;
@@ -159,7 +304,6 @@ static void print_to_console()
 	total_req_cn = tech->rx_cnt + tech->tx_cnt;
 	if (smc_conn_cnt)
 		avg_req_p_conn = total_req_cn / (double)smc_conn_cnt;
-
 	special_calls += tech->cork_cnt;
 	special_calls += tech->ndly_cnt;
 	special_calls += tech->sendpage_cnt;
@@ -175,10 +319,30 @@ static void print_to_console()
 		buf_rx_full = tech->rmb_rx.buf_full_cnt / (double)tech->rx_cnt * 100;
 
 	printf("  Total connections handled  %12llu\n", total_conn);
-	printf("  SMC connections            %12llu\n", smc_conn_cnt);
-	printf("  Handshake errors           %12llu\n", hshake_err_cnt);
-	printf("  TCP fallback               %12llu\n", fback_count);
+	if (d_level) {
+		printf("  SMC connections            %12llu (client %llu, server %llu)\n",
+			smc_conn_cnt, tech->clnt_v1_succ_cnt + tech->clnt_v2_succ_cnt,
+			tech->srv_v1_succ_cnt + tech->srv_v2_succ_cnt);
+		printf("    v1                       %12llu\n", smc_c_cnt_v1);
+		printf("    v2                       %12llu\n", smc_c_cnt_v2);
+		printf("  SMC connections            %12llu\n", smc_conn_cnt);
+	} else {
+		printf("  SMC connections            %12llu\n", smc_conn_cnt);
+	}
+	if (d_level) {
+		printf("  Handshake errors           %12llu (client %llu, server %llu)\n",
+			hshake_err_cnt, smc_stat.clnt_hshake_err_cnt, smc_stat.srv_hshake_err_cnt);
+	} else {
+		printf("  Handshake errors           %12llu\n", hshake_err_cnt);
+	}
 	printf("  Avg requests per SMC conn  %14.1f\n", avg_req_p_conn);
+	if (d_level) {
+		printf("  TCP fallback               %12llu (client %llu, server %llu)\n",
+			fback_count, smc_rsn.clnt_fback_cnt, smc_rsn.srv_fback_cnt);
+		print_fbackstr();
+	} else {
+		printf("  TCP fallback               %12llu\n", fback_count);
+	}
 	printf("\n");
 	printf("RX Stats\n");
 	get_abbreviated(smc_stat.smc[tech_type].rx_bytes, 6, temp_str);
@@ -187,6 +351,10 @@ static void print_to_console()
 	printf("  Total requests             %12llu\n", tech->rx_cnt);
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_rx.buf_full_cnt,
 			buf_rx_full);
+	if (d_level) {
+		printf("  Allocs (downgrades)        %12llu\n", tech->rmb_rx.alloc_cnt);
+		printf("  Reuses                     %12llu\n", tech->rmb_rx.reuse_cnt);
+	}
 	fillbuffer(&tech->rx_rmbsize, buf);
 	printf("            8KB    16KB    32KB    64KB   128KB   256KB   512KB  >512KB\n");
 	printf("  Bufs   %6s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n",
@@ -210,6 +378,10 @@ static void print_to_console()
 			buf_small);
 	printf("  Buffer too small(remote)   %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_peer_cnt,
 			buf_small_r);
+	if (d_level) {
+		printf("  Allocs (downgrades)        %12llu\n", tech->rmb_tx.alloc_cnt);
+		printf("  Reuses                     %12llu\n", tech->rmb_tx.reuse_cnt);
+	}
 	fillbuffer(&tech->tx_rmbsize, buf);
 	printf("            8KB    16KB    32KB    64KB   128KB   256KB   512KB  >512KB\n");
 	printf("  Bufs   %6s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n",
@@ -222,6 +394,13 @@ static void print_to_console()
 	printf("\n");
 	printf("Extras\n");
 	printf("  Special socket calls       %12llu\n", special_calls);
+	if (d_level) {
+		printf("    cork                     %12llu\n", tech->cork_cnt);
+		printf("    nodelay                  %12llu\n", tech->ndly_cnt);
+		printf("    sendpage                 %12llu\n", tech->sendpage_cnt);
+		printf("    splice                   %12llu\n", tech->splice_cnt);
+		printf("    urgent data              %12llu\n", tech->urg_data_cnt);
+	}
 }
 
 static int show_tech_pload_info(struct nlattr **attr, int type, int direction)
