@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/file.h>
 
 #include "smctools_common.h"
 #include "util.h"
@@ -32,8 +33,15 @@ static int is_smcd = 0;
 static int d_level = 0;
 
 static int show_cmd = 0;
+static int reset_cmd = 0;
+static int cache_file_exists = 0;
+
 struct smc_stats smc_stat;
+struct smc_stats smc_stat_c;
 struct smc_stats_rsn smc_rsn;
+struct smc_stats_rsn smc_rsn_c;
+FILE *cache_fp = NULL;
+char *cache_file_path;
 
 static struct nla_policy smc_gen_stats_policy[SMC_NLA_STATS_MAX + 1] = {
 	[SMC_NLA_STATS_PAD]		= { .type = NLA_UNSPEC },
@@ -101,11 +109,11 @@ static void usage(void)
 {
 	fprintf(stderr,
 #if defined(SMCD)
-		"Usage: smcd stat [show]\n"
+		"Usage: smcd stats [show | reset]\n"
 #elif defined(SMCR)
-		"Usage: smcr stat [show]\n"
+		"Usage: smcr stats [show | reset]\n"
 #else
-		"Usage: smc stat [show]\n"
+		"Usage: smc stats [show | reset]\n"
 #endif
 	);
 	exit(-1);
@@ -657,7 +665,6 @@ static int handle_gen_stats_reply(struct nl_msg *msg, void *arg)
 		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCR_TECH);
 	if (stats_attrs[SMC_NLA_STATS_SMCD_TECH] && is_smcd)
 		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCD_TECH);
-	print_to_console();
 	return rc;
 }
 
@@ -743,6 +750,9 @@ static void handle_cmd_params(int argc, char **argv)
 		} else if (contains(argv[0], "show") == 0) {
 			show_cmd = 1;
 			break;
+		} else if (contains(argv[0], "reset") == 0) {
+			reset_cmd = 1;
+			break;
 		} else {
 			usage();
 		}
@@ -755,14 +765,219 @@ static void handle_cmd_params(int argc, char **argv)
 		usage();
 }
 
+static void read_cache_file(FILE *fp)
+{
+	int count = 0, idx = 0, rc, size_fback = 0;
+	int size, val_err, val_cnt;
+	unsigned long long val;
+	__u64 *trgt, *fbck_cnt;
+	char buf[4096];
+	int *trgt_fbck;
+
+	/* size without fallback reasons */
+	size = sizeof(smc_stat_c) / sizeof(__u64);
+	trgt = (__u64 *)&smc_stat_c;
+	size_fback = size + 2*SMC_MAX_FBACK_RSN_CNT;
+	trgt_fbck = (int *)&smc_rsn_c;
+	fbck_cnt = (__u64 *)&smc_rsn_c.srv_fback_cnt;
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		if (count < size) {
+			rc = sscanf(buf, "%d%llu", &idx, &val);
+			if (rc < 2) {
+				perror("Error: parsing cache file(stats)");
+				exit(-1);
+			}
+			if (idx != count) {
+				perror("Error: unexpected value in cache file");
+				exit(-1);
+			}
+			*trgt = val;
+			trgt++;
+		} else if (count < size_fback) {
+			rc = sscanf(buf, "%d%d%d", &idx, &val_err, &val_cnt);
+			if (rc < 3) {
+				perror("Error: parsing cache file (fback stats)");
+				exit(-1);
+			}
+			if (idx > SMC_MAX_FBACK_RSN_CNT * 2) {
+				perror("Error: unexpected value in cache file (fback stats)");
+				exit(-1);
+			}
+			*trgt_fbck = val_err;
+			trgt_fbck++;
+			*trgt_fbck = val_cnt;
+			trgt_fbck++;
+		} else if (count < size_fback + 2) {
+			rc = sscanf(buf, "%llu", &val);
+			if (rc < 1) {
+				perror("Error: parsing cache file(fback counters)");
+				exit(-1);
+			}
+			*fbck_cnt = val;
+			fbck_cnt++;
+		} else {
+			perror("Error: cache file corrupt");
+			exit(-1);
+		}
+		cache_file_exists = 1;
+		count++;
+	}
+}
+
+static int get_fback_err_cache_count(struct smc_stats_fback *fback, int trgt)
+{
+	int i;
+
+	for (i = 0; i < SMC_MAX_FBACK_RSN_CNT; i++) {
+		if (fback[i].fback_code == trgt)
+			return fback[i].count;
+	}
+
+	return 0;
+}
+
+/* Check whether there were wrap arounds or really old data in the cache */
+static int is_data_consistent ()
+{
+	int size, i, size_fback, val_err, val_cnt, cache_cnt;
+	int *kern_fbck;
+	__u64 *kernel, *cache;
+
+	size = sizeof(smc_stat) / sizeof(__u64);
+	kernel = (__u64 *)&smc_stat;
+	cache = (__u64 *)&smc_stat_c;
+	for (i = 0; i < size; i++)
+		if (kernel++ < cache++)
+			return 0;
+
+	size_fback = size + 2 * SMC_MAX_FBACK_RSN_CNT;
+	kern_fbck = (int *)&smc_rsn;
+	for (i = 0; i < size_fback; i++) {
+		val_err = *(kern_fbck++);
+		if (i < SMC_MAX_FBACK_RSN_CNT)
+			cache_cnt = get_fback_err_cache_count(smc_rsn_c.srv, val_err);
+		else
+			cache_cnt = get_fback_err_cache_count(smc_rsn_c.clnt, val_err);
+		val_cnt = *(kern_fbck++);
+		if (val_cnt < cache_cnt)
+			return 0;
+	}
+
+	if ((smc_rsn.srv_fback_cnt < smc_rsn_c.srv_fback_cnt) ||
+	    (smc_rsn.clnt_fback_cnt < smc_rsn_c.clnt_fback_cnt))
+		return 0;
+
+	return 1;
+}
+
+static void merge_cache ()
+{
+	int size, i, size_fback, val_err, cache_cnt;
+	__u64 *kernel, *cache;
+	int *kern_fbck;
+
+	if (!is_data_consistent()) {
+		unlink(cache_file_path);
+		return;
+	}
+
+	size = sizeof(smc_stat) / sizeof(__u64);
+	kernel = (__u64 *)&smc_stat;
+	cache = (__u64 *)&smc_stat_c;
+	for (i = 0; i < size; i++)
+		*(kernel++) -=  *(cache++);
+
+	size_fback = size + 2 * SMC_MAX_FBACK_RSN_CNT;
+	kern_fbck = (int *)&smc_rsn;
+	for (i = 0; i < size_fback; i++) {
+		val_err = *(kern_fbck++);
+		if (i < SMC_MAX_FBACK_RSN_CNT)
+			cache_cnt = get_fback_err_cache_count(smc_rsn_c.srv, val_err);
+		else
+			cache_cnt = get_fback_err_cache_count(smc_rsn_c.clnt, val_err);
+		*(kern_fbck++) -= cache_cnt;
+	}
+
+	smc_rsn.srv_fback_cnt -= smc_rsn_c.srv_fback_cnt;
+	smc_rsn.clnt_fback_cnt -= smc_rsn_c.clnt_fback_cnt;
+}
+
+static void init_cache_file()
+{
+	int fd;
+
+	cache_file_path = malloc(128);
+	sprintf(cache_file_path, "/tmp/.smcstats.u%d", getuid());
+
+	if (reset_cmd)
+		unlink(cache_file_path);
+
+	fd = open(cache_file_path, O_RDWR|O_CREAT|O_NOFOLLOW, 0600);
+
+	if (fd < 0) {
+		perror("Error: open cache file");
+		exit(-1);
+	}
+
+	if ((cache_fp = fdopen(fd, "r+")) == NULL) {
+		perror("Error: cache file r+");
+		exit(-1);
+	}
+	if (flock(fileno(cache_fp), LOCK_EX)) {
+		perror("Error: cache file lock");
+		exit(-1);
+	}
+	read_cache_file(cache_fp);
+}
+
+
+static void fill_cache_file()
+{
+	int size, i, val_err, val_cnt;
+	int *fback_src;
+	__u64 *src;
+
+	if (ftruncate(fileno(cache_fp), 0) < 0)
+		perror("Error: ftruncate");
+
+	size = sizeof(smc_stat) / sizeof(__u64);
+	src = (__u64 *)&smc_stat;
+	for (i = 0; i < size; i++) {
+		fprintf(cache_fp, "%-12d%-16llu\n",i ,*src);
+		src++;
+	}
+
+	fback_src = (int*)&smc_rsn;
+	size = 2 * SMC_MAX_FBACK_RSN_CNT;
+	for (i = 0; i < size; i++) {
+		val_err = *(fback_src++);
+		val_cnt = *(fback_src++);
+		fprintf(cache_fp, "%-12d%-16d%-16d\n",i , val_err, val_cnt);
+	}
+
+	fprintf(cache_fp, "%16llu\n", smc_rsn.srv_fback_cnt);
+	fprintf(cache_fp, "%16llu\n", smc_rsn.clnt_fback_cnt);
+
+	fclose(cache_fp);
+}
+
 int invoke_stats(int argc, char **argv, int detail_level)
 {
 	d_level = detail_level;
 
 	handle_cmd_params(argc, argv);
+	init_cache_file();
 	if (gen_nl_handle_dump(SMC_NETLINK_GET_FBACK_STATS, handle_gen_fback_stats_reply, NULL))
-		return 0;
-	gen_nl_handle_dump(SMC_NETLINK_GET_STATS, handle_gen_stats_reply, NULL);
-
+		goto errout;
+	if (gen_nl_handle_dump(SMC_NETLINK_GET_STATS, handle_gen_stats_reply, NULL))
+		goto errout;
+	if (cache_file_exists)
+		merge_cache();
+	print_to_console();
+	if (!cache_file_exists)
+		fill_cache_file();
+errout:
+	free(cache_file_path);
 	return 0;
 }
