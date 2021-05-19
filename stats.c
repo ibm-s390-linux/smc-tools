@@ -34,6 +34,7 @@ static int d_level = 0;
 
 static int show_cmd = 0;
 static int reset_cmd = 0;
+static int json_cmd = 0;
 static int cache_file_exists = 0;
 
 struct smc_stats smc_stat;
@@ -42,6 +43,23 @@ struct smc_stats_rsn smc_rsn;
 struct smc_stats_rsn smc_rsn_c;
 FILE *cache_fp = NULL;
 char *cache_file_path;
+
+static char* j_output[63] = {"SMC_INT_TX_BUF_8K", "SMC_INT_TX_BUF_16K", "SMC_INT_TX_BUF_32K", "SMC_INT_TX_BUF_64K", "SMC_INT_TX_BUF_128K",
+			    "SMC_INT_TX_BUF_256K", "SMC_INT_TX_BUF_512K", "SMC_INT_TX_BUF_1024K", "SMC_INT_TX_BUF_G_1024K",
+			    "SMC_INT_RX_BUF_8K", "SMC_INT_RX_BUF_16K", "SMC_INT_RX_BUF_32K", "SMC_INT_RX_BUF_64K", "SMC_INT_RX_BUF_128K",
+			    "SMC_INT_RX_BUF_256K", "SMC_INT_RX_BUF_512K", "SMC_INT_RX_BUF_1024K", "SMC_INT_RX_BUF_G_1024K",
+			    "SMC_USR_TX_BUF_8K", "SMC_USR_TX_BUF_16K", "SMC_USR_TX_BUF_32K", "SMC_USR_TX_BUF_64K", "SMC_USR_TX_BUF_128K",
+			    "SMC_USR_TX_BUF_256K", "SMC_USR_TX_BUF_512K", "SMC_USR_TX_BUF_1024K", "SMC_USR_TX_BUF_G_1024K",
+			    "SMC_USR_RX_BUF_8K", "SMC_USR_RX_BUF_16K", "SMC_USR_RX_BUF_32K", "SMC_USR_RX_BUF_64K", "SMC_USR_RX_BUF_128K",
+			    "SMC_USR_RX_BUF_256K", "SMC_USR_RX_BUF_512K", "SMC_USR_RX_BUF_1024K", "SMC_USR_RX_BUF_G_1024K",
+			    "SMC_INT_TX_BUF_SIZE_SM_PEER_CNT", "SMC_INT_TX_BUF_SIZE_SM_CNT", "SMC_INT_TX_BUF_FULL_PEER_CNT",
+			    "SMC_INT_TX_BUF_FULL_CNT", "SMC_INT_TX_BUF_REUSE_CNT", "SMC_INT_TX_BUF_ALLOC_CNT", "SMC_INT_TX_BUF_DGRADE_CNT",
+			    "SMC_INT_RX_BUF_SIZE_SM_PEER_CNT", "SMC_INT_RX_BUF_SIZE_SM_CNT", "SMC_INT_RX_BUF_FULL_PEER_CNT",
+			    "SMC_INT_RX_BUF_FULL_CNT", "SMC_INT_RX_BUF_REUSE_CNT", "SMC_INT_RX_BUF_ALLOC_CNT", "SMC_INT_RX_BUF_DGRADE_CNT",
+			    "SMC_CLNT_V1_SUCC_CNT", "SMC_CLNT_V2_SUCC_CNT", "SMC_SRV_V1_SUCC_CNT", "SMC_SRV_V2_SUCC_CNT",
+			    "SMC_SENDPAGE_CNT", "SMC_URG_DATA_CNT", "SMC_SPLICE_CNT", "SMC_CORK_CNT", "SMC_NDLY_CNT",
+			    "SMC_RX_BYTES", "SMC_TX_BYTES", "SMC_RX_CNT", "SMC_TX_CNT"
+};
 
 static struct nla_policy smc_gen_stats_policy[SMC_NLA_STATS_MAX + 1] = {
 	[SMC_NLA_STATS_PAD]		= { .type = NLA_UNSPEC },
@@ -274,7 +292,29 @@ static void fillbuffer(struct smc_stats_memsize *mem, char buf[][7])
 			buf[SMC_BUF_1024K]);
 }
 
-static void print_to_console()
+static void print_as_json()
+{
+	int size, i;
+	__u64 *src;
+
+	size = sizeof(struct smc_stats_tech) / sizeof(__u64);
+	if (is_smcd) {
+		src = (__u64 *)&smc_stat.smc[SMC_TYPE_D];
+		printf("{\"SMCD\": {");
+	} else {
+		src = (__u64 *)&smc_stat.smc[SMC_TYPE_R];
+		printf("{\"SMCR\": {");
+	}
+	for (i = 0; i < size; i++) {
+		printf("\"%s\":%llu",j_output[i] ,*src);
+		if (i != size - 1)
+			printf(",");
+		src++;
+	}
+	printf("}}\n");
+}
+
+static void print_as_text()
 {
 	__u64 smc_conn_cnt = 0, special_calls = 0, total_req_cn = 0;
 	__u64 total_conn = 0, fback_count = 0, hshake_err_cnt = 0;
@@ -538,7 +578,7 @@ static int show_tech_rmb_info(struct nlattr **attr, int type, int direction)
 	return rc;
 }
 
-static int show_tech_info(struct nlattr **attr, int type)
+static int fill_tech_info(struct nlattr **attr, int type)
 {
 	struct nlattr *tech_attrs[SMC_NLA_STATS_T_MAX + 1];
 	uint64_t trgt = 0;
@@ -661,10 +701,10 @@ static int handle_gen_stats_reply(struct nl_msg *msg, void *arg)
 		smc_stat.srv_hshake_err_cnt = trgt;
 	}
 
-	if (stats_attrs[SMC_NLA_STATS_SMCR_TECH] && !is_smcd)
-		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCR_TECH);
-	if (stats_attrs[SMC_NLA_STATS_SMCD_TECH] && is_smcd)
-		rc = show_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCD_TECH);
+	if (stats_attrs[SMC_NLA_STATS_SMCR_TECH])
+		rc = fill_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCR_TECH);
+	if (stats_attrs[SMC_NLA_STATS_SMCD_TECH])
+		rc = fill_tech_info(&stats_attrs[0], SMC_NLA_STATS_SMCD_TECH);
 	return rc;
 }
 
@@ -753,7 +793,10 @@ static void handle_cmd_params(int argc, char **argv)
 		} else if (contains(argv[0], "reset") == 0) {
 			reset_cmd = 1;
 			break;
-		} else {
+		} else if (contains(argv[0], "json") == 0) {
+			json_cmd = 1;
+			break;
+		}else {
 			usage();
 		}
 		if (!NEXT_ARG_OK())
@@ -974,7 +1017,10 @@ int invoke_stats(int argc, char **argv, int detail_level)
 		goto errout;
 	if (cache_file_exists)
 		merge_cache();
-	print_to_console();
+	if (!json_cmd)
+		print_as_text();
+	else
+		print_as_json();
 	if (!cache_file_exists)
 		fill_cache_file();
 errout:
