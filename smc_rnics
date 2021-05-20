@@ -170,7 +170,7 @@ function print_rnics() {
 function format_fid() {
 	res="${1#0x}";
 
-	if [[ "$res" =~ ^([:xdigit:])+ ]]; then
+	if [[ ! "$res" =~ ^[[:xdigit:]]+$ ]]; then
 		printf "Error: '%s' is not a valid FID\n" "$res" >&2;
 		exit 3;
 	fi
