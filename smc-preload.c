@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <search.h>
+#include <ctype.h>
 
 #define DLOPEN_FLAG RTLD_LAZY
 
@@ -70,6 +71,28 @@ static int emergency_socket(int domain, int type, int protocol)
 	return -1;
 }
 
+static void set_bufsize(int socket, int opt, const char *envname) {
+	char *val, *end;
+	int size;
+	int rc;
+
+	val = getenv(envname);
+	if (!val)
+		return;
+	size = strtol(val, &end, 10);
+	if (end != NULL) {
+		switch (toupper(*end)) {
+		case 'K': size *= 1024;
+			  break;
+		case 'M': size *= 1048576;
+			  break;
+		default:  break;
+		}
+	}
+	rc = setsockopt(socket, SOL_SOCKET, opt, &size, sizeof(size));
+	dbg_msg(stderr, "sockopt %d set to %d\n", opt, size, rc);
+}
+
 int socket(int domain, int type, int protocol)
 {
 	int rc;
@@ -92,6 +115,10 @@ int socket(int domain, int type, int protocol)
 	}
 
 	rc = (*orig_socket)(domain, type, protocol);
+	if (rc != -1) {
+		set_bufsize(rc, SO_SNDBUF, "SMC_SNDBUF");
+		set_bufsize(rc, SO_RCVBUF, "SMC_RCVBUF");
+	}
 
 	return rc;
 }

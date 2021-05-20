@@ -41,6 +41,7 @@ Release History:
 * __v1.5.99 (tbd)__
 
     Changes:
+    - `smc_run': Add various command-line switches
 
     Bug fixes:
     - `smc_chk`: Remove 'EXPERIMENTAL' flag

@@ -13,7 +13,10 @@ networking protocol
 .SH SYNOPSIS
 
 .B smc_run
-.RB [ \-d ]
+.RB [ \-dhrtv ] [ \-r
+.IR SIZE ]
+.RB [-t
+.IR SIZE ]
 .I program
 .I parameters
 
@@ -22,18 +25,61 @@ networking protocol
 starts a
 .IR program
 specified as argument with its
-.IR parameters
+.IR parameters ,
 allowing to use the SMC protocol for program-used TCP socket connections.
+.br
 The script specifies libsmc-preload.so as a preload shared library for the
-Linux program loader.
+Linux program loader, and may adjust transmit and receive buffer sizes to
+.I SIZE
+by setting socket options SO_RCVBUF and SO_SNDBUF respectively.
+.I SIZE
+can be specified in Bytes or using metric prefixes k and m, e.g.
+8k...1024k/1m.
+.br
 The preload library libsmc-preload.so intercepts a few TCP socket calls and
 triggers the equivalent execution through SMC.
+.br
+Note: If it is not possibile to use
+.IR smc_run ,
+the libsmc-preload.so may be installed as apreload library via environment
+variable LD_PRELOAD. Use environment varibles SMC_SNDBUF and SMC_RCVBUF to
+request specific transmit and receive buffer sizes respectively. Supports
+metric prefixes k and m.
 
 The following options can be specified:
 .TP
 .BR "\-d"
-Display additional diagnostic messages during the program
-execution.
+Display additional diagnostic messages during the program execution.
+.TP
+.BR "\-h"
+Display a brief usage information.
+.TP
+.BR "\-r " \fISIZE
+Request receive buffer size
+.IR SIZE .
+.br
+.BR Notes :
+.RS
+.IP \[bu] 2
+May be overridden by the application.
+.IP \[bu]
+Increases net.core.rmem_max if necessary.
+.RE
+.TP
+.BR "\-t " \fISIZE
+Request transmit buffer size
+.IR SIZE .
+.br
+.BR Notes :
+.RS
+.IP \[bu] 2
+May be overridden by the application.
+.IP \[bu]
+Increases net.core.wmem_max if necessary.
+.RE
+.TP
+.BR "\-v"
+Display version information.
 .SH RETURN CODES
 On success, the
 .IR smc_run
@@ -47,6 +93,14 @@ than 0.
 .B 1
 An invalid option was specified.
 .P
+
+.SH EXAMPLES
+.B Run program foo using SMC, requesting a receive buffer size of 512KB
+.RS 4
+.PP
+$ smc_run -r 512k ./foo
+.P
+
 .SH SEE ALSO
 .BR af_smc (7),
 .BR smc_chk (8)
