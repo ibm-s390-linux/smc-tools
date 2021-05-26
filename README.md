@@ -41,6 +41,7 @@ Release History:
 * __v1.5.99 (tbd)__
 
     Changes:
+    - `smc_rnics`: Recognize unknown Mellanox cards
     - `smc_run': Add various command-line switches
 
     Bug fixes:
