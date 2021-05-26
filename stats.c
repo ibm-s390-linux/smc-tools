@@ -400,7 +400,7 @@ static void print_as_text()
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_rx.buf_full_cnt,
 			buf_rx_full);
 	if (d_level) {
-		printf("  Allocs (downgrades)        %12llu\n", tech->rmb_rx.alloc_cnt);
+		printf("  Downgraded allocs          %12llu\n", tech->rmb_rx.dgrade_cnt);
 		printf("  Reuses                     %12llu\n", tech->rmb_rx.reuse_cnt);
 	}
 	fillbuffer(&tech->rx_rmbsize, buf);
@@ -427,7 +427,7 @@ static void print_as_text()
 	printf("  Buffer too small(remote)   %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_peer_cnt,
 			buf_small_r);
 	if (d_level) {
-		printf("  Allocs (downgrades)        %12llu\n", tech->rmb_tx.alloc_cnt);
+		printf("  Downgraded allocs          %12llu\n", tech->rmb_tx.dgrade_cnt);
 		printf("  Reuses                     %12llu\n", tech->rmb_tx.reuse_cnt);
 	}
 	fillbuffer(&tech->tx_rmbsize, buf);
