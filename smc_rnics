@@ -94,6 +94,23 @@ function set_RoCE_dev_and_port() {
 	fi;
 }
 
+function set_by_firmware_lvl() {
+	local iface;
+	local name;
+	local lvl;
+
+	name="Mlx_$id";
+	which ethtool >/dev/null 2>&1;
+	if [ $? -eq 0 ] && [ "$int" != "n/a" ] && [ -d "net" ]; then
+		iface="`ls -1 net | head -1`";
+		lvl="`ethtool -i $iface | grep -e "^firmware-version:" | awk '{print($2)}'`";
+		if [ "${lvl%%.*}" == "22" ]; then
+			name="RoCE_Express3";
+		fi
+	fi
+	set_RoCE_dev_and_port $name;
+}
+
 function print_rnics() {
 	# iterate over slots, as powered-off devices won't show elsewhere
 	for fid in `ls -1 /sys/bus/pci/slots`; do
@@ -148,6 +165,7 @@ function print_rnics() {
 				"0x1003" | \
 				"0x1004") dev_type="RoCE_Express";;
 				"0x1016") set_RoCE_dev_and_port "RoCE_Express2";;
+				"0x101e") set_by_firmware_lvl;;
 				*)	  set_RoCE_dev_and_port "Mlx_$id";;
 				esac;;
 			*) [ $all -eq 0 ] && continue

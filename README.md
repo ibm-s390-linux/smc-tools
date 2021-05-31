@@ -42,6 +42,7 @@ Release History:
 * __v1.8.99 (tbd)__
 
     Changes:
+    - `smc_rncs`: Recognize RoCE Express3 cards
 
     Bug fixes:
 
