@@ -373,7 +373,6 @@ static void print_as_text()
 			tech->srv_v1_succ_cnt + tech->srv_v2_succ_cnt);
 		printf("    v1                       %12llu\n", smc_c_cnt_v1);
 		printf("    v2                       %12llu\n", smc_c_cnt_v2);
-		printf("  SMC connections            %12llu\n", smc_conn_cnt);
 	} else {
 		printf("  SMC connections            %12llu\n", smc_conn_cnt);
 	}
@@ -400,8 +399,8 @@ static void print_as_text()
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_rx.buf_full_cnt,
 			buf_rx_full);
 	if (d_level) {
-		printf("  Downgraded allocs          %12llu\n", tech->rmb_rx.dgrade_cnt);
-		printf("  Reuses                     %12llu\n", tech->rmb_rx.reuse_cnt);
+		printf("  Buffer downgrades          %12llu\n", tech->rmb_rx.dgrade_cnt);
+		printf("  Buffer reuses              %12llu\n", tech->rmb_rx.reuse_cnt);
 	}
 	fillbuffer(&tech->rx_rmbsize, buf);
 	printf("            8KB    16KB    32KB    64KB   128KB   256KB   512KB  >512KB\n");
@@ -420,15 +419,15 @@ static void print_as_text()
 	printf("  Total requests             %12llu\n", tech->tx_cnt);
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_cnt,
 			buf_full);
-	printf("  Buffer full(remote)        %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_peer_cnt,
+	printf("  Buffer full (remote)       %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_peer_cnt,
 			buf_full_r);
 	printf("  Buffer too small           %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_cnt,
 			buf_small);
-	printf("  Buffer too small(remote)   %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_peer_cnt,
+	printf("  Buffer too small (remote)  %12llu (%.2f%%)\n", tech->rmb_tx.buf_size_small_peer_cnt,
 			buf_small_r);
 	if (d_level) {
-		printf("  Downgraded allocs          %12llu\n", tech->rmb_tx.dgrade_cnt);
-		printf("  Reuses                     %12llu\n", tech->rmb_tx.reuse_cnt);
+		printf("  Buffer downgrades          %12llu\n", tech->rmb_tx.dgrade_cnt);
+		printf("  Buffer reuses              %12llu\n", tech->rmb_tx.reuse_cnt);
 	}
 	fillbuffer(&tech->tx_rmbsize, buf);
 	printf("            8KB    16KB    32KB    64KB   128KB   256KB   512KB  >512KB\n");
@@ -884,25 +883,29 @@ static int get_fback_err_cache_count(struct smc_stats_fback *fback, int trgt)
 static int is_data_consistent ()
 {
 	int size, i, size_fback, val_err, val_cnt, cache_cnt;
-	int *kern_fbck;
+	struct smc_stats_fback *kern_fbck;
 	__u64 *kernel, *cache;
 
 	size = sizeof(smc_stat) / sizeof(__u64);
 	kernel = (__u64 *)&smc_stat;
 	cache = (__u64 *)&smc_stat_c;
-	for (i = 0; i < size; i++)
-		if (kernel++ < cache++)
+	for (i = 0; i < size; i++) {
+		if (*kernel < *cache)
 			return 0;
+		kernel++;
+		cache++;
+	}
 
 	size_fback = size + 2 * SMC_MAX_FBACK_RSN_CNT;
-	kern_fbck = (int *)&smc_rsn;
+	kern_fbck = (struct smc_stats_fback *)&smc_rsn;
 	for (i = 0; i < size_fback; i++) {
-		val_err = *(kern_fbck++);
+		val_err = kern_fbck->fback_code;
 		if (i < SMC_MAX_FBACK_RSN_CNT)
 			cache_cnt = get_fback_err_cache_count(smc_rsn_c.srv, val_err);
 		else
 			cache_cnt = get_fback_err_cache_count(smc_rsn_c.clnt, val_err);
-		val_cnt = *(kern_fbck++);
+		val_cnt = kern_fbck->count;
+		kern_fbck++;
 		if (val_cnt < cache_cnt)
 			return 0;
 	}
