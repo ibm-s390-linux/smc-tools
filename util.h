@@ -18,6 +18,8 @@
 #include <stdint.h>
 #define SMC_DETAIL_LEVEL_V 1
 #define SMC_DETAIL_LEVEL_VV 2
+#define SMC_OPTION_ABS -1
+#define SMC_OPTION_DETAIL_ABS -2
 #define SMC_TYPE_STR_MAX 5
 
 

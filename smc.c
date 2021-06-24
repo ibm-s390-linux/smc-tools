@@ -31,7 +31,7 @@
 #include "info.h"
 #include "stats.h"
 
-static int detail_level = 0;
+static int option_detail = 0;
 #if defined(SMCD)
 char *myname = "smcd";
 #elif defined(SMCR)
@@ -50,11 +50,11 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: %s  [ OPTIONS ] OBJECT {COMMAND | help}\n"
-		"where  OBJECT := {info | linkgroup | device}\n"
+		"where  OBJECT := {info | linkgroup | device | stats}\n"
 #if defined(SMCD)
-		"       OPTIONS := {-v[ersion]}\n", myname);
+		"       OPTIONS := {-v[ersion] | -d[etails] | -a[bsolute]}\n", myname);
 #else
-		"       OPTIONS := {-v[ersion] | -d[etails] | -dd[details]}\n", myname);
+		"       OPTIONS := {-v[ersion] | -d[etails] | -dd[details] | -a[bsolute]}\n", myname);
 #endif
 }
 
@@ -66,7 +66,7 @@ static int invoke_help(int argc, char **argv, int k)
 
 static const struct cmd {
 	const char *cmd;
-	int (*func)(int argc, char **argv, int detail_level);
+	int (*func)(int argc, char **argv, int option_detail);
 } cmds[] = {
 	{ "device",	invoke_devs },
 	{ "linkgroup",	invoke_lgs },
@@ -82,7 +82,7 @@ static int run_cmd(const char *argv0, int argc, char **argv)
 
 	for (c = cmds; c->cmd; ++c) {
 		if (contains(argv0, c->cmd) == 0)
-			return -(c->func(argc-1, argv+1, detail_level));
+			return -(c->func(argc-1, argv+1, option_detail));
 	}
 
 	fprintf(stderr, "Error: Object \"%s\" is unknown, try \"%s help\".\n", argv0, myname);
@@ -104,12 +104,17 @@ int main(int argc, char **argv)
 			break;
 		if (opt[1] == '-')
 			opt++;
-		if (contains(opt, "-version") == 0) {
+
+		if ((strncmp(opt, "-ad", 3) == 0) || (strncmp(opt, "-da", 3) == 0)) {
+			option_detail = SMC_OPTION_DETAIL_ABS;
+		} else if (contains(opt, "-absolute") == 0) {
+			option_detail = SMC_OPTION_ABS;
+		} else if (contains(opt, "-version") == 0) {
 			version();
 		} else if (contains(opt, "-detail") == 0) {
-			detail_level = SMC_DETAIL_LEVEL_V;
+			option_detail = SMC_DETAIL_LEVEL_V;
 		} else if (contains(opt, "-ddetail") == 0) {
-			detail_level = SMC_DETAIL_LEVEL_VV;
+			option_detail = SMC_DETAIL_LEVEL_VV;
 		} else if (contains(opt, "-help") == 0) {
 			usage();
 			goto out;
