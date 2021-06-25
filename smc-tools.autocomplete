@@ -4,11 +4,12 @@ _smc()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="device linkgroup info -d -dd -v"
-    opts_smcd="device linkgroup info -v" 
+    opts="device linkgroup info stats -a -d -dd -v"
+    opts_smcd="device linkgroup info stats -a -d -v"
     opts_short="device linkgroup"
     opts_show="show link-show"
     opts_show_smcd="show"
+    opts_stats="show reset"
     opts_type="smcd smcr"
     opts_final="all netdev ibdev"
     opts_final_smcd="all"
@@ -63,6 +64,10 @@ _smc()
             ;;
         smcr)
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        stats)
+            COMPREPLY=( $(compgen -W "${opts_stats}" -- ${cur}) )
             return 0
             ;;
         *)
