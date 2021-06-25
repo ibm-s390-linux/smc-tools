@@ -17,11 +17,12 @@ smc \- Print information about SMC linkgroups, links, devices
 .sp
 
 .IR OBJECT " := { "
-.BR linkgroup " | " device " | " info " }"
+.BR device " | " info " | " linkgroup " | " stats " }"
 .sp
 
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
+\fB\-a\fR[\fIbsolute\fR] |
 \fB\-v\fR[\fIerbose\fR] |
 \fB\-vv\fR[\fIerbose\fR]}
 
@@ -32,6 +33,10 @@ smc \- Print information about SMC linkgroups, links, devices
 Print the version of the
 .B smc
 utility and exit.
+
+.TP
+.BR "\-a", " \-absolute"
+Print absolute statistic value (valid only for stats).
 
 .TP
 .BR "\-v", " \-verbose"
@@ -47,19 +52,23 @@ Print more detailed information.
 .I OBJECT
 
 .B device
-Device(s) of the SMC.
+Device(s) as used by SMC
 
 .TP
 .B info
-Generic SMC information.
+Generic SMC information
 
 .TP
 .B linkgroup
-Linkgroup(s) or link(s) of the SMC.
+Linkgroup(s) or link(s) as used by SMC
+
+.TP
+.B stats
+SMC statistics
 
 .PP
 The names of all objects can be abbreviated down to
-a unique stem. For example
+a unique stem. For example,
 .B device
 can be abbreviated to
 .B dev
@@ -88,8 +97,7 @@ is assumed.
 .SH RETURN CODES
 Successful
 .IR smc
-commands return 0 and display the
-requested linkgroup, link or device information.
+commands return 0 and display the requested information.
 If an error occurs,
 .IR smc
 writes a message to stderr and completes with a return code other than 0.
@@ -99,3 +107,4 @@ writes a message to stderr and completes with a return code other than 0.
 .BR smc-device (8),
 .BR smc-info (8),
 .BR smc-linkgroup (8)
+.BR smc-stats (8)

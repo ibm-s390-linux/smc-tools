@@ -18,11 +18,12 @@ smcr \- Print information about SMC-R linkgroups, links, devices
 .sp
 
 .IR OBJECT " := { "
-.BR info " | " linkgroup " | " device " }"
+.BR info " | " linkgroup " | " device " | " stats " }"
 .sp
 
 .IR OPTIONS " := { "
 \fB\-v\fR[\fIersion\fR] |
+\fB\-a\fR[\fIbsolute\fR] |
 \fB\-d\fR[\fIetails\fR] |
 \fB\-dd\fR[\fIetails\fR] }
 
@@ -33,6 +34,10 @@ smcr \- Print information about SMC-R linkgroups, links, devices
 Print the version of the
 .B smcr
 utility and exit.
+
+.TP
+.BR "\-a", " \-absolute"
+Print absolute statistic value (valid only for stats).
 
 .TP
 .BR "\-d", " \-details"
@@ -58,6 +63,10 @@ Generic SMC information.
 .TP
 .B linkgroup
 Linkgroup(s) or link(s) used by SMC-R.
+
+.TP
+.B stats
+SMC-R statistics.
 
 .PP
 The names of all objects can be abbreviated down to
@@ -109,3 +118,4 @@ tool or the smc kernel module is not loaded.
 .BR smcr-device (8),
 .BR smcr-info (8),
 .BR smcr-linkgroup (8)
+.BR smcr-stats (8)

@@ -1,0 +1,201 @@
+.TH SMCSS 8 "June 2021" "smc-tools" "Linux Programmer's Manual"
+
+.SH NAME
+smcd-stats \- Print statistics about SMC-D usage
+
+smcr-stats \- Print statistics about SMC-R usage
+
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B smcd
+.RI "[ " OPTIONS " ]"
+.B stats
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.B smcr
+.RI "[ " OPTIONS " ]"
+.B stats
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.SH DESCRIPTION
+The smcd stats and smcr stats commands display statistics about SMC-D and
+SMC-R, respectively. Data includes number of connections, number of failed
+connections, buffer information, and special calls.
+Statistics are collected at various data points in the smc kernel module.
+Therefore, minor inconsistencies in the data can occur and are to be
+expected.
+
+.SH COMMANDS
+
+.TP
+.BR "show " (default)
+Display statistics on respective SMC mode usage. Values displayed are
+cumulative since last reset, unless option
+.B -a/--absolute
+is specified.
+
+.TP
+.BR reset
+Display current statistics and reset all counters to zero.
+
+.TP
+.BR json
+Display current statistics in JSON format.
+
+.SH OPTIONS
+
+.TP
+.B \-d, \-\-details
+Display additional fields and information in the output.
+
+.TP
+.B \-a, \-\-absolute
+Display values since smc module load, ignoring any resets.
+
+.SH OUTPUT
+The
+.B -d/--details
+option displays a number of additional fields as indicated in the following.
+It also breaks up a number of counters in section
+.I Connections Summary
+into separate counts for client and server.
+
+.SS "Total connections handled"
+Total number of connections handled by the SMC module. Includes
+.I TCP fallback
+connections as well as
+.IR "handshake errors" .
+
+.SS "SMC connections"
+Number of connections that successfully entered the respective SMC mode.
+.B -d/--details
+breaks up connections by SMC versions.
+
+.SS Handshake errors
+Number of connections that failed due to errors during the handshaking
+phase, e.g. peer no longer responding.
+
+.SS Avg requests per SMC conn
+Average number of requests sent and received (including
+.IR "special socket calls" )
+per SMC connection.
+
+.SS TCP fallback
+Number of connections that fell back to TCP/IP.
+
+.SS  Data transmitted
+Amount of data sent (TX) or received (RX) in Bytes.
+
+.SS Total requests
+Total number of individual send (TX) or receive (RX) requests handled.
+Includes requests that ended with errors or did not transfer any data.
+
+.SS Buffer full
+Number of occurrences where the respective send buffer (TX) could not contain
+all data to be sent, or did not contain as much data as requested in a
+receive call (RX).
+
+.SS Buffer full (remote) (\-\-details only)
+Number of occurrences where the peer's receive buffer was exceeded by
+writing data. That is, requests that fill the buffer up to the last bit are not
+included in the count.
+
+.SS Buffer too small (\-\-details only)
+Number of occurrences where a send request was larger than the local send
+buffer's total capacity.
+
+.SS Buffer too small (remote) (\-\-details only)
+Number of occurrences where a send request exceeded the total capacity of the
+peer's receive buffer.
+
+.SS Buffer downgrades (\-\-details only)
+Number of occurrences where a buffer of the requested size could not be
+allocated for a new connection, and a smaller buffer was used.
+
+.SS Buffer reuses (\-\-details only)
+Number of occurrences where a buffer was provided as requested for a new
+connection by reusing a buffer from a previous connection. 
+
+.SS Bufs
+Histogram of buffer sizes for all connections, including
+.I buffer downgrades
+and
+.IR "buffer reuses" .
+The histogram scale presents exact buffer sizes.
+
+.SS Reqs
+Histogram of request sizes. The histogram scale includes upper boundaries of
+request sizes. Counts reflect requested send sizes for TX, and actual receive
+sizes for RX. Difference to
+.I "Total requests"
+is due to requests not transferring any data and/or erroneous requests.
+
+.SS Special socket calls
+Summarizes the total number of sockets calls that require special handling
+in SMC.
+To categorize these calls into individual counters as follows, use the
+.I -d/\-\-details
+option.
+
+.TP
+.I cork
+Counts occurrences of sockopt TCP_CORK enablements. That is, does not reflect
+the number of send requests with TCP_CORK enabled.
+.TP
+.I nodelay
+Counts occurrences of sockopt TCP_NODELAY enablements. That is, does not
+reflect the number of send requests with TCP_CORK enabled.
+.TP
+.I sendpage
+Counts occurrences of the AF_SMC implementation of the sendpage call.
+.TP
+.I splice
+Counts number of calls of the splice() system call.
+.TP
+.I urgent data
+Counts number of send and receive calls with MSG_OOB set.
+
+.SH "EXAMPLES"
+
+.HP 2
+1. Show SMC-D statistics:
+.br
+\fB# smcd stats\fP
+.br
+.HP 2
+2. Show detailed SMC-R statistics:
+.br
+\fB# smcr -d stats show\fP
+.br
+.HP 2
+3. Show detailed SMC-R statistics and reset SMC-R statistics counters:
+.br
+\fB# smcr -d stats reset\fP
+.br
+.HP 2
+4. Show detailed SMC-D statistics since module load in JSON format:
+.br
+\fB# smcd -da stats json\fP
+.br
+.HP 2
+.HP 2
+5. Show SMC-R statistics since module load:
+.br
+\fB# smcr -a stats\fP
+.br
+.HP 2
+
+
+.P
+.SH SEE ALSO
+.BR smcd (8),
+.BR smcr (8)
+

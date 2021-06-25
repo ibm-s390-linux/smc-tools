@@ -17,11 +17,14 @@ smcd \- Print information about SMC-D linkgroups and devices
 .sp
 
 .IR OBJECT " := { "
-.BR info " | " linkgroup " | " device " }"
+.BR info " | " linkgroup " | " device " | " stats " }"
 .sp
 
 .IR OPTIONS " := { "
-\fB\-v\fR[\fIersion\fR] }
+\fB\-v\fR[\fIersion\fR] |
+\fB\-d\fR[\fIetails\fR] |
+\fB\-a\fR[\fIbsolute\fR]}
+
 
 .SH OPTIONS
 
@@ -30,6 +33,14 @@ smcd \- Print information about SMC-D linkgroups and devices
 Print the version of the
 .B smcd
 utility and exit.
+
+.TP
+.BR "\-d", " \-details"
+Print detailed information (valid only for stats).
+
+.TP
+.BR "\-a", " \-absolute"
+Print absolute statistic value (valid only for stats).
 
 .SH SMCD - COMMAND SYNTAX
 
@@ -47,6 +58,10 @@ Generic SMC information.
 .TP
 .B linkgroup
 Linkgroup(s) used by SMC-D.
+
+.TP
+.B stats
+SMC-D statistics.
 
 .PP
 The names of all objects can be abbreviated down to
@@ -96,3 +111,4 @@ tool or the smc kernel module is not loaded.
 .BR smcd-device (8),
 .BR smcd-info (8),
 .BR smcd-linkgroup (8)
+.BR smcd-stats (8)

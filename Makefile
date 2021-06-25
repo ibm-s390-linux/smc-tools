@@ -170,9 +170,11 @@ endif
 	install $(INSTALL_FLAGS_MAN) smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcd-device.8 $(DESTDIR)$(MANDIR)/man8
 	install $(INSTALL_FLAGS_MAN) smcd-info.8 $(DESTDIR)$(MANDIR)/man8
+	install $(INSTALL_FLAGS_MAN) smcd-stats.8 $(DESTDIR)$(MANDIR)/man8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-linkgroup.8 $(DESTDIR)$(MANDIR)/man8/smcr-linkgroup.8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-device.8 $(DESTDIR)$(MANDIR)/man8/smcr-device.8
 	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-info.8 $(DESTDIR)$(MANDIR)/man8/smcr-info.8
+	ln -sfr $(DESTDIR)$(MANDIR)/man8/smcd-stats.8 $(DESTDIR)$(MANDIR)/man8/smcr-stats.8
 ifneq ($(BASH_AUTODIR),)
 	install $(INSTALL_FLAGS_MAN) smc-tools.autocomplete $(DESTDIR)$(BASH_AUTODIR)/smc-tools
 	ln -sfr $(DESTDIR)$(BASH_AUTODIR)/smc-tools $(DESTDIR)$(BASH_AUTODIR)/smc_rnics
