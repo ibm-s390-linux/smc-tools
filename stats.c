@@ -38,10 +38,12 @@ static int reset_cmd = 0;
 static int json_cmd = 0;
 static int cache_file_exists = 0;
 
-struct smc_stats smc_stat;
-struct smc_stats smc_stat_c;
+struct smc_stats smc_stat;	/* kernel values, might contain merged values */
+struct smc_stats smc_stat_c;	/* cache file values */
+struct smc_stats smc_stat_org;	/* original kernel values */
 struct smc_stats_rsn smc_rsn;
 struct smc_stats_rsn smc_rsn_c;
+struct smc_stats_rsn smc_rsn_org;
 FILE *cache_fp = NULL;
 char *cache_file_path;
 
@@ -951,15 +953,12 @@ static void merge_cache ()
 	smc_rsn.clnt_fback_cnt -= smc_rsn_c.clnt_fback_cnt;
 }
 
-static void init_cache_file()
+static void open_cache_file()
 {
 	int fd;
 
 	cache_file_path = malloc(128);
 	sprintf(cache_file_path, "/tmp/.smcstats.u%d", getuid());
-
-	if (reset_cmd)
-		unlink(cache_file_path);
 
 	fd = open(cache_file_path, O_RDWR|O_CREAT|O_NOFOLLOW, 0600);
 
@@ -976,6 +975,11 @@ static void init_cache_file()
 		perror("Error: cache file lock");
 		exit(-1);
 	}
+}
+
+static void init_cache_file()
+{
+	open_cache_file();
 	read_cache_file(cache_fp);
 }
 
@@ -990,13 +994,13 @@ static void fill_cache_file()
 		perror("Error: ftruncate");
 
 	size = sizeof(smc_stat) / sizeof(__u64);
-	src = (__u64 *)&smc_stat;
+	src = (__u64 *)&smc_stat_org;
 	for (i = 0; i < size; i++) {
 		fprintf(cache_fp, "%-12d%-16llu\n",i ,*src);
 		src++;
 	}
 
-	fback_src = (int*)&smc_rsn;
+	fback_src = (int*)&smc_rsn_org;
 	size = 2 * SMC_MAX_FBACK_RSN_CNT;
 	for (i = 0; i < size; i++) {
 		val_err = *(fback_src++);
@@ -1028,14 +1032,20 @@ int invoke_stats(int argc, char **argv, int option_details)
 		goto errout;
 	if (gen_nl_handle_dump(SMC_NETLINK_GET_STATS, handle_gen_stats_reply, NULL))
 		goto errout;
+	memcpy(&smc_stat_org, &smc_stat, sizeof(smc_stat_org));
+	memcpy(&smc_rsn_org, &smc_rsn, sizeof(smc_rsn_org));
+
 	if (!is_abs && cache_file_exists)
 		merge_cache();
 	if (!json_cmd)
 		print_as_text();
 	else
 		print_as_json();
-	if (!is_abs && !cache_file_exists)
+	if (reset_cmd) {
+		unlink(cache_file_path);
+		open_cache_file();
 		fill_cache_file();
+	}
 errout:
 	free(cache_file_path);
 	return 0;
