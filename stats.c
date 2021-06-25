@@ -739,7 +739,6 @@ static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
 	if (!attrs[SMC_GEN_FBACK_STATS])
 		return NL_STOP;
 
-	memset(&smc_rsn, 0, sizeof(smc_rsn));
 	if (nla_parse_nested(stats_fback_attrs, SMC_NLA_FBACK_STATS_MAX,
 			     attrs[SMC_GEN_FBACK_STATS],
 			     smc_gen_stats_fback_policy)) {
@@ -779,6 +778,8 @@ static int handle_gen_fback_stats_reply(struct nl_msg *msg, void *arg)
 
 static void handle_cmd_params(int argc, char **argv)
 {
+
+	memset(&smc_rsn, 0, sizeof(smc_rsn));
 	if (argc == 0) {
 		show_cmd = 1; /* no object given, so use the default "show" */
 		return;
