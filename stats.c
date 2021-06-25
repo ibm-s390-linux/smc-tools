@@ -31,6 +31,7 @@ static int is_smcd = 1;
 static int is_smcd = 0;
 #endif
 static int d_level = 0;
+static int is_abs = 0;
 
 static int show_cmd = 0;
 static int reset_cmd = 0;
@@ -1008,23 +1009,31 @@ static void fill_cache_file()
 	fclose(cache_fp);
 }
 
-int invoke_stats(int argc, char **argv, int detail_level)
+int invoke_stats(int argc, char **argv, int option_details)
 {
-	d_level = detail_level;
+	if (option_details == SMC_DETAIL_LEVEL_V || option_details == SMC_DETAIL_LEVEL_VV) {
+		d_level = 1;
+	} else if (option_details == SMC_OPTION_ABS) {
+		is_abs = 1;
+	} else if (option_details == SMC_OPTION_DETAIL_ABS) {
+		is_abs = 1;
+		d_level = 1;
+	}
 
 	handle_cmd_params(argc, argv);
-	init_cache_file();
+	if (!is_abs)
+		init_cache_file();
 	if (gen_nl_handle_dump(SMC_NETLINK_GET_FBACK_STATS, handle_gen_fback_stats_reply, NULL))
 		goto errout;
 	if (gen_nl_handle_dump(SMC_NETLINK_GET_STATS, handle_gen_stats_reply, NULL))
 		goto errout;
-	if (cache_file_exists)
+	if (!is_abs && cache_file_exists)
 		merge_cache();
 	if (!json_cmd)
 		print_as_text();
 	else
 		print_as_json();
-	if (!cache_file_exists)
+	if (!is_abs && !cache_file_exists)
 		fill_cache_file();
 errout:
 	free(cache_file_path);
