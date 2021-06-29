@@ -2,7 +2,7 @@
 
 # Copyright IBM Corp. 2021
 
-VERSION="1.6.0";
+VERSION="1.6.99";
 
 
 function usage() {
