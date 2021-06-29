@@ -3,15 +3,16 @@ SMC Tools
 
 Utilities for use with `AF_SMC` sockets.
 
-This package consists of the tools:
+This package consists of the following tools:
 
 - `libsmc-preload.so` : preload library.
-- `smc_run`           : preload library environment setup script.
+- `smc`               : List linkgroups, links, devices, and more
+- `smc_chk`           : SMC support diagnostics
 - `smc_pnet`          : C program for PNET Table handling
+- `smc_rnics`         : List available RDMA NICs
+- `smc_run`           : preload library environment setup script.
 - `smcss`             : C program for displaying the information about active
                         SMC sockets.
-- `smc_rnics`         : List available RDMA NICs
-- `smc`               : List linkgroups, links and devices.
 
 The preload shared library `libsmc-preload.so` provides mapping of TCP socket
 operations to SMC sockets.
@@ -38,12 +39,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.5.99 (tbd)__
+* __v1.6.0 (2021-07-01)__
 
     Changes:
     - `smcd`/`smcr`: Add new command `stats`
     - `smc_rnics`: Recognize unknown Mellanox cards
-    - `smc_run': Add various command-line switches
+    - `smc_run`: Add various command-line switches
 
     Bug fixes:
     - `smc_chk`: Remove 'EXPERIMENTAL' flag
