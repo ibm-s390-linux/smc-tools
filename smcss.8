@@ -239,6 +239,10 @@ Peer sent no ISMv2 SEID
 No SMC-Dv2 device found, but required
 .TP
 .I
+0x03030008
+Peer sent no UEID
+.TP
+.I
 0x03040000
 SMC modes mismatch (R or D)
 .TP
@@ -280,6 +284,14 @@ SMC version mismatch
 SMC-D connection limit reached
 .TP
 .I
+.TP
+.I
+0x030e0000
+SMC-Rv2 connection found no route to peer
+.TP
+.I
+0x030f0000
+SMC-Rv2 connection mismatch direct/indirect with peer
 0x04000000
 Synchronization error
 .TP

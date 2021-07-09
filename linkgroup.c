@@ -84,6 +84,21 @@ static struct nla_policy smc_gen_link_smcr_sock_policy[SMC_NLA_LINK_MAX + 1] = {
 	[SMC_NLA_LINK_STATE]		= { .type = NLA_U32 },
 };
 
+static struct nla_policy smc_gen_lgr_v2_sock_policy[SMC_NLA_LGR_V2_MAX + 1] = {
+	[SMC_NLA_LGR_V2_VER]		= { .type = NLA_U8 },
+	[SMC_NLA_LGR_V2_REL]		= { .type = NLA_U8 },
+	[SMC_NLA_LGR_V2_OS]		= { .type = NLA_U8 },
+	[SMC_NLA_LGR_V2_NEG_EID]	= { .type = NLA_NUL_STRING,
+					    .maxlen = SMC_MAX_EID_LEN + 1 },
+	[SMC_NLA_LGR_V2_PEER_HOST]	= { .type = NLA_NUL_STRING,
+					    .maxlen = SMC_MAX_HOSTNAME_LEN + 1 },
+};
+
+static struct nla_policy smc_gen_lgr_r_v2_sock_policy[SMC_NLA_LGR_R_V2_MAX + 1] = {
+	[SMC_NLA_LGR_R_V2_UNSPEC]	= { .type = NLA_UNSPEC },
+	[SMC_NLA_LGR_R_V2_DIRECT]	= { .type = NLA_U8 },
+};
+
 static void usage(void)
 {
 	fprintf(stderr,
@@ -104,6 +119,9 @@ static void usage(void)
 
 static void print_lgr_smcr_header(void)
 {
+	if (!show_links && d_level >= SMC_DETAIL_LEVEL_V)
+		return;
+
 	printf("LG-ID    ");
 	printf("LG-Role  ");
 	printf("LG-Type  ");
@@ -131,12 +149,27 @@ static void print_lgr_smcr_header(void)
 
 static void print_lgr_smcd_header(void)
 {
+	if (d_level >= SMC_DETAIL_LEVEL_V)
+		return;
+
 	printf("LG-ID    ");
 	printf("VLAN  ");
 	printf("#Conns  ");
 	printf("PNET-ID " );
 
 	printf("\n");
+}
+
+static const char *smc_peer_os(unsigned int x)
+{
+	static char buf[32];
+
+	switch (x) {
+	case 1:		return "ZOS";
+	case 2:		return "LINUX";
+	case 3:		return "AIX";
+	default:	sprintf(buf, "Unknown (%#x)", x); return buf;
+	}
 }
 
 static const char *smc_link_state(unsigned int x)
@@ -244,6 +277,25 @@ static int fill_link_struct(struct smc_diag_linkinfo_v2 *link, struct nlattr **a
 	return NL_OK;
 }
 
+static void fill_lgr_v2_common_struct(struct smc_v2_lgr_info *v2_lgr_info, struct nlattr **v2_lgr_attrs)
+{
+	if (v2_lgr_attrs[SMC_NLA_LGR_V2_VER])
+		v2_lgr_info->smc_version = nla_get_u8(v2_lgr_attrs[SMC_NLA_LGR_V2_VER]);
+	if (v2_lgr_attrs[SMC_NLA_LGR_V2_REL])
+		v2_lgr_info->peer_smc_release = nla_get_u8(v2_lgr_attrs[SMC_NLA_LGR_V2_REL]);
+	if (v2_lgr_attrs[SMC_NLA_LGR_V2_OS])
+		v2_lgr_info->peer_os = nla_get_u8(v2_lgr_attrs[SMC_NLA_LGR_V2_OS]);
+	if (v2_lgr_attrs[SMC_NLA_LGR_V2_NEG_EID])
+		snprintf((char*)v2_lgr_info->negotiated_eid,
+			 sizeof(v2_lgr_info->negotiated_eid), "%s",
+			 nla_get_string(v2_lgr_attrs[SMC_NLA_LGR_V2_NEG_EID]));
+	if (v2_lgr_attrs[SMC_NLA_LGR_V2_PEER_HOST])
+		snprintf((char*)v2_lgr_info->peer_hostname,
+			 sizeof(v2_lgr_info->peer_hostname), "%s",
+			 nla_get_string(v2_lgr_attrs[SMC_NLA_LGR_V2_PEER_HOST]));
+	v2_lgr_info->v2_lgr_info_received = 1;
+}
+
 static int fill_lgr_struct(struct smc_diag_lgr *lgr, struct nlattr **attrs)
 {
 	struct nlattr *lgr_attrs[SMC_NLA_LGR_R_MAX + 1];
@@ -267,6 +319,30 @@ static int fill_lgr_struct(struct smc_diag_lgr *lgr, struct nlattr **attrs)
 	if (lgr_attrs[SMC_NLA_LGR_R_PNETID])
 		snprintf((char*)lgr->pnet_id, sizeof(lgr->pnet_id), "%s",
 			 nla_get_string(lgr_attrs[SMC_NLA_LGR_R_PNETID]));
+	if (lgr_attrs[SMC_NLA_LGR_R_V2_COMMON]) {
+		struct nlattr *v2_lgr_attrs[SMC_NLA_LGR_V2_MAX + 1];
+
+		if (nla_parse_nested(v2_lgr_attrs, SMC_NLA_LGR_V2_MAX,
+				     lgr_attrs[SMC_NLA_LGR_R_V2_COMMON],
+				     smc_gen_lgr_v2_sock_policy)) {
+			fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_lgr_v2_sock_policy\n");
+			return NL_STOP;
+		}
+		fill_lgr_v2_common_struct(&lgr->v2_lgr_info, v2_lgr_attrs);
+	}
+	if (lgr_attrs[SMC_NLA_LGR_R_V2]) {
+		struct nlattr *v2_lgr_attrs[SMC_NLA_LGR_R_V2_MAX + 1];
+
+		if (nla_parse_nested(v2_lgr_attrs, SMC_NLA_LGR_R_V2_MAX,
+				     lgr_attrs[SMC_NLA_LGR_R_V2],
+				     smc_gen_lgr_r_v2_sock_policy)) {
+			fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_lgr_r_v2_sock_policy\n");
+			return NL_STOP;
+		}
+		if (v2_lgr_attrs[SMC_NLA_LGR_R_V2_DIRECT])
+			lgr->v2_lgr_info.smcr_direct = nla_get_u8(v2_lgr_attrs[SMC_NLA_LGR_R_V2_DIRECT]);
+	}
+
 	return NL_OK;
 }
 
@@ -289,13 +365,49 @@ static int fill_lgr_smcd_struct(struct smcd_diag_dmbinfo_v2 *lgr, struct nlattr 
 	if (lgr_attrs[SMC_NLA_LGR_D_PNETID])
 		snprintf((char*)lgr->pnet_id, sizeof(lgr->pnet_id), "%s",
 			 nla_get_string(lgr_attrs[SMC_NLA_LGR_D_PNETID]));
+	if (lgr_attrs[SMC_NLA_LGR_D_V2_COMMON]) {
+		struct nlattr *v2_lgr_attrs[SMC_NLA_LGR_V2_MAX + 1];
+
+		if (nla_parse_nested(v2_lgr_attrs, SMC_NLA_LGR_V2_MAX,
+				     lgr_attrs[SMC_NLA_LGR_D_V2_COMMON],
+				     smc_gen_lgr_v2_sock_policy)) {
+			fprintf(stderr, "Error: Failed to parse nested attributes: smc_gen_lgr_v2_sock_policy\n");
+			return NL_STOP;
+		}
+		fill_lgr_v2_common_struct(&lgr->v2_lgr_info, v2_lgr_attrs);
+	}
 	return NL_OK;
+}
+
+static int show_lgr_smcr_info_lgr_details_first_loop = 1;
+
+static void show_lgr_smcr_info_lgr_details(struct smc_diag_lgr *lgr)
+{
+	if (!show_lgr_smcr_info_lgr_details_first_loop)
+		printf("\n"); /* separator line between link groups */
+	else
+		show_lgr_smcr_info_lgr_details_first_loop = 0;
+
+	printf("LG-ID    : %08x\n", *(__u32*)lgr->lgr_id);
+	printf("LG-Role  : %s\n", lgr->lgr_role ? "SERV" : "CLNT");
+	printf("LG-Type  : %s\n", smc_lgr_type(lgr->lgr_type));
+	printf("VLAN     : %x\n", lgr->vlan_id);
+	printf("PNET-ID  : %s\n", trim_space((char *)lgr->pnet_id));
+	printf("Version  : %d\n", (lgr->v2_lgr_info.v2_lgr_info_received ? lgr->v2_lgr_info.smc_version : 1));
+	if (lgr->v2_lgr_info.v2_lgr_info_received) {
+		printf("Peer-Rel : %d\n", lgr->v2_lgr_info.peer_smc_release);
+		printf("Peer-Host: %s\n", trim_space((char *)lgr->v2_lgr_info.peer_hostname));
+		printf("Peer-OS  : %s\n", smc_peer_os(lgr->v2_lgr_info.peer_os));
+		printf("Direct   : %s\n", (lgr->v2_lgr_info.smcr_direct ? "Yes" : "No"));
+		printf("EID      : %s\n", lgr->v2_lgr_info.negotiated_eid);
+	}
+	printf("#Conns   : %d\n", lgr->conns_num);
 }
 
 static int show_lgr_smcr_info(struct nlattr **attr)
 {
-	static struct smc_diag_lgr lgr = {0};
 	struct smc_diag_linkinfo_v2 link = {0};
+	static struct smc_diag_lgr lgr = {0};
 	int rc = NL_OK;
 
 	if (attr[SMC_GEN_LGR_SMCR])
@@ -309,6 +421,13 @@ static int show_lgr_smcr_info(struct nlattr **attr)
 
 	if (filter_smcr_item(&link, &lgr))
 		return rc;
+
+	if (!show_links && d_level >= SMC_DETAIL_LEVEL_V) {
+		show_lgr_smcr_info_lgr_details(&lgr);
+		/* clear the (static) lgr struct for next lgr */
+		memset(&lgr, 0, sizeof(lgr));
+		return rc;
+	}
 
 	printf("%08x ", *(__u32*)lgr.lgr_id);
 	printf("%-8s ", lgr.lgr_role ? "SERV" : "CLNT");
@@ -343,15 +462,44 @@ static int show_lgr_smcr_info(struct nlattr **attr)
 	return rc;
 }
 
+static int show_lgr_smcd_info_lgr_details_first_loop = 1;
+
+static void show_lgr_smcd_info_lgr_details(struct smcd_diag_dmbinfo_v2 *lgr)
+{
+	if (!show_lgr_smcd_info_lgr_details_first_loop)
+		printf("\n"); /* separator line between link groups */
+	else
+		show_lgr_smcd_info_lgr_details_first_loop = 0;
+
+	printf("LG-ID    : %08x\n", lgr->v1.linkid);
+	printf("VLAN     : %x\n", lgr->vlan_id);
+	printf("PNET-ID  : %s\n", trim_space((char *)lgr->pnet_id));
+	printf("Version  : %d\n", (lgr->v2_lgr_info.v2_lgr_info_received ? lgr->v2_lgr_info.smc_version : 1));
+	if (lgr->v2_lgr_info.v2_lgr_info_received) {
+		printf("Peer-Rel : %d\n", lgr->v2_lgr_info.peer_smc_release);
+		printf("Peer-Host: %s\n", trim_space((char *)lgr->v2_lgr_info.peer_hostname));
+		printf("Peer-OS  : %s\n", smc_peer_os(lgr->v2_lgr_info.peer_os));
+		printf("EID      : %s\n", lgr->v2_lgr_info.negotiated_eid);
+	}
+	printf("#Conns   : %d\n", lgr->conns_num);
+}
+
 static int show_lgr_smcd_info(struct nlattr **attr)
 {
-	struct smcd_diag_dmbinfo_v2 lgr;
+	struct smcd_diag_dmbinfo_v2 lgr = {0};
 	int rc = NL_OK;
 
 	if (attr[SMC_GEN_LGR_SMCD])
 		rc = fill_lgr_smcd_struct(&lgr, attr);
+
 	if(filter_smcd_item(&lgr))
 		return rc;
+
+	if (d_level >= SMC_DETAIL_LEVEL_V) {
+		show_lgr_smcd_info_lgr_details(&lgr);
+		return rc;
+	}
+
 	printf("%08x ", lgr.v1.linkid);
 	printf("%#4x  ", lgr.vlan_id);
 	printf("%6d  ", lgr.conns_num);

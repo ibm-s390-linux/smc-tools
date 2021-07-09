@@ -34,6 +34,7 @@ smc_gen_info_policy[SMC_NLA_SYS_MAX + 1] = {
 	[SMC_NLA_SYS_IS_ISM_V2]	= { .type = NLA_U8 },
 	[SMC_NLA_SYS_LOCAL_HOST]= { .type = NLA_NUL_STRING },
 	[SMC_NLA_SYS_SEID]	= { .type = NLA_NUL_STRING },
+	[SMC_NLA_SYS_IS_SMCR_V2]= { .type = NLA_U8 },
 };
 
 static void usage(void)
@@ -104,7 +105,11 @@ static int handle_gen_info_reply(struct nl_msg *msg, void *arg)
 	printf("SMC-D Features:   %s\n", tmp);
 
 	/* SMC-R */
-	printf("SMC-R Features:   v1\n");
+	sprintf(tmp, "%s", "v1");
+	if (info_attrs[SMC_NLA_SYS_IS_SMCR_V2] && nla_get_u8(info_attrs[SMC_NLA_SYS_IS_SMCR_V2])) {
+		strcat(tmp, " v2");
+	}
+	printf("SMC-R Features:   %s\n", tmp);
 
 	printf("\n");
 	printf("Hardware Capabilities\n");
