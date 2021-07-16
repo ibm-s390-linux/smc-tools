@@ -45,7 +45,7 @@ struct smc_stats_rsn smc_rsn;
 struct smc_stats_rsn smc_rsn_c;
 struct smc_stats_rsn smc_rsn_org;
 FILE *cache_fp = NULL;
-char *cache_file_path;
+char *cache_file_path = NULL;
 
 static char* j_output[63] = {"SMC_INT_TX_BUF_8K", "SMC_INT_TX_BUF_16K", "SMC_INT_TX_BUF_32K", "SMC_INT_TX_BUF_64K", "SMC_INT_TX_BUF_128K",
 			    "SMC_INT_TX_BUF_256K", "SMC_INT_TX_BUF_512K", "SMC_INT_TX_BUF_1024K", "SMC_INT_TX_BUF_G_1024K",
@@ -1011,8 +1011,6 @@ static void fill_cache_file()
 
 	fprintf(cache_fp, "%16llu\n", smc_rsn.srv_fback_cnt);
 	fprintf(cache_fp, "%16llu\n", smc_rsn.clnt_fback_cnt);
-
-	fclose(cache_fp);
 }
 
 int invoke_stats(int argc, char **argv, int option_details)
@@ -1044,10 +1042,18 @@ int invoke_stats(int argc, char **argv, int option_details)
 		print_as_json();
 	if (reset_cmd) {
 		unlink(cache_file_path);
+		if (cache_fp) {
+			fclose(cache_fp);
+			cache_fp = NULL;
+		}
+		free(cache_file_path);
+		cache_file_path = NULL;
 		open_cache_file();
 		fill_cache_file();
 	}
 errout:
+	if (cache_fp)
+		fclose(cache_fp);
 	free(cache_file_path);
 	return 0;
 }
