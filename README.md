@@ -46,6 +46,7 @@ Release History:
     Bug fixes:
     - `smcd`/`smcr`: stats: Fix memory overread in is_data_consistent()
     - `smcd`/`smcr`: stats: Fix memory and file handle leaks
+    - `smcd`/`smcr`: stats: Use correct fallback counter values after reset
 
 * __v1.6.0 (2021-07-01)__
 

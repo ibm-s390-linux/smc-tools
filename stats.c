@@ -1009,8 +1009,8 @@ static void fill_cache_file()
 		fprintf(cache_fp, "%-12d%-16d%-16d\n",i , val_err, val_cnt);
 	}
 
-	fprintf(cache_fp, "%16llu\n", smc_rsn.srv_fback_cnt);
-	fprintf(cache_fp, "%16llu\n", smc_rsn.clnt_fback_cnt);
+	fprintf(cache_fp, "%16llu\n", smc_rsn_org.srv_fback_cnt);
+	fprintf(cache_fp, "%16llu\n", smc_rsn_org.clnt_fback_cnt);
 }
 
 int invoke_stats(int argc, char **argv, int option_details)
