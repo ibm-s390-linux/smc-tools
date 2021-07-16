@@ -900,7 +900,7 @@ static int is_data_consistent ()
 		cache++;
 	}
 
-	size_fback = size + 2 * SMC_MAX_FBACK_RSN_CNT;
+	size_fback = 2 * SMC_MAX_FBACK_RSN_CNT;
 	kern_fbck = (struct smc_stats_fback *)&smc_rsn;
 	for (i = 0; i < size_fback; i++) {
 		val_err = kern_fbck->fback_code;
@@ -924,8 +924,8 @@ static int is_data_consistent ()
 static void merge_cache ()
 {
 	int size, i, size_fback, val_err, cache_cnt;
+	struct smc_stats_fback *kern_fbck;
 	__u64 *kernel, *cache;
-	int *kern_fbck;
 
 	if (!is_data_consistent()) {
 		unlink(cache_file_path);
@@ -938,15 +938,16 @@ static void merge_cache ()
 	for (i = 0; i < size; i++)
 		*(kernel++) -=  *(cache++);
 
-	size_fback = size + 2 * SMC_MAX_FBACK_RSN_CNT;
-	kern_fbck = (int *)&smc_rsn;
+	size_fback = 2 * SMC_MAX_FBACK_RSN_CNT;
+	kern_fbck = (struct smc_stats_fback *)&smc_rsn;
 	for (i = 0; i < size_fback; i++) {
-		val_err = *(kern_fbck++);
+		val_err = kern_fbck->fback_code;
 		if (i < SMC_MAX_FBACK_RSN_CNT)
 			cache_cnt = get_fback_err_cache_count(smc_rsn_c.srv, val_err);
 		else
 			cache_cnt = get_fback_err_cache_count(smc_rsn_c.clnt, val_err);
-		*(kern_fbck++) -= cache_cnt;
+		kern_fbck->count -= cache_cnt;
+		kern_fbck++;
 	}
 
 	smc_rsn.srv_fback_cnt -= smc_rsn_c.srv_fback_cnt;

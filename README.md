@@ -44,6 +44,7 @@ Release History:
     Changes:
 
     Bug fixes:
+    - `smcd`/`smcr`: stats: Fix memory overread in is_data_consistent()
 
 * __v1.6.0 (2021-07-01)__
 
