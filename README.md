@@ -39,6 +39,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
+* __v1.6.99 (tbd)__
+
+    Changes:
+    - `smcd`/`smcr`: Add support for new commands `seid` and `ueid` to
+      manage system and user EIDs
+
+    Bug fixes:
+
 * __v1.6.1 (2021-10-01)__
 
     Bug fixes:
