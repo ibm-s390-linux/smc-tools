@@ -383,8 +383,8 @@ function analyze_iface() {
       if [ "$seid" != "" ]; then
          echo "     Advertising SEID:   $seid";
       fi
-      for i in `smcd eid show`; do
-         [ $tab -eq 0 ] && echo -n "     Advertising EIDs:  ";
+      for i in `smcd ueid show`; do
+         [ $tab -eq 0 ] && echo -n "     Advertising UEIDs:  ";
          printf "%*s%s\n" $tab " " $i;
          tab=$TAB2;
       done
