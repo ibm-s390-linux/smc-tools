@@ -39,13 +39,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.6.99 (tbd)__
+* __v1.7.0 (2021-10-29)__
 
     Changes:
+    - Add support for SMC-Rv2
     - `smcd`/`smcr`: Add support for new commands `seid` and `ueid` to
       manage system and user EIDs
-
-    Bug fixes:
 
 * __v1.6.1 (2021-10-01)__
 
@@ -172,4 +171,3 @@ Release History:
 
 
 Copyright IBM Corp. 2016, 2020
-
