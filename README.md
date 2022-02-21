@@ -42,6 +42,7 @@ Release History:
 * __v1.7.99 (tbd)__
 
     Changes:
+    - `smc_dbg`: Add stats and `smc info` output
 
     Bug fixes:
 
