@@ -34,7 +34,7 @@ Limit output to the specified function ID
 .RI ( FID ).
 .TP
 .BR "\-a, \-\-all"
-Include disabled devices in output
+Include disabled and unknown devices in output
 .TP
 .BR "\-d, \-\-disable " \fIFID
 Set (R)NIC
@@ -44,7 +44,12 @@ offline.
 .BR "\-e, \-\-enable " \fIFID
 Set (R)NIC
 .I FID
-online.
+online. Note that devices other than (R)NICs are not displayed by default and
+therefore, once enabled, will not appear in further output unless option
+.BR -a
+or
+.BR -r
+is specified.
 .TP
 .BR "\-h, \-\-help"
 Display a brief
@@ -56,7 +61,7 @@ Display IB device information.
 .TP
 .BR "\-r, \-\-rawids"
 Display raw PCI vendor and device codes in column. Note that this will
-also toggle display of non-networking related devices.
+also include unknown devices.
 .TP
 .BR "\-v, \-\-version"
 Display version information.

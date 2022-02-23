@@ -43,6 +43,7 @@ Release History:
 
     Changes:
     - `smc_dbg`: Add stats and `smc info` output
+    - `smc_rnics`: List unknown devices with option `-a`
 
     Bug fixes:
 

@@ -115,7 +115,6 @@ function print_rnics() {
 		vend=`cat vendor`;
 		dev_type="${vend#0x}:${id#0x}";
 		if [ $rawIDs -eq 0 ]; then
-			# suppress all output except the devices we know
 			case "$vend" in
 			"0x1014" ) # IBM
 				case "$id" in
@@ -131,8 +130,7 @@ function print_rnics() {
 				"0x1016") set_RoCE_dev_and_port "RoCE_Express2";;
 				*)	  set_RoCE_dev_and_port "Mlx_$id";;
 				esac;;
-			*)
-				continue;
+			*) [ $all -eq 0 ] && continue
 			esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
