@@ -46,6 +46,7 @@ Release History:
     - `smc_rnics`: List unknown devices with option `-a`
 
     Bug fixes:
+    - `smc_rnics`: Display correct PNET ID for unknown Mellanox cards
 
 * __v1.7.0 (2021-10-29)__
 

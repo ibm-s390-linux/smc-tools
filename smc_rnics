@@ -40,14 +40,11 @@ function get_pnet_from_port() {
 		echo "";
 		return;
 	fi
-	if [ "$lport" == "n/a" ] || [ "$dev_type" == "RoCE_Express2" ]; then
-		if [ $IBdev -eq 0 ]; then
-			lport=0;
-		else
-			lport=1;
-		fi
+	if [ "$lport" == "n/a" ] || [ "$dev_type" != "RoCE_Express" ]; then
+		lport=0;
+	else
+		[ $IBdev -ne 0 ] && let lport=$lport-1;
 	fi
-	[ $IBdev -ne 0 ] && let lport=$lport-1;
 	(( idx=16*$lport+1 ))
 	(( end=$idx+15 ))
 	res="`echo "$pnetids" | cut -c $idx-$end | sed 's/ //g'`";
