@@ -44,6 +44,7 @@ Release History:
     Changes:
     - `smc_dbg`: Add stats and `smc info` output
     - `smc_rnics`: List unknown devices with option `-a`
+    - 'smc_rnics`: Include software-set PNET IDs
 
     Bug fixes:
     - `smc_rnics`: Display correct PNET ID for unknown Mellanox cards

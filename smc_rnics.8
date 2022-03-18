@@ -94,7 +94,10 @@ Corresponding physical port of an RNIC, if applicable. Starts counting at 0.
 Corresponding Infiniband port of an RNIC, if applicable. Starts counting at 1.
 
 .SS "PNET_ID"
-Physical network ID, if defined in IOCDS.
+Physical network ID. Has an asterisk
+.B *
+appended if defined via
+.BR smc_pnet .
 
 .SS "Net-Dev"
 Network interface in Linux, if applicable.

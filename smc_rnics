@@ -23,17 +23,39 @@ function usage() {
 
 function print_header() {
 	if [ $IBdev -eq 0 ]; then
-		printf "     FID  Power  PCI_ID        PCHID  Type           PPrt  PNET_ID           Net-Dev\n";
+		printf "     FID  Power  PCI_ID        PCHID  Type           PPrt  PNET_ID            Net-Dev\n";
 	else
-		printf "     FID  Power  PCI_ID        PCHID  Type           IPrt  PNET_ID           IB-Dev\n";
+		printf "     FID  Power  PCI_ID        PCHID  Type           IPrt  PNET_ID            IB-Dev\n";
 	fi
-	echo '-----------------------------------------------------------------------------------------';
+	echo '------------------------------------------------------------------------------------------';
+}
+
+function get_softset_pnet_id() {
+	local res="n/a";
+	local line;
+	local id;
+	local iface;
+	local dev;
+	local prt;
+
+	while read -r line; do
+		read id iface dev prt <<< $line;
+		if [[ ("$iface" != "n/a" && "$iface" == "$int") || ("$dev" != "n/a" && "$dev" == "$addr") ]]; then
+			if [ "$prt" != "255" ] && [ "$prt" != "$iport" ]; then
+				continue;
+			fi
+			res="$id*";
+		fi
+	done <<< "$(smc_pnet)"
+
+	echo "$res";
 }
 
 function get_pnet_from_port() {
 	local idx;
 	local end;
 	local lport=$port;
+	local iport;
 	local res;
 
 	if [ "$lport" == "" ]; then
@@ -45,17 +67,18 @@ function get_pnet_from_port() {
 	else
 		[ $IBdev -ne 0 ] && let lport=$lport-1;
 	fi
+	(( iport=$lport+1 ))
 	(( idx=16*$lport+1 ))
 	(( end=$idx+15 ))
 	res="`echo "$pnetids" | cut -c $idx-$end | sed 's/ //g'`";
 	if [ "$res" == "" ]; then
-		res="n/a";
+		res="`get_softset_pnet_id`";
 	fi
 	echo $res;
 }
 
 function print_rnic() {
-	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-16s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
+	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-17s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
 	(( printed++ ));
 }
 
