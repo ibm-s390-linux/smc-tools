@@ -273,6 +273,9 @@ function set_pnetid() {
    # Check for a software-defined PNET ID
    debug "No luck so far - try the SW PNET table";
    pnetid="`smc_pnet | awk -v id="$1" '$2 == id {print($1)}'`";
+   if [ "$pnetid" != "" ]; then
+      pnetid="$pnetid*";
+   fi
    debug "PNET ID is '$pnetid'";
 }
 

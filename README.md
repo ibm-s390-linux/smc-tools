@@ -46,6 +46,7 @@ Release History:
     - `smc_rnics`:
         - List unknown devices with option `-a`
         - Include software-set PNET IDs
+    - `smc_chk`: Indicate PNET IDs set by `smc_pnet`.
 
     Bug fixes:
     - `smc_rnics`: Display correct PNET ID for unknown Mellanox cards
