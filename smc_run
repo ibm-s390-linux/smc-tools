@@ -10,6 +10,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 LIB_NAME="libsmc-preload.so"
+VERSION="1.7.99";
 
 
 function usage() {
@@ -49,7 +50,7 @@ function adjust_core_net_max() {
 # if necessary.
 #
 SMC_DEBUG=0;
-while getopts "dhr:t:" opt; do
+while getopts "dhr:t:v" opt; do
 	case $opt in
 		d)
 			SMC_DEBUG=1;;
