@@ -39,7 +39,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.7.99 (tbd)__
+* __v1.8.0 (2022-04-11)__
 
     Changes:
     - `smc_dbg`: Add stats and `smc info` output

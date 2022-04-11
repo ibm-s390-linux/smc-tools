@@ -19,7 +19,7 @@
 #define STRINGIFY_1(x)		#x
 #define STRINGIFY(x)		STRINGIFY_1(x)
 
-#define RELEASE_STRING		"1.7.99"
+#define RELEASE_STRING		"1.8.0"
 
 #define PF_SMC 43
 
