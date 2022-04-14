@@ -39,13 +39,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.8.99 (tbd)__
+* __v1.8.1 (2022-04-14)__
 
     Changes:
     - `smc_rncs`: Recognize RoCE Express3 cards
-
-    Bug fixes:
-
 
 * __v1.8.0 (2022-04-11)__
 

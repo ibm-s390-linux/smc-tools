@@ -10,7 +10,7 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 LIB_NAME="libsmc-preload.so"
-VERSION="1.8.99";
+VERSION="1.8.1";
 
 
 function usage() {
