@@ -70,8 +70,7 @@ while getopts "dhr:t:v" opt; do
 done
 
 shift $(expr $OPTIND - 1);
-command_line=$@
-if [ "$command_line" == "" ]; then
+if [ $# -eq 0 ]; then
 	echo "`basename "$0"`: Error: Missing command parameter";
 	exit 1;
 fi
@@ -82,5 +81,5 @@ export SMC_DEBUG;
 #
 export LD_PRELOAD=$LD_PRELOAD:$LIB_NAME;
 
-exec $command_line
+exec "$@"
 exit $?;
