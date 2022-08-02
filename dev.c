@@ -102,6 +102,7 @@ static const char *smc_ib_dev_type(unsigned int x)
 	switch (x) {
 	case 0x1004:		return "RoCE_Express";
 	case 0x1016:		return "RoCE_Express2";
+	case 0x101e:		return "RoCE_Express3";
 	case 0x04ed:		return "ISM";
 	default:	sprintf(buf, "%#x", x); return buf;
 	}
