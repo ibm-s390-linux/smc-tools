@@ -189,18 +189,20 @@ ifneq ($(BASH_AUTODIR),)
 endif
 
 check:
-	if which cppcheck >/dev/null; then \
+	if ( command -v cppcheck >/dev/null ); then \
 	    echo "Running cppcheck"; \
 	    cppcheck . 2>&1; \
 	else \
 	    echo "cppcheck not available"; \
 	fi
 	@echo;
-	if which valgrind >/dev/null; then \
+	#if type -p valgrind >/dev/null; then \
+	if ( command -v valgrind >/dev/null ); then \
 	    echo "Running valgrind"; \
 	    valgrind --leak-check=full --show-leak-kinds=all ./smcss 2>&1; \
 	    valgrind --leak-check=full --show-leak-kinds=all ./smc_pnet 2>&1; \
-	    valgrind --leak-check=full --show-leak-kinds=all ./smc 2>&1; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smcd info 2>&1; \
+	    valgrind --leak-check=full --show-leak-kinds=all ./smcd stats 2>&1; \
 	else \
 	    echo "valgrind not available"; \
 	fi

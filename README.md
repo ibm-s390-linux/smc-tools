@@ -39,6 +39,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
+* __v1.8.99 (tbd)__
+
+    Changes:
+
+    Bug fixes:
+    - `smc_run`: Fix for single quotes in parameters
+    - `Makefile`: Fix target `check`
+
 * __v1.8.1 (2022-04-14)__
 
     Changes:
