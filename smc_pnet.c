@@ -97,7 +97,7 @@ static const struct option long_opts[] = {
 	{ "add", 0, 0, 'a'},
 	{ "show", 0, 0, 's'},
 	{ "delete", 0, 0, 'd'},
-	{ "version", 0, 0, 'V' },
+	{ "version", 0, 0, 'v' },
 	{ "help", 0, 0, 'h' },
 	{ NULL, 0, NULL, 0}
 };
