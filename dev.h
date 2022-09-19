@@ -20,6 +20,6 @@ extern struct rtnl_handle rth;
 
 int invoke_devs(int argc, char **argv, int detail_level);
 int dev_count_ism_devices(int *ism_count);
-int dev_count_roce_devices(int *rocev1_count, int *rocev2_count);
+int dev_count_roce_devices(int *rocev1_count, int *rocev2_count, int *rocev3_count);
 
 #endif /* DEV_H_ */

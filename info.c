@@ -24,7 +24,7 @@
 #include "dev.h"
 
 static int show_cmd = 0;
-static int ism_count, rocev1_count, rocev2_count;
+static int ism_count, rocev1_count, rocev2_count, rocev3_count;
 
 static struct nla_policy
 smc_gen_info_policy[SMC_NLA_SYS_MAX + 1] = {
@@ -135,12 +135,12 @@ static int handle_gen_info_reply(struct nl_msg *msg, void *arg)
 
 	/* RoCE hardware */
 	tmp[0] = '\0';
-	if (rocev1_count || rocev2_count) {
+	if (rocev1_count || rocev2_count || rocev3_count) {
 		/* Kernel found any RoCE device */
 		strcpy(tmp, "");
-		if (rocev1_count || rocev2_count)
+		if (rocev1_count || rocev2_count || rocev3_count)
 			strcat(tmp, "v1 ");
-		if (rocev2_count)
+		if (rocev2_count || rocev3_count)
 			strcat(tmp, "v2");
 	}
 	printf("RoCE:             %s\n", (tmp[0] != '\0' ? tmp : "n/a"));
@@ -184,7 +184,7 @@ int invoke_info(int argc, char **argv, int detail_level)
 			fprintf(stderr, "Error: Failed to retrieve ISM device count\n");
 			return EXIT_FAILURE;
 		}
-		if (dev_count_roce_devices(&rocev1_count, &rocev2_count)) {
+		if (dev_count_roce_devices(&rocev1_count, &rocev2_count, &rocev3_count)) {
 			fprintf(stderr, "Error: Failed to retrieve RoCE device count\n");
 			return EXIT_FAILURE;
 		}

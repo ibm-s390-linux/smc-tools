@@ -24,6 +24,12 @@
 #include "libnetlink.h"
 #include "dev.h"
 
+#define MASK_ROCE_V1_HEX 0x1004
+#define MASK_ROCE_V2_HEX 0x1016
+#define MASK_ROCE_V3_HEX 0x101e
+
+#define MASK_ISM_V1_HEX 0x04ed
+
 static int netdev_entered = 0;
 static int ibdev_entered = 0;
 static int type_entered = 0;
@@ -100,10 +106,10 @@ static const char *smc_ib_dev_type(unsigned int x)
 	static char buf[16];
 
 	switch (x) {
-	case 0x1004:		return "RoCE_Express";
-	case 0x1016:		return "RoCE_Express2";
-	case 0x101e:		return "RoCE_Express3";
-	case 0x04ed:		return "ISM";
+	case MASK_ROCE_V1_HEX:		return "RoCE_Express";
+	case MASK_ROCE_V2_HEX:		return "RoCE_Express2";
+	case MASK_ROCE_V3_HEX:		return "RoCE_Express3";
+	case MASK_ISM_V1_HEX:			return "ISM";
 	default:	sprintf(buf, "%#x", x); return buf;
 	}
 }
@@ -480,6 +486,7 @@ int dev_count_ism_devices(int *ism_count)
 struct count_roce_args {
 	int *rocev1_count;
 	int *rocev2_count;
+	int *rocev3_count;
 };
 
 /* arg is an (struct count_roce_args *) */
@@ -512,23 +519,27 @@ static int count_roce_devices_reply(struct nl_msg *msg, void *arg)
 		}
 		if (dev_attrs[SMC_NLA_DEV_PCI_DEVICE])
 			i = nla_get_u16(dev_attrs[SMC_NLA_DEV_PCI_DEVICE]);
-		if (i == 0x1004)
+		if (i == MASK_ROCE_V1_HEX)
 			(*args->rocev1_count)++;
-		if (i == 0x1016)
+		if (i == MASK_ROCE_V2_HEX)
 			(*args->rocev2_count)++;
+		if (i == MASK_ROCE_V3_HEX)
+			(*args->rocev3_count)++;
 	}
 
 	return NL_OK;
 }
 
-int dev_count_roce_devices(int *rocev1_count, int *rocev2_count)
+int dev_count_roce_devices(int *rocev1_count, int *rocev2_count, int *rocev3_count)
 {
 	struct count_roce_args args = {
 			.rocev1_count = rocev1_count,
-			.rocev2_count = rocev2_count
+			.rocev2_count = rocev2_count,
+			.rocev3_count = rocev3_count,
 	};
 
 	*rocev1_count = 0;
 	*rocev2_count = 0;
+	*rocev3_count = 0;
 	return gen_nl_handle_dump(SMC_NETLINK_GET_DEV_SMCR, count_roce_devices_reply, &args);
 }
