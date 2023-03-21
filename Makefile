@@ -42,7 +42,7 @@ STUFF_32BIT	  = 0
 #
 ifeq ($(ARCH),64)
 ifeq ($(DISTRO),Ubuntu)
-LIBDIR		= ${PREFIX}/lib/${ARCHTYPE}-linux-gnu
+LIBDIR		= ${PREFIX}/lib
 else
 LIBDIR		= ${PREFIX}/lib64
 endif
