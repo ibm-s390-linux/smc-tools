@@ -39,12 +39,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.8.99 (tbd)__
-
-    Changes:
+* __v1.8.3 (2023-07-28)__
 
     Bug fixes:
-
+    - `Makefile`: Adjust default library path for Ubuntu
+    - `smc_stats`: Fix man page name
 
 * __v1.8.2 (2022-09-26)__
 
