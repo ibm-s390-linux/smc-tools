@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <search.h>
 #include <ctype.h>
+#include <pthread.h>
 
 #define DLOPEN_FLAG RTLD_LAZY
 
@@ -34,8 +35,9 @@
 #define SMCPROTO_SMC6		1	/* SMC protocol, IPv6 */
 #endif
 
-int (*orig_socket)(int domain, int type, int protocol);
+int (*orig_socket)(int domain, int type, int protocol) = NULL;
 static void *dl_handle = NULL;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void initialize(void);
 
@@ -97,7 +99,7 @@ int socket(int domain, int type, int protocol)
 {
 	int rc;
 
-	if (!dl_handle)
+	if (!orig_socket)
 		initialize();
 
 	/* check if socket is eligible for AF_SMC */
@@ -135,10 +137,17 @@ static void set_debug_mode(const char *var_name)
 
 static void initialize(void)
 {
+	pthread_mutex_lock(&mutex);
+	if (orig_socket) {
+		pthread_mutex_unlock(&mutex);
+		return;
+	}
+
 	set_debug_mode("SMC_DEBUG");
 
 	dl_handle = dlopen(LIBC_SO, DLOPEN_FLAG);
 	if (!dl_handle)
 		dbg_msg(stderr, "dlopen failed: %s\n", dlerror());
 	GET_FUNC(socket);
+	pthread_mutex_unlock(&mutex);
 }
