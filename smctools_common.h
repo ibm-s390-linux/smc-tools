@@ -143,6 +143,8 @@ enum {
 	SMC_NLA_LGR_R_NET_COOKIE,	/* u64 */
 	SMC_NLA_LGR_R_PAD,		/* flag */
 	SMC_NLA_LGR_R_BUF_TYPE,		/* u8 */
+	SMC_NLA_LGR_R_SNDBUF_ALLOC,	/* uint */
+	SMC_NLA_LGR_R_RMB_ALLOC,	/* uint */
 	__SMC_NLA_LGR_R_MAX,
 	SMC_NLA_LGR_R_MAX = __SMC_NLA_LGR_R_MAX - 1
 };
@@ -178,6 +180,8 @@ enum {
 	SMC_NLA_LGR_D_V2_COMMON,	/* nest */
 	SMC_NLA_LGR_D_EXT_GID,		/* u64 */
 	SMC_NLA_LGR_D_PEER_EXT_GID,	/* u64 */
+	SMC_NLA_LGR_D_SNDBUF_ALLOC,	/* uint */
+	SMC_NLA_LGR_D_DMB_ALLOC,	/* uint */
 	__SMC_NLA_LGR_D_MAX,
 	SMC_NLA_LGR_D_MAX = __SMC_NLA_LGR_D_MAX - 1
 };
@@ -502,6 +506,8 @@ struct smcd_diag_dmbinfo_v2 {
 	__u32		conns_num;
 	__u16		chid;
 	__u8		vlan_id;
+	__u64		sndbuf_alloc;
+	__u64		dmb_alloc;
 	struct smc_v2_lgr_info v2_lgr_info;
 };
 
@@ -530,6 +536,8 @@ struct smc_diag_lgr {
 	__u8		pnet_id[SMC_MAX_PNETID_LEN];
 	__u8		vlan_id;
 	__u32		conns_num;
+	__u64		sndbuf_alloc;
+	__u64		rmb_alloc;
 	struct smc_v2_lgr_info v2_lgr_info;
 };
 #endif /* SMCTOOLS_COMMON_H */
