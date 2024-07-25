@@ -47,7 +47,7 @@ struct smc_stats_rsn smc_rsn_org;
 FILE *cache_fp = NULL;
 char *cache_file_path = NULL;
 
-static char* j_output[63] = {"SMC_INT_TX_BUF_8K", "SMC_INT_TX_BUF_16K", "SMC_INT_TX_BUF_32K", "SMC_INT_TX_BUF_64K", "SMC_INT_TX_BUF_128K",
+static char* j_output[65] = {"SMC_INT_TX_BUF_8K", "SMC_INT_TX_BUF_16K", "SMC_INT_TX_BUF_32K", "SMC_INT_TX_BUF_64K", "SMC_INT_TX_BUF_128K",
 			    "SMC_INT_TX_BUF_256K", "SMC_INT_TX_BUF_512K", "SMC_INT_TX_BUF_1024K", "SMC_INT_TX_BUF_G_1024K",
 			    "SMC_INT_RX_BUF_8K", "SMC_INT_RX_BUF_16K", "SMC_INT_RX_BUF_32K", "SMC_INT_RX_BUF_64K", "SMC_INT_RX_BUF_128K",
 			    "SMC_INT_RX_BUF_256K", "SMC_INT_RX_BUF_512K", "SMC_INT_RX_BUF_1024K", "SMC_INT_RX_BUF_G_1024K",
@@ -61,7 +61,7 @@ static char* j_output[63] = {"SMC_INT_TX_BUF_8K", "SMC_INT_TX_BUF_16K", "SMC_INT
 			    "SMC_INT_RX_BUF_FULL_CNT", "SMC_INT_RX_BUF_REUSE_CNT", "SMC_INT_RX_BUF_ALLOC_CNT", "SMC_INT_RX_BUF_DGRADE_CNT",
 			    "SMC_CLNT_V1_SUCC_CNT", "SMC_CLNT_V2_SUCC_CNT", "SMC_SRV_V1_SUCC_CNT", "SMC_SRV_V2_SUCC_CNT",
 			    "SMC_SENDPAGE_CNT", "SMC_URG_DATA_CNT", "SMC_SPLICE_CNT", "SMC_CORK_CNT", "SMC_NDLY_CNT",
-			    "SMC_RX_BYTES", "SMC_TX_BYTES", "SMC_RX_CNT", "SMC_TX_CNT"
+			    "SMC_RX_BYTES", "SMC_TX_BYTES", "SMC_RX_CNT", "SMC_TX_CNT", "SMC_RX_RMB_USAGE", "SMC_TX_RMB_USAGE"
 };
 
 static struct nla_policy smc_gen_stats_policy[SMC_NLA_STATS_MAX + 1] = {
@@ -399,6 +399,8 @@ static void print_as_text()
 	printf("  Data transmitted (Bytes) %14llu (%s)\n",
 		smc_stat.smc[tech_type].rx_bytes, temp_str);
 	printf("  Total requests             %12llu\n", tech->rx_cnt);
+	get_abbreviated(smc_stat.smc[tech_type].rx_rmbuse, 6, temp_str);
+	printf("  Buffer usage (Bytes)       %12llu (%s)\n", tech->rx_rmbuse, temp_str);
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_rx.buf_full_cnt,
 			buf_rx_full);
 	if (d_level) {
@@ -420,6 +422,8 @@ static void print_as_text()
 	printf("  Data transmitted (Bytes) %14llu (%s)\n",
 		smc_stat.smc[tech_type].tx_bytes, temp_str);
 	printf("  Total requests             %12llu\n", tech->tx_cnt);
+	get_abbreviated(smc_stat.smc[tech_type].tx_rmbuse, 6, temp_str);
+	printf("  Buffer usage (Bytes)       %12llu (%s)\n", tech->tx_rmbuse, temp_str);
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_cnt,
 			buf_full);
 	printf("  Buffer full (remote)       %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_peer_cnt,
@@ -621,6 +625,14 @@ static int fill_tech_info(struct nlattr **attr, int type)
 	if (tech_attrs[SMC_NLA_STATS_T_TX_BYTES]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_TX_BYTES]);
 		smc_stat.smc[tech_type].tx_bytes = trgt;
+	}
+	if (tech_attrs[SMC_NLA_STATS_T_RX_RMB_USAGE]) {
+		trgt = nl_attr_get_uint(tech_attrs[SMC_NLA_STATS_T_RX_RMB_USAGE]);
+		smc_stat.smc[tech_type].rx_rmbuse = trgt;
+	}
+	if (tech_attrs[SMC_NLA_STATS_T_TX_RMB_USAGE]) {
+		trgt = nl_attr_get_uint(tech_attrs[SMC_NLA_STATS_T_TX_RMB_USAGE]);
+		smc_stat.smc[tech_type].tx_rmbuse = trgt;
 	}
 	if (tech_attrs[SMC_NLA_STATS_T_RX_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_RX_CNT]);
