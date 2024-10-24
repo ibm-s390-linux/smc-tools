@@ -37,6 +37,7 @@
 #define SMC_MAX_UEID		8  /* Max number of eids */
 #define SMC_MAX_PORTS		2  /* Max # of ports per ib device */
 #define SMC_PCI_ID_STR_LEN	16 /* Max length of pci id string */
+#define SMC_MAX_DUMP_DEV_LEN	16 /* Max length of dummy device name */
 
 /* Netlink SMC_PNETID attributes */
 enum {
@@ -80,6 +81,9 @@ enum {
 	SMC_NETLINK_DUMP_SEID,
 	SMC_NETLINK_ENABLE_SEID,
 	SMC_NETLINK_DISABLE_SEID,
+	SMC_NETLINK_GET_DUMP_DEV = 19,
+	SMC_NETLINK_SET_DUMP_DEV,
+	SMC_NETLINK_RESET_DUMP_DEV,
 };
 
 /* SMC_GENL_FAMILY top level attributes */
@@ -302,6 +306,14 @@ enum {
 	SMC_NLA_SEID_ENABLED,	/* u8 */
 	__SMC_NLA_SEID_TABLE_MAX,
 	SMC_NLA_SEID_TABLE_MAX = __SMC_NLA_SEID_TABLE_MAX - 1
+};
+
+/* SMC_NETLINK_DUMP_DEV attributes */
+enum {
+	SMC_NLA_DUMP_DEV_UNSPEC,
+	SMC_NLA_DUMP_DEV_NAME,  /* string */
+	__SMC_NLA_DUMP_DEV_MAX,
+	SMC_NLA_DUMP_DEV_MAX = __SMC_NLA_DUMP_DEV_MAX - 1
 };
 
 /***********************************************************

@@ -115,13 +115,13 @@ endif
 %.o: %.c
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
-smc: smc.o info.o ueid.o seid.o dev.o linkgroup.o libnetlink.o util.o
+smc: smc.o info.o ueid.o seid.o dev.o linkgroup.o libnetlink.o util.o dumpdev.o
 	${CCC} ${ALL_CFLAGS} ${ALL_LDFLAGS} $^ -o $@
 
-smcd: smcd.o infod.o ueidd.o seidd.o devd.o linkgroupd.o statsd.o libnetlink.o util.o
+smcd: smcd.o infod.o ueidd.o seidd.o devd.o linkgroupd.o statsd.o libnetlink.o util.o dumpdev.o
 	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
-smcr: smcr.o infor.o ueidr.o seidr.o devr.o linkgroupr.o statsr.o libnetlink.o util.o
+smcr: smcr.o infor.o ueidr.o seidr.o devr.o linkgroupr.o statsr.o libnetlink.o util.o dumpdev.o
 	${CCC} ${ALL_CFLAGS} $^ ${ALL_LDFLAGS} -o $@
 
 smc_pnet: smc_pnet.c smctools_common.h
