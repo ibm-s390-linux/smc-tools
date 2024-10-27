@@ -32,6 +32,7 @@
 #include "seid.h"
 #include "info.h"
 #include "stats.h"
+#include "dumpdev.h"
 
 static int option_detail = 0;
 #if defined(SMCD)
@@ -53,10 +54,10 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: %s  [ OPTIONS ] OBJECT {COMMAND | help}\n"
 #if defined(SMCD)
-		"where  OBJECT := {info | linkgroup | device | stats | ueid | seid}\n"
+		"where  OBJECT := {info | linkgroup | device | stats | ueid | seid | dumpdev}\n"
 		"       OPTIONS := {-v[ersion] | -d[etails] | -a[bsolute]}\n", myname);
 #else
-		"where  OBJECT := {info | linkgroup | device | stats | ueid}\n"
+		"where  OBJECT := {info | linkgroup | device | stats | ueid | dumpdev}\n"
 		"       OPTIONS := {-v[ersion] | -d[etails] | -dd[etails] | -a[bsolute]}\n", myname);
 #endif
 }
@@ -79,6 +80,7 @@ static const struct cmd {
 #if defined(SMCD)
 	{ "seid",	invoke_seid },
 #endif
+	{ "dumpdev",	invoke_dumpdev },
 	{ "help",	invoke_help },
 	{ 0 }
 };
