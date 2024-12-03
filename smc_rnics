@@ -86,10 +86,14 @@ function set_RoCE_dev_and_port() {
 	dev_type="$1";
 	if [ -e port ]; then
 		port=`cat port`;
-		if [ $IBdev -eq 0 ]; then
-			let port=$port-1;
+		if [ $port -eq 0 ]; then
+			port="n/a";
 		else
-			port=1;
+			if [ $IBdev -eq 0 ]; then
+				let port=$port-1;
+			else
+				port=1;
+			fi
 		fi
 	fi;
 }
