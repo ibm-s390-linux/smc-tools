@@ -2,7 +2,7 @@
 
 # Copyright IBM Corp. 2018, 2022
 
-VERSION="1.8.4";
+VERSION="1.8.99";
 
 
 function usage() {
