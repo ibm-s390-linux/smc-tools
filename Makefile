@@ -106,13 +106,13 @@ endif
 endif
 
 
-%d.o: %.c
+%d.o: %.c smctools_common.h
 	${CCC} ${ALL_CFLAGS} -DSMCD -c $< -o $@
 
-%r.o: %.c
+%r.o: %.c smctools_common.h
 	${CCC} ${ALL_CFLAGS} -DSMCR -c $< -o $@
 
-%.o: %.c
+%.o: %.c smctools_common.h
 	${CCC} ${ALL_CFLAGS} -c $< -o $@
 
 smc: smc.o info.o ueid.o seid.o dev.o linkgroup.o libnetlink.o util.o
