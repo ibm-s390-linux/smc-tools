@@ -39,12 +39,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.8.99 (tbd)__
+* __v1.8.4 (2024-12-17)__
 
     Changes:
+    - `smcd`/`smcr` statistics: add statistics on sndbufs/RMBs usage
 
     Bug fixes:
-
+    - `smc_rnics`: Fix smc_rnics showing the wrong physical port
+    - `util.h`:  Fix build with CFLAGS="-g"
+    - `smc_run`: Fix segfault issue during creating concurrent sockets
+    - `Makefile`: Make sure to show the right release number
 
 * __v1.8.3 (2023-07-28)__
 
@@ -64,7 +68,7 @@ Release History:
 * __v1.8.1 (2022-04-14)__
 
     Changes:
-    - `smc_rncs`: Recognize RoCE Express3 cards
+    - `smc_rnics`: Recognize RoCE Express3 cards
 
 * __v1.8.0 (2022-04-11)__
 
