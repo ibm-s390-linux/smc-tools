@@ -11,6 +11,7 @@ This package consists of the following tools:
 - `smc_pnet`          : C program for PNET Table handling
 - `smc_rnics`         : List available RDMA NICs
 - `smc_run`           : preload library environment setup script.
+- `smc_run.bpf`       : eBPF version of smc_run
 - `smcss`             : C program for displaying the information about active
                         SMC sockets.
 
@@ -25,6 +26,59 @@ table.
 
 In addition the package contains the `AF_SMC` manpage (`man af_smc`).
 
+Build
+-------
+You can build smc_run.bpf and all its dependencies by script:
+```bash
+sudo yum install clang libbpf libbpf-devel
+make
+make install
+```
+
+Usage
+------
+
+### smc_run.bpf
+
+An eBPF implemented smc_run based on IPPROTO_SMC:
+
+- Support to transparent replacement based on command (Just like smc_run)
+- Supprot to transparent replacement based on pid configuration. And supports the inheritance of this capability between parent and child processes
+- Support to transparent replacement based on per netns configuration
+
+__smc_run.bpf COMMAND__
+- Equivalent to smc_run but with IPPROTO_SMC via eBPF
+
+__smc_run.bpf -p pid__
+- To add the process with target pid to the map. Afterward, all socket() calls of the process and its descendant processes will be replaced from IPPROTO_TCP to IPPROTO_SMC.
+- Mapping will be automatically deleted when process exits.
+- Specifically, COMMAND mode is actually works like following:
+```
+smc_run.bpf -p $$
+COMMAND
+exit
+```
+
+__smc_run.bpf -n 1__
+- To make all socket() calls of the current netns to be replaced from IPPROTO_TCP to IPPROTO_SMC.
+- Turn off it by smc_run.bpf -n 0
+
+For example :
+
+```
+ip netns add test
+ip link set eth2 down
+ip link set eth2 netns test
+ip netns exec test ip link set eth2 up
+# turn on
+ip netns exec test smc_run.bpf -n 1
+# smc
+ip netns exec test curl http://smc_server
+# turn off
+ip netns exec test smc_run.bpf -n 0
+# tcp
+ip netns exec test curl http://smc_server
+```
 
 License
 -------

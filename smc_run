@@ -79,6 +79,16 @@ export SMC_DEBUG;
 #
 # Execute the specified command.
 #
+
+if [ -n "$SMC_RUN_BPF" ] && [ "$SMC_RUN_BPF" -ne 0 ]; then
+	smc_run.bpf -p $$ > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		exec "$@"
+		exit $?;
+	fi
+	# failover to AF_SMC with LD_PRELOAD
+fi
+
 export LD_PRELOAD=$LD_PRELOAD:$LIB_NAME;
 
 exec "$@"
