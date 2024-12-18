@@ -33,7 +33,7 @@ char* trim_space(char *str);
 int get_abbreviated(uint64_t num, int max_digs, char *res);
 int contains(const char *prfx, const char *str);
 
-inline int is_str_empty(char *str)
+static inline int is_str_empty(char *str)
 {
 	if (str && str[0] == '\0')
 		return 1;
