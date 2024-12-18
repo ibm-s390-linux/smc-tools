@@ -302,3 +302,10 @@ void gen_nl_close()
 		sk = NULL;
 	}
 }
+
+uint64_t nl_attr_get_uint(const struct nlattr *nla)
+{
+	if (nla && nla_len(nla) == sizeof(uint32_t))
+		return nla_get_u32(nla);
+	return nla_get_u64(nla);
+}

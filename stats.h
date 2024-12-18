@@ -113,6 +113,8 @@ struct smc_stats_tech {
 	__u64	tx_bytes;
 	__u64	rx_cnt;
 	__u64	tx_cnt;
+	__u64	rx_rmbuse;
+	__u64	tx_rmbuse;
 };
 
 struct smc_stats {

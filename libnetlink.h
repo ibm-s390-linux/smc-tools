@@ -65,4 +65,5 @@ void gen_nl_close();
 int gen_nl_handle(int cmd, int nlmsg_flags,
 		  int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg);
 int gen_nl_handle_dump(int cmd, int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg);
+uint64_t nl_attr_get_uint(const struct nlattr *nla);
 #endif /* SMC_LIBNETLINK_H_ */
