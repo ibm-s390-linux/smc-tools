@@ -60,7 +60,7 @@ int rtnl_dump(struct rtnl_handle *rth, void (*handler)(struct nlmsghdr *nlh));
 void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 int sockdiag_send(int fd, unsigned char cmd);
 void set_extension(int ext);
-int gen_nl_open();
+int gen_nl_open(char *pname);
 void gen_nl_close();
 int gen_nl_handle(int cmd, int nlmsg_flags,
 		  int (*cb_handler)(struct nl_msg *msg, void *arg), void *arg);
