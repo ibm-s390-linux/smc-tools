@@ -24,6 +24,14 @@ function usage() {
         echo "   -r <SIZE>  request receive buffer size in Bytes";
         echo "   -t <SIZE>  request transmit buffer size in Bytes";
         echo "   -v         display version info";
+        echo "   -f <inet | smc | auto> specify the address type of SMC socket";
+}
+
+function check_family() {
+	case "$1" in
+		inet|smc|auto) ;;
+		*) "Error: parameter must be one of inet, smc, or auto, but got '$1'"; exit 1;;
+	esac
 }
 
 function check_size() {
@@ -50,7 +58,7 @@ function adjust_core_net_max() {
 # if necessary.
 #
 SMC_DEBUG=0;
-while getopts "dhr:t:v" opt; do
+while getopts "dhr:t:vf:" opt; do
 	case $opt in
 		d)
 			SMC_DEBUG=1;;
@@ -62,6 +70,8 @@ while getopts "dhr:t:v" opt; do
 		t)	check_size $OPTARG;
 			adjust_core_net_max wmem $OPTARG;
 			export SMC_SNDBUF=$OPTARG;;
+		f)	check_family $OPTARG;
+			export SMC_SOCK_FAMILY=$OPTARG;;
 		v)	echo "smc_run utility, smc-tools-$VERSION";
 			exit;;
 		\?)	echo "`basename "$0"`: Error: Invalid option: -$OPTARG";
