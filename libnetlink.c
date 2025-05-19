@@ -207,7 +207,7 @@ int sockdiag_send(int fd, unsigned char cmd)
 
 /* Operations on generic netlink sockets */
 
-int gen_nl_open(char *pname)
+int gen_nl_open(void)
 {
 	int rc = EXIT_FAILURE;
 

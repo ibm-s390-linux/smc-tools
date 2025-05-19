@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 		argc--;	argv++;
 	}
 
-	if (gen_nl_open(myname))
+	if (gen_nl_open())
 		exit(1);
 	if (argc > 1) {
 		rc = run_cmd(argv[1], argc-1, argv+1);
