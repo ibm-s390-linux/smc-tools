@@ -23,9 +23,9 @@ function usage() {
 
 function print_header() {
 	if [ $IBdev -eq 0 ]; then
-		printf "     FID  Power  PCI_ID        PCHID  Type           PPrt  PNET_ID            Net-Dev\n";
+		printf "     FID  Power  PCI_ID        PCHID  Type            PPrt  PNET_ID            Net-Dev\n";
 	else
-		printf "     FID  Power  PCI_ID        PCHID  Type           IPrt  PNET_ID            IB-Dev\n";
+		printf "     FID  Power  PCI_ID        PCHID  Type            IPrt  PNET_ID            IB-Dev\n";
 	fi
 	echo '------------------------------------------------------------------------------------------';
 }
@@ -78,7 +78,7 @@ function get_pnet_from_port() {
 }
 
 function print_rnic() {
-	printf "%8x  %-5s  %-12s  %-4s   %-14s %-4s  %-17s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
+	printf "%8x  %-5s  %-12s  %-4s   %-15s %-4s  %-17s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
 	(( printed++ ));
 }
 
@@ -103,13 +103,14 @@ function set_by_firmware_lvl() {
 	local name;
 	local lvl;
 
-	name="Mlx_$id";
 	which ethtool >/dev/null 2>&1;
 	if [ $? -eq 0 ] && [ "$int" != "n/a" ] && [ -d "net" ]; then
 		iface="`ls -1 net | head -1`";
 		lvl="`ethtool -i $iface | grep -e "^firmware-version:" | awk '{print($2)}'`";
 		if [ "${lvl%%.*}" == "22" ]; then
 			name="RoCE_Express3";
+		elif [ "${lvl%%.*}" == "14" ]; then
+			name="RoCE_Express2";
 		fi
 	fi
 	set_RoCE_dev_and_port $name;
@@ -155,25 +156,17 @@ function print_rnics() {
 		id=`cat device`;
 		vend=`cat vendor`;
 		dev_type="${vend#0x}:${id#0x}";
+		pft=`cat pft`;
 		if [ $rawIDs -eq 0 ]; then
-			case "$vend" in
-			"0x1014" ) # IBM
-				case "$id" in
-				"0x04ed") dev_type="ISM";
-					  int="n/a";;
-				*)
-					continue;
-				esac;;
-			"0x15b3" ) # Mellanox
-				case "$id" in
-				"0x1003" | \
-				"0x1004") dev_type="RoCE_Express";;
-				"0x1016") set_RoCE_dev_and_port "RoCE_Express2";;
-				"0x101e") set_by_firmware_lvl;;
-				*)	  set_RoCE_dev_and_port "Mlx_$id";;
-				esac;;
+			case "$pft" in
+			"0x05") dev_type="ISM";
+				int="n/a";;
+			"0x02") dev_type="RoCE_Express";;
+			"0x0a") set_by_firmware_lvl;;
+			"0x0c" | \
+			"0x0f") set_RoCE_dev_and_port "Network_Express";;
 			*) [ $all -eq 0 ] && continue
-			esac
+		esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
 		pnetids="`cat util_string | sed 's/\x0/\x40/g' | iconv -f IBM-1047 -t ASCII`";
