@@ -255,7 +255,7 @@ function set_pnetid() {
    if [ $? -eq 0 ]; then
       # PCI device - use smc_rnics for easy PNET_ID access
       debug "PCI device, retrieve PNET ID via smc_rnics";
-      pnetid="`smc_rnics | grep -e "$1\$" | awk '{print($7)}'`";
+      pnetid="`smc_rnics | grep -e "$1\$" | awk '{print($9)}'`";
       [ "$pnetid" != "" ] && return;
    fi
    if [ -e /sys/class/net/$1/device/portno ] && [ -e /sys/class/net/$1/device/chpid ]; then
@@ -290,7 +290,7 @@ function is_smcd_available() {
 function set_ism() {
    is_smcd_available "v1";
    [ $? -ne 0 ] && return;
-   ism="`smc_rnics | awk -v pn="$1" '$5 == "ISM" && $7 == pn {print($1)}' | sed 's/ $//'`";
+   ism="`smc_rnics | awk -v pn="$1" '$5 == "ISM" && $9 == pn {print($1)}' | sed 's/ $//'`";
 }
 
 # Returns all ISMv2-eligible devices (PNET ID not set or same as *some* NIC)
@@ -317,7 +317,7 @@ function set_ismv2() {
          [ $? -ne 0 ] && continue;
       fi
       ismv2="$ismv2 `echo $line | awk '{print($1)}'`";
-   done <<< $(smc_rnics | awk '$5 == "ISM" {print($1" "$7)}')
+   done <<< $(smc_rnics | awk '$5 == "ISM" {print($1" "$9)}')
    ismv2="`echo $ismv2`";    # strip leading blank
 }
 
