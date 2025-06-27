@@ -60,7 +60,7 @@ usage information.
 Display IB device information.
 .TP
 .BR "\-r, \-\-rawids"
-Display raw PCI vendor and device codes in column. Note that this will
+Display raw PCI vendor/device, PFT, and VFN codes in columns. Note that this will
 also include unknown devices.
 .TP
 .BR "\-v, \-\-version"
@@ -86,6 +86,15 @@ ISM devices.
 Device type in human readable form. See option
 .B -r
 to switch to display of PCI vendor and device instead.
+
+.SS "PFT"
+PCI Function Type. Display hexadecimal value with option -r or mapped name with option -a.
+
+.SS "VF"
+Virtual Function. Indicates if the FID is a virtual function within the adapter.
+
+.SS "VFN"
+Virtual Function number. Indicates the virtual function within the adapter.
 
 .SS "PPrt"
 Corresponding physical port of an RNIC, if applicable. Starts counting at 0.
