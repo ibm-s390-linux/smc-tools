@@ -22,12 +22,19 @@ function usage() {
 }
 
 function print_header() {
-	if [ $IBdev -eq 0 ]; then
-		printf "     FID  Power  PCI_ID        PCHID  Type            PPrt  PNET_ID            Net-Dev\n";
+        if [ $IBdev -eq 1 ] && [ $rawIDs -eq 1 ]; then
+		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VFN  IPrt  PNET_ID            IB-Dev\n";
+		echo '----------------------------------------------------------------------------------------------------';
+	elif [ $IBdev -eq 1 ]; then
+		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VF   IPrt  PNET_ID            IB-Dev\n";
+		echo '----------------------------------------------------------------------------------------------------';
+	elif [ $rawIDs -eq 1 ]; then
+		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VFN  PPrt  PNET_ID            Net-Dev\n";
+		echo '----------------------------------------------------------------------------------------------------'
 	else
-		printf "     FID  Power  PCI_ID        PCHID  Type            IPrt  PNET_ID            IB-Dev\n";
+		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VF   PPrt  PNET_ID            Net-Dev\n";
+		echo '----------------------------------------------------------------------------------------------------';
 	fi
-	echo '------------------------------------------------------------------------------------------';
 }
 
 function get_softset_pnet_id() {
@@ -78,10 +85,35 @@ function get_pnet_from_port() {
 }
 
 function print_rnic() {
-	printf "%8x  %-5s  %-12s  %-4s   %-15s %-4s  %-17s  %s\n" "$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$port" "`get_pnet_from_port`" "$int";
+	if [ $rawIDs -eq 1 ]; then
+		printf "%4x  %-5s  %-12s  %-4s   %-15s  %-4s  %-3s  %-4s  %-17s  %s\n" \
+			"$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$pft" "${vfn:+$((16#${vfn#0x}))}" "$port" "`get_pnet_from_port`" "$int";
+	else
+		printf "%4x  %-5s  %-12s  %-4s   %-15s  %-4s  %-3s  %-4s  %-17s  %s\n" \
+			"$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$pft" "$vfn" "$port" "`get_pnet_from_port`" "$int";
+	fi
 	(( printed++ ));
 }
 
+function set_RoCE_pft_and_vfn() {
+	local lpft=$1;
+	local lvfn=$((16#${2#0x}));
+
+	case "$lpft" in
+	"0x02") pft="ROC"; vfn="y";;
+	"0x05") pft="ISM"; vfn="y";;
+	"0x0a") pft="ROC2"; vfn="y";;
+	"0x0c") pft="NETH"; vfn="y";;
+	"0x0f") pft="NETD";
+		if (( $lvfn != 0 )); then
+			vfn="y";
+		else
+			vfn="n";
+		fi;;
+	*)
+		vfn="$lvfn";;
+	esac
+}
 function set_RoCE_dev_and_port() {
 	dev_type="$1";
 	if [ -e port ]; then
@@ -134,8 +166,10 @@ function print_rnics() {
 			if [ $all -ne 0 ]; then
 				dev_type="";
 				pchid="";
+				pft="";
 				pnet="";
 				port="";
+				vfn="";
 				print_rnic;
 			fi
 			continue;
@@ -157,15 +191,28 @@ function print_rnics() {
 		vend=`cat vendor`;
 		dev_type="${vend#0x}:${id#0x}";
 		pft=`cat pft`;
+		vfn=`cat vfn`;
 		if [ $rawIDs -eq 0 ]; then
 			case "$pft" in
 			"0x05") dev_type="ISM";
-				int="n/a";;
-			"0x02") dev_type="RoCE_Express";;
-			"0x0a") set_by_firmware_lvl;;
+				int="n/a";
+				set_RoCE_pft_and_vfn "$pft" "$vfn";;
+			"0x02") dev_type="RoCE_Express";
+				set_RoCE_pft_and_vfn "$pft" "$vfn";;
+			"0x0a") set_by_firmware_lvl;
+				set_RoCE_pft_and_vfn "$pft" "$vfn";;
 			"0x0c" | \
-			"0x0f") set_RoCE_dev_and_port "Network_Express";;
-			*) [ $all -eq 0 ] && continue
+			"0x0f") set_RoCE_dev_and_port "Network_Express";
+				set_RoCE_pft_and_vfn "$pft" "$vfn";;
+			*)
+				# For unknown PCI vendors, determine VF flag based on VFN value.
+				# This ensures consistent handling even for unrecognized vendor devices
+				[ $all -eq 0 ] && continue
+				if (( 16#${vfn#0x} != 0 )); then
+					vfn="y";
+				else
+					vfn="n";
+				fi;;
 		esac
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
