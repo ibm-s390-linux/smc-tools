@@ -227,8 +227,9 @@ function print_rnics() {
 			fi
 			# one device can have multiple interfaces (one per port)
 			for int in $interfaces; do
+				set_RoCE_dev_and_port "$dev_type";
 				cd /sys/bus/pci/devices/$addr/net/$int;
-				if [ "$dev_type" == "RoCE_Express" ] && [ -e dev_port ]; then
+				if [ "$((pft))" -eq 2 ] && [ -e dev_port ]; then
 					port=`cat dev_port`;
 				fi
 				print_rnic;
