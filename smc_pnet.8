@@ -48,13 +48,19 @@ smc_pnet \- create, destroy, and change the SMC PNET table
 The SMC protocol requires grouping of standard Ethernet and RoCE networks or ISM
 devices.
 Such groups are called \fIPhysical Networks\fR (PNETs). The mapping is configured
-within a table called \fIpnet table\fR. Any available Ethernet interface can be
-combined with an available RDMA-capable network interface card (RNIC) or a
+within a table called \fIpnet table\fR. Any Ethernet interface can be
+combined with the RDMA-capable network interface card (RNIC) or a
 DMA-capable ISM device, if they
 belong to the same Converged Ethernet fabric. To configure mapping of a RoCE Adapter
 port or an ISM device to a standard Ethernet interface, both devices need to have
 the same PNET ID; either hardware-defined or user-defined using the pnet table.
-Hardware-defined PNET IDs cannot be overwritten.
+Hardware-defined PNET IDs cannot be overwritten. The Ethernet interface or the
+RNIC or a DMA-capable ISM device may not be present while creating a pnet table
+entry. Such pnet table entries will be applied once the corresponding interface
+or device comes online. The entry will still remain in the pnet table when the
+interface or device is removed. The entire pnet table is not persistent across
+reboots.
+
 .P
 The
 .B smc_pnet
