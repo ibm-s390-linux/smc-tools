@@ -83,7 +83,22 @@ Physical channel identifier, or virtual channel identifier (VCHID) for
 ISM devices.
 
 .SS "Type"
-Device type in human readable form. See option
+Device type in human readable form. Currently just a single device type is supported that actually is not an RDMA capabe network adapter: ISM.
+
+The following RDMA capable network adapters are supported:
+.TS
+box tab(|);
+l | l.
+Type|IBM Z Adapter Name
+=
+Integrated_Network|IBM Integrated Network Adapter 100G
+Network_Express|Network Express
+RoCE_Express3|RoCE Express 3
+RoCE_Express2|RoCE Express 2
+RoCE_Express|RoCE Express
+.TE
+
+See option
 .B -r
 to switch to display of PCI vendor and device instead.
 

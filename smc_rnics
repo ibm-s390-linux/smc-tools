@@ -23,17 +23,17 @@ function usage() {
 
 function print_header() {
         if [ $IBdev -eq 1 ] && [ $rawIDs -eq 1 ]; then
-		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VFN  IPrt  PNET_ID            IB-Dev\n";
-		echo '----------------------------------------------------------------------------------------------------';
+		printf "FID   Power  PCI_ID        PCHID  Type                PFT   VFN  IPrt  PNET_ID            IB-Dev\n";
+		echo '-------------------------------------------------------------------------------------------------------';
 	elif [ $IBdev -eq 1 ]; then
-		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VF   IPrt  PNET_ID            IB-Dev\n";
-		echo '----------------------------------------------------------------------------------------------------';
+		printf "FID   Power  PCI_ID        PCHID  Type                PFT   VF   IPrt  PNET_ID            IB-Dev\n";
+		echo '-------------------------------------------------------------------------------------------------------';
 	elif [ $rawIDs -eq 1 ]; then
-		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VFN  PPrt  PNET_ID            Net-Dev\n";
-		echo '----------------------------------------------------------------------------------------------------'
+		printf "FID   Power  PCI_ID        PCHID  Type                PFT   VFN  PPrt  PNET_ID            Net-Dev\n";
+		echo '-------------------------------------------------------------------------------------------------------'
 	else
-		printf "FID   Power  PCI_ID        PCHID  Type             PFT   VF   PPrt  PNET_ID            Net-Dev\n";
-		echo '----------------------------------------------------------------------------------------------------';
+		printf "FID   Power  PCI_ID        PCHID  Type                PFT   VF   PPrt  PNET_ID            Net-Dev\n";
+		echo '-------------------------------------------------------------------------------------------------------';
 	fi
 }
 
@@ -88,10 +88,10 @@ function get_pnet_from_port() {
 
 function print_rnic() {
 	if [ $rawIDs -eq 1 ]; then
-		printf "%4x  %-5s  %-12s  %-4s   %-15s  %-4s  %-3s  %-4s  %-17s  %s\n" \
+		printf "%4x  %-5s  %-12s  %-4s   %-18s  %-4s  %-3s  %-4s  %-17s  %s\n" \
 			"$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$pft" "${vfn:+$((16#${vfn#0x}))}" "$port" "`get_pnet_from_port`" "$int";
 	else
-		printf "%4x  %-5s  %-12s  %-4s   %-15s  %-4s  %-3s  %-4s  %-17s  %s\n" \
+		printf "%4x  %-5s  %-12s  %-4s   %-18s  %-4s  %-3s  %-4s  %-17s  %s\n" \
 			"$((16#$fid))" "$power" "$addr" "$pchid" "$dev_type" "$pft" "$vfn" "$port" "`get_pnet_from_port`" "$int";
 	fi
 	(( printed++ ));
@@ -164,7 +164,14 @@ function set_by_pciid(){
 		"0x1004") dev_type="RoCE_Express";
 			  multiport_f=1;;
 		"0x1016") set_RoCE_dev_and_port "RoCE_Express2";;
-		"0x101e") set_by_firmware_lvl;;
+		"0x101e") #  default to Network_Express
+			  if [ "0x0127" = "$ssid" ]; then
+				  set_RoCE_dev_and_port "Integrated_Network";
+			  elif [ "0x0002" = "$ssid" ]; then
+				  set_RoCE_dev_and_port "Network_Express";
+			  else
+			      set_by_firmware_lvl
+			  fi;;
 		*)	  set_RoCE_dev_and_port "Mlx_$id";;
 		esac;;
 	esac
@@ -218,6 +225,7 @@ function print_rnics() {
 		fi
 		id=`cat device`;
 		vend=`cat vendor`;
+		ssid=`cat subsystem_device`;
 		dev_type="${vend#0x}:${id#0x}";
 		pft=`cat pft`;
 		vfn=`cat vfn`;
@@ -234,7 +242,12 @@ function print_rnics() {
 			"0x0a") set_by_firmware_lvl;
 				set_RoCE_pft_and_vfn "$pft" "$vfn";;
 			"0x0c" | \
-			"0x0f") set_RoCE_dev_and_port "Network_Express";
+			"0x0f")
+				if [ "0x0127" = "$ssid" ]; then
+					set_RoCE_dev_and_port "Integrated_Network";
+				else
+					set_RoCE_dev_and_port "Network_Express";
+				fi
 				set_RoCE_pft_and_vfn "$pft" "$vfn";;
 			*)
 				# but if that fails go via the pci IDs
