@@ -21,7 +21,7 @@
 #define SMC_OPTION_ABS -1
 #define SMC_OPTION_DETAIL_ABS -2
 #define SMC_TYPE_STR_MAX 5
-
+#define SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT ((__u64) -1)
 
 #define NEXT_ARG() do { argv++; argc--; } while(0)
 #define NEXT_ARG_OK() (argc - 1 > 0)

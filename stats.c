@@ -399,8 +399,10 @@ static void print_as_text()
 	printf("  Data transmitted (Bytes) %14llu (%s)\n",
 		smc_stat.smc[tech_type].rx_bytes, temp_str);
 	printf("  Total requests             %12llu\n", tech->rx_cnt);
-	get_abbreviated(smc_stat.smc[tech_type].rx_rmbuse, 6, temp_str);
-	printf("  Buffer usage (Bytes)       %12llu (%s)\n", tech->rx_rmbuse, temp_str);
+	if (smc_stat.smc[tech_type].rx_rmbuse != SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT) {
+		get_abbreviated(smc_stat.smc[tech_type].rx_rmbuse, 6, temp_str);
+		printf("  Buffer usage (Bytes)       %12llu (%s)\n", tech->rx_rmbuse, temp_str);
+	}
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_rx.buf_full_cnt,
 			buf_rx_full);
 	if (d_level) {
@@ -422,8 +424,10 @@ static void print_as_text()
 	printf("  Data transmitted (Bytes) %14llu (%s)\n",
 		smc_stat.smc[tech_type].tx_bytes, temp_str);
 	printf("  Total requests             %12llu\n", tech->tx_cnt);
-	get_abbreviated(smc_stat.smc[tech_type].tx_rmbuse, 6, temp_str);
-	printf("  Buffer usage (Bytes)       %12llu (%s)\n", tech->tx_rmbuse, temp_str);
+	if (smc_stat.smc[tech_type].tx_rmbuse != SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT) {
+		get_abbreviated(smc_stat.smc[tech_type].tx_rmbuse, 6, temp_str);
+		printf("  Buffer usage (Bytes)       %12llu (%s)\n", tech->tx_rmbuse, temp_str);
+	}
 	printf("  Buffer full                %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_cnt,
 			buf_full);
 	printf("  Buffer full (remote)       %12llu (%.2f%%)\n", tech->rmb_tx.buf_full_peer_cnt,
@@ -629,11 +633,13 @@ static int fill_tech_info(struct nlattr **attr, int type)
 	if (tech_attrs[SMC_NLA_STATS_T_RX_RMB_USAGE]) {
 		trgt = nl_attr_get_uint(tech_attrs[SMC_NLA_STATS_T_RX_RMB_USAGE]);
 		smc_stat.smc[tech_type].rx_rmbuse = trgt;
-	}
+	} else
+		smc_stat.smc[tech_type].rx_rmbuse = SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT;
 	if (tech_attrs[SMC_NLA_STATS_T_TX_RMB_USAGE]) {
 		trgt = nl_attr_get_uint(tech_attrs[SMC_NLA_STATS_T_TX_RMB_USAGE]);
 		smc_stat.smc[tech_type].tx_rmbuse = trgt;
-	}
+	} else
+		smc_stat.smc[tech_type].tx_rmbuse = SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT;
 	if (tech_attrs[SMC_NLA_STATS_T_RX_CNT]) {
 		trgt = nla_get_u64(tech_attrs[SMC_NLA_STATS_T_RX_CNT]);
 		smc_stat.smc[tech_type].rx_cnt = trgt;

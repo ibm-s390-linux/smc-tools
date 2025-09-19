@@ -321,8 +321,12 @@ static int fill_lgr_struct(struct smc_diag_lgr *lgr, struct nlattr **attrs)
 			 nla_get_string(lgr_attrs[SMC_NLA_LGR_R_PNETID]));
 	if (lgr_attrs[SMC_NLA_LGR_R_SNDBUF_ALLOC])
 		lgr->sndbuf_alloc = nl_attr_get_uint(lgr_attrs[SMC_NLA_LGR_R_SNDBUF_ALLOC]);
+	else
+		lgr->sndbuf_alloc = SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT;
 	if (lgr_attrs[SMC_NLA_LGR_R_RMB_ALLOC])
 		lgr->rmb_alloc = nl_attr_get_uint(lgr_attrs[SMC_NLA_LGR_R_RMB_ALLOC]);
+	else
+		lgr->rmb_alloc = SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT;
 	if (lgr_attrs[SMC_NLA_LGR_R_V2_COMMON]) {
 		struct nlattr *v2_lgr_attrs[SMC_NLA_LGR_V2_MAX + 1];
 
@@ -371,8 +375,12 @@ static int fill_lgr_smcd_struct(struct smcd_diag_dmbinfo_v2 *lgr, struct nlattr 
 			 nla_get_string(lgr_attrs[SMC_NLA_LGR_D_PNETID]));
 	if (lgr_attrs[SMC_NLA_LGR_D_SNDBUF_ALLOC])
 		lgr->sndbuf_alloc = nl_attr_get_uint(lgr_attrs[SMC_NLA_LGR_D_SNDBUF_ALLOC]);
+	else
+		lgr->sndbuf_alloc = SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT;
 	if (lgr_attrs[SMC_NLA_LGR_D_DMB_ALLOC])
 		lgr->dmb_alloc = nl_attr_get_uint(lgr_attrs[SMC_NLA_LGR_D_DMB_ALLOC]);
+	else
+		lgr->dmb_alloc = SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT;
 	if (lgr_attrs[SMC_NLA_LGR_D_V2_COMMON]) {
 		struct nlattr *v2_lgr_attrs[SMC_NLA_LGR_V2_MAX + 1];
 
@@ -410,8 +418,10 @@ static void show_lgr_smcr_info_lgr_details(struct smc_diag_lgr *lgr)
 		printf("EID      : %s\n", lgr->v2_lgr_info.negotiated_eid);
 	}
 	printf("#Conns   : %d\n", lgr->conns_num);
-	printf("Sndbuf   : %lld B\n", lgr->sndbuf_alloc);
-	printf("RMB      : %lld B\n", lgr->rmb_alloc);
+	if (lgr->sndbuf_alloc != SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT)
+		printf("Sndbuf   : %lld B\n", lgr->sndbuf_alloc);
+	if (lgr->rmb_alloc != SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT)
+		printf("RMB      : %lld B\n", lgr->rmb_alloc);
 }
 
 static int show_lgr_smcr_info(struct nlattr **attr)
@@ -492,8 +502,10 @@ static void show_lgr_smcd_info_lgr_details(struct smcd_diag_dmbinfo_v2 *lgr)
 		printf("EID      : %s\n", lgr->v2_lgr_info.negotiated_eid);
 	}
 	printf("#Conns   : %d\n", lgr->conns_num);
-	printf("Sndbuf   : %lld B\n", lgr->sndbuf_alloc);
-	printf("DMB      : %lld B\n", lgr->dmb_alloc);
+	if (lgr->sndbuf_alloc != SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT)
+		printf("Sndbuf   : %lld B\n", lgr->sndbuf_alloc);
+	if (lgr->dmb_alloc != SMC_BUFF_STATS_KERNEL_SUPPORT_ABSENT)
+		printf("DMB      : %lld B\n", lgr->dmb_alloc);
 }
 
 static int show_lgr_smcd_info(struct nlattr **attr)
