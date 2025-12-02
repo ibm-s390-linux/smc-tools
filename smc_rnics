@@ -148,6 +148,26 @@ function set_by_firmware_lvl() {
 	set_RoCE_dev_and_port $name;
 }
 
+function set_by_pciid(){
+
+	case "$vend" in
+	"0x1014" ) # IBM
+		case "$id" in
+		"0x04ed") dev_type="ISM";
+			  int="n/a";;
+		esac;;
+	"0x15b3" ) # Mellanox
+		case "$id" in
+		"0x1003" | \
+		"0x1004") dev_type="RoCE_Express";
+			  multiport_f=1;;
+		"0x1016") set_RoCE_dev_and_port "RoCE_Express2";;
+		"0x101e") set_by_firmware_lvl;;
+		*)	  set_RoCE_dev_and_port "Mlx_$id";;
+		esac;;
+	esac
+}
+
 function print_rnics() {
 	# iterate over slots, as powered-off devices won't show elsewhere
 	for fid in `ls -1 /sys/bus/pci/slots`; do
@@ -192,12 +212,15 @@ function print_rnics() {
 		dev_type="${vend#0x}:${id#0x}";
 		pft=`cat pft`;
 		vfn=`cat vfn`;
+		multiport_f=0;
 		if [ $rawIDs -eq 0 ]; then
+			# prefer PFT for disamgibuating devices
 			case "$pft" in
 			"0x05") dev_type="ISM";
 				int="n/a";
 				set_RoCE_pft_and_vfn "$pft" "$vfn";;
 			"0x02") dev_type="RoCE_Express";
+				multiport_f=1;
 				set_RoCE_pft_and_vfn "$pft" "$vfn";;
 			"0x0a") set_by_firmware_lvl;
 				set_RoCE_pft_and_vfn "$pft" "$vfn";;
@@ -205,15 +228,20 @@ function print_rnics() {
 			"0x0f") set_RoCE_dev_and_port "Network_Express";
 				set_RoCE_pft_and_vfn "$pft" "$vfn";;
 			*)
+				# but if that fails go via the pci IDs
+				set_by_pciid
 				# For unknown PCI vendors, determine VF flag based on VFN value.
 				# This ensures consistent handling even for unrecognized vendor devices
-				[ $all -eq 0 ] && continue
+				[ "$dev_type"  = "${vend#0x}:${id#0x}" ] && [ $all -eq 0 ] && continue
 				if (( 16#${vfn#0x} != 0 )); then
 					vfn="y";
 				else
 					vfn="n";
 				fi;;
-		esac
+			esac
+		else
+			set_RoCE_dev_and_port "$dev_type";
+			[ "0x15b3" = "$vend" ] && [ "0x1004" = "$id" ] &&  multiport_f=1;
 		fi
 		pchid="`cat pchid | sed 's/^0x//'`";
 		pnetids="`cat util_string | sed 's/\x0/\x40/g' | iconv -f IBM-1047 -t ASCII`";
@@ -225,11 +253,10 @@ function print_rnics() {
 				print_rnic;
 				continue;
 			fi
-			# one device can have multiple interfaces (one per port)
 			for int in $interfaces; do
-				set_RoCE_dev_and_port "$dev_type";
+				# one device can have multiple interfaces (one per port)
 				cd /sys/bus/pci/devices/$addr/net/$int;
-				if [ "$((pft))" -eq 2 ] && [ -e dev_port ]; then
+				if [ $multiport_f -eq 1 ] && [ -e dev_port ]; then
 					port=`cat dev_port`;
 				fi
 				print_rnic;
