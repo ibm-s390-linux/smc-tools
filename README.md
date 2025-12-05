@@ -39,6 +39,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
+* __v1.8.99 (tbd)__
+
+    Changes:
+
+    Bug fixes:
+
 * __v1.8.6 (2025-12-05)__
 
     Bug fixes:
