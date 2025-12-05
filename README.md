@@ -39,12 +39,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.8.99 (tbd)__
-
-    Changes:
+* __v1.8.6 (2025-12-05)__
 
     Bug fixes:
-
+    - `man pages`: Update man page for smc_pnet
+    - `smc-tools`: Display sndbuf/RMB stats only if supported by the kernel
 
 * __v1.8.5 (2025-07-16)__
 
