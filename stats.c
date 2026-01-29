@@ -19,11 +19,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 
 #include "smctools_common.h"
 #include "util.h"
 #include "libnetlink.h"
 #include "stats.h"
+
+#define BUF_SIZE 8192
 
 #if defined(SMCD)
 static int is_smcd = 1;
@@ -972,12 +975,62 @@ static void merge_cache ()
 	smc_rsn.clnt_fback_cnt -= smc_rsn_c.clnt_fback_cnt;
 }
 
+#define SMCSTATS_FILENAME ".smcstats"
+void ensure_smcstats_file()
+{
+	char *xdg;
+	char *home;
+	size_t cfp_size = 0;
+	int n;
+
+	xdg = getenv("XDG_DATA_HOME");
+
+	if (xdg && xdg[0] != '\0') {
+		cfp_size = strlen(xdg) + strlen("/smc-tools/" SMCSTATS_FILENAME) + 1;
+		cache_file_path = malloc(cfp_size);
+		n = snprintf(cache_file_path, cfp_size, "%s/smc-tools/" SMCSTATS_FILENAME, xdg);
+	} else {
+		home = getenv("HOME");
+		if (!home || home[0] == '\0') {
+			fprintf(stderr, "$HOME is not set\n");
+			exit(-1);
+		}
+		cfp_size = strlen(home) + strlen("/.local/share/smc-tools/" SMCSTATS_FILENAME) + 1;
+		cache_file_path = malloc(cfp_size);
+		n = snprintf(cache_file_path, cfp_size, "%s/.local/share/smc-tools/" SMCSTATS_FILENAME, home);
+	}
+
+	if (n < 0) {
+		perror("could not construct cache file path");
+		goto errout;
+	}
+
+	if (access(cache_file_path, F_OK) == 0)
+		return;
+
+	/* Try to create the directory (mkdir -p style) */
+	for (char *p = cache_file_path + 1; *p; p++) {
+		if (*p == '/') {
+			*p = '\0';
+			if ((mkdir(cache_file_path, 0700)) && errno != EEXIST) {
+				perror("mkdir");
+				goto errout;
+			}
+			*p = '/';
+		}
+	}
+	return;
+errout:
+	free(cache_file_path);
+	exit(-1);
+}
+
 static void open_cache_file()
 {
 	int fd;
 
-	cache_file_path = malloc(128);
-	sprintf(cache_file_path, "/tmp/.smcstats.u%d", getuid());
+	/* Create cache file in $XDG_DATA_HOME directory */
+	ensure_smcstats_file();
 
 	fd = open(cache_file_path, O_RDWR|O_CREAT|O_NOFOLLOW, 0600);
 
@@ -1031,6 +1084,92 @@ static void fill_cache_file()
 	fprintf(cache_fp, "%16llu\n", smc_rsn_org.clnt_fback_cnt);
 }
 
+static void copy_cache_file(const char *src_path)
+{
+	FILE *cache_fp_old;
+	static char buffer[BUF_SIZE];
+	size_t bytes_read;
+
+	cache_fp_old = fopen(src_path, "r");
+	if (cache_fp_old == NULL) {
+		perror("fopen");
+		goto errout;
+	}
+
+	while ((bytes_read = fread(buffer, 1, BUF_SIZE, cache_fp_old)) > 0) {
+		if (fwrite(buffer, 1, bytes_read, cache_fp) != bytes_read) {
+			perror("fwrite");
+			fclose(cache_fp_old);
+			goto errout;
+		}
+	}
+	if (ferror(cache_fp_old)) {
+		perror("fread");
+		goto errout;
+	}
+
+	fclose(cache_fp_old);
+	return;
+errout:
+	fprintf(stderr, "Copying of %s to %s failed\n", src_path, cache_file_path);
+}
+
+/* For backward compatibility with older smc-tools version(1.8.6) or older */
+void handle_legacy_cache(void)
+{
+	char cache_file_path_old[128] = {0};
+	struct stat file_stat;
+	mode_t perm;
+	uid_t uid;
+
+	snprintf(cache_file_path_old, sizeof(cache_file_path_old),
+			 "/tmp/.smcstats.u%d", getuid());
+	if (stat(cache_file_path_old, &file_stat) || !(file_stat.st_size))
+		return;
+	/*
+	 * Using geteuid here as st_uid will be set to the effective UID of the
+	 * process that created the file
+	 */
+	uid = geteuid();
+	if (file_stat.st_uid != uid) {
+		fprintf(stderr,
+			"Legacy cache file %s with inappropriate ownership found: %d"
+			"(expected owner=%d).\n",
+			cache_file_path_old, file_stat.st_uid, uid);
+		goto out_untrusted;
+	}
+
+	perm = file_stat.st_mode & 0777;
+	if (perm != 0600) {
+		fprintf(stderr,
+			"Legacy cache file %s with inappropriate permissions found: "
+			"%04o(expected permissions=0600).\n",
+			cache_file_path_old, perm);
+		goto out_untrusted;
+	}
+	copy_cache_file(cache_file_path_old);
+	rewind(cache_fp);
+	read_cache_file(cache_fp);
+	goto out_remove;
+
+out_untrusted:
+	fprintf(stderr, "Disregarding legacy cache file!\n"
+		        "Warning: Emitting absolute statistics!\n");
+out_remove:
+	if (remove(cache_file_path_old)) {
+		fprintf(stderr,
+				"\nCannot remove legacy cache file %s: %s. You will keep "
+				"seeing this warning message on subsequent 'smcd/r stats' "
+				"invocations unless the "
+				"legacy cache file ceases to exist(for example with the "
+				"next reboot if /tmp is not persistent)\nor is manually "
+				"recovered (not recommended) or 'smcd/r stats' is invoked "
+				"in absolute mode\nor a new populated cache file exists "
+				"(created by invoking smcd/r stats reset)\n",
+				cache_file_path_old, strerror(errno));
+	}
+}
+
 int invoke_stats(int argc, char **argv, int option_details)
 {
 	if (option_details == SMC_DETAIL_LEVEL_V || option_details == SMC_DETAIL_LEVEL_VV) {
@@ -1051,6 +1190,9 @@ int invoke_stats(int argc, char **argv, int option_details)
 		goto errout;
 	memcpy(&smc_stat_org, &smc_stat, sizeof(smc_stat_org));
 	memcpy(&smc_rsn_org, &smc_rsn, sizeof(smc_rsn_org));
+
+	if (!is_abs && !cache_file_exists)
+		handle_legacy_cache();
 
 	if (!is_abs && cache_file_exists)
 		merge_cache();
