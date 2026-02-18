@@ -39,11 +39,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Release History:
 ================
 
-* __v1.8.99 (tbd)__
-
-    Changes:
+* __v1.8.7 (2026-02-18)__
 
     Bug fixes:
+    - `smc_rnics`: fix regression when PFT not available
+    - `smcd/smcr`: prevent DoS on statistics workfile present in /tmp/
 
 * __v1.8.6 (2025-12-05)__
 
