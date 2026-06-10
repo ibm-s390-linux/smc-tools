@@ -47,7 +47,9 @@ function get_softset_pnet_id() {
 
 	while read -r line; do
 		read id iface dev prt <<< $line;
-		if [[ ("$iface" != "n/a" && "$iface" == "$int") || ("$dev" != "n/a" && "$dev" == "$addr") ]]; then
+		if [[ ("$iface" != "n/a" && "$iface" == "$int") || \
+			("$dev" != "n/a" && "$dev" == "$addr") || \
+			("$ibdev_name" != "n/a" && "$dev" == "$ibdev_name") ]]; then
 			if [ "$prt" != "255" ] && [ "$prt" != "$iport" ]; then
 				continue;
 			fi
@@ -181,6 +183,7 @@ function print_rnics() {
 		port="n/a";
 		addr="";
 		int="";
+		ibdev_name="";
 		if [ $power -eq 0 ]; then
 			# device not yet hotplugged
 			if [ $all -ne 0 ]; then
@@ -207,6 +210,12 @@ function print_rnics() {
 			continue;
 		fi
 		cd /sys/bus/pci/devices/$addr;
+		# Get IB device name for this PCI device
+		if [ -d "infiniband" ]; then
+			ibdev_name="`ls -1 infiniband | head -1`";
+		else
+			ibdev_name="n/a";
+		fi
 		id=`cat device`;
 		vend=`cat vendor`;
 		dev_type="${vend#0x}:${id#0x}";
