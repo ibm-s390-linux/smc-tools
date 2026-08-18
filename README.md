@@ -38,11 +38,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Release History:
 ================
-* __v1.8.99 (tbd)__
 
-    Changes:
+* __v1.8.8 (2026-08-18)__
 
     Bug fixes:
+    - `smc_rnics`: reflect SW PNET ID applied via IB device name (mlx)
+    - `smc_rnics`: fix Integrated Network misidentified as Network Express
 
 * __v1.8.7 (2026-02-18)__
 
