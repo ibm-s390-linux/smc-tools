@@ -30,6 +30,10 @@
 #define AF_SMC 43
 #endif
 
+#ifndef IPPROTO_SMC
+#define IPPROTO_SMC 256
+#endif
+
 #ifndef SMCPROTO_SMC
 #define SMCPROTO_SMC		0	/* SMC protocol, IPv4 */
 #define SMCPROTO_SMC6		1	/* SMC protocol, IPv6 */
@@ -42,6 +46,7 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static void initialize(void);
 
 static int debug_mode = 0;
+static int sk_family;
 
 #define GET_FUNC(x) \
 if (dl_handle) { \
@@ -108,12 +113,15 @@ int socket(int domain, int type, int protocol)
 	    (type & 0xf) == SOCK_STREAM &&
 	    (protocol == IPPROTO_IP || protocol == IPPROTO_TCP)) {
 		dbg_msg(stderr, "libsmc-preload: map sock to AF_SMC\n");
-		if (domain == AF_INET)
-			protocol = SMCPROTO_SMC;
-		else /* AF_INET6 */
-			protocol = SMCPROTO_SMC6;
-
-		domain = AF_SMC;
+		if (sk_family == AF_SMC) {  /* using AF_SMC */
+			if (domain == AF_INET)
+				protocol = SMCPROTO_SMC;
+			else /* AF_INET6 */
+				protocol = SMCPROTO_SMC6;
+			domain = AF_SMC;
+		} else {
+			protocol = IPPROTO_SMC;
+		}
 	}
 
 	rc = (*orig_socket)(domain, type, protocol);
@@ -133,6 +141,35 @@ static void set_debug_mode(const char *var_name)
 	debug_mode = 0;
 	if (var_value != NULL)
 		debug_mode = (var_value[0] != '0');
+}
+
+static void __attribute__ ((constructor)) init_sock_family(void)
+{
+	char *var_value;
+	int fd;
+
+	var_value = getenv("SMC_SOCK_FAMILY");
+
+	if (!var_value) { /* default to AF_SMC still */
+		goto select_af_smc ;
+	} else if (strncmp(var_value, "inet", sizeof("inet" - 1)) == 0) {
+		goto select_af_inet;
+	} else if (strncmp(var_value, "smc", sizeof("smc" - 1)) == 0) {
+		goto select_af_smc;
+	} else if (strncmp(var_value, "auto", sizeof("auto" - 1)) == 0) {
+		/* check whether IPPROTO_SMC was support */
+		fd = socket(AF_INET, SOCK_STREAM, IPPROTO_SMC);
+		if (fd >= 0) {
+			close(fd);
+			goto select_af_inet;
+		}
+	}
+select_af_smc:
+	sk_family = AF_SMC;
+	return;
+select_af_inet:
+	sk_family = AF_UNSPEC;
+	return;
 }
 
 static void initialize(void)
